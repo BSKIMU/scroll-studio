@@ -30,3 +30,4 @@ __pycache__/
 !/tools/test-canvas-documents.mjs
 !/tools/check-release.mjs
 !/tools/prepare-pages.mjs
+!/tools/test-hosted-motion.mjs

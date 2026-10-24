@@ -1,6 +1,6 @@
 import * as T from 'three';
 let pending;
-export function loadInteractionClips(){return pending??=fetch('/assets/interaction-clips.json').then(r=>{if(!r.ok)throw Error('local motion bank unavailable');return r.json();}).then(bank=>{if(bank.version!==1||!bank.clips?.sit?.frames?.length||!bank.clips?.lie?.frames?.length)throw Error('invalid motion bank');return bank;}).catch(error=>{pending=null;return null;});}
+export function loadInteractionClips(){return pending??=fetch(new URL('./assets/interaction-clips.json',import.meta.url)).then(r=>{if(!r.ok)throw Error('motion bank unavailable');return r.json();}).then(bank=>{if(bank.version!==1||!bank.clips?.sit?.frames?.length||!bank.clips?.lie?.frames?.length)throw Error('invalid motion bank');return bank;}).catch(error=>{pending=null;return null;});}
 const yaw=a=>new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),a),smooth=x=>{x=T.MathUtils.clamp(x,0,1);return x*x*(3-2*x);};
 export function sampleInteraction(clip,t){const frame=T.MathUtils.clamp(t/clip.duration,0,1)*(clip.frames.length-1),i=Math.floor(frame),a=clip.frames[i],b=clip.frames[Math.min(i+1,clip.frames.length-1)],u=frame-i;return {hip:new T.Vector3(...a.hip).lerp(new T.Vector3(...b.hip),u),q:clip.bones.map((_,j)=>new T.Quaternion().fromArray(a.q,j*4).slerp(new T.Quaternion().fromArray(b.q,j*4),u))};}
 export class FurnitureMotion{

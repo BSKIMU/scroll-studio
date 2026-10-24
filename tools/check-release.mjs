@@ -16,5 +16,5 @@ for(const {name} of files){
   assert(existsSync(resolve(dirname(file),ref.split(/[?#]/)[0])),`${name}: missing ${ref}`);
  }
 }
-for(const test of ['test-template','test-tool-switching','test-tool-order','test-frame-input','test-editing-history','test-canvas-documents'])run(['--import','./tools/test-module-loader.mjs',`tools/${test}.mjs`]);
+for(const test of ['test-template','test-tool-switching','test-tool-order','test-frame-input','test-editing-history','test-canvas-documents','test-hosted-motion'])run(['--import','./tools/test-module-loader.mjs',`tools/${test}.mjs`]);
 console.log(`PASS: ${files.length} source files, relative entry points and 6 editing checks`);

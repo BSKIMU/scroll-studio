@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {PoseRig} from './rig.js';
-import {MOTION_URLS,pickMotion,loadMixamoSource,loadMixamoBody,loadMotionClips} from './mixamo-assets.js';
+import {MOTION_URLS,pickMotion,loadMixamoSource,loadMixamoBody,loadMotionClips} from './mixamo-assets.js?v=20261025-release1';
 import {setMotionOffset,applyMotionOffsets} from './motion-controls.js';
 const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),Q=()=>new T.Quaternion();
 const ZERO=new T.Vector3(),STEP_UP=.3;

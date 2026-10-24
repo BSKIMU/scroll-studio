@@ -97,7 +97,7 @@ export class SceneMovement{
    this.previousHint=document.querySelector('.view-hint').textContent;document.querySelector('.view-hint').textContent='WASD: 이동 · Shift: 달리기 · Space: 점프 · Esc: 현재 자세로 멈춤 · 마우스 드래그: 카메라';
    e.gizmo.transform.enabled=false;e.gizmo.helper.visible=false;$('sceneDialog').classList.add('movement-active');
    e.queueLive();this.status('움직임 모드 · WASD / Space');
-  }catch(error){this.physics?.dispose();this.physics=null;if(token===this.startToken)this.status('모션을 열지 못했습니다. 로컬 서버를 확인한 뒤 움직임 탭을 다시 누르세요.');console.error('Pose Lab motion:',error);}
+  }catch(error){this.physics?.dispose();this.physics=null;if(token===this.startToken)this.status('모션을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 움직임 탭을 다시 누르세요.');console.error('Pose Lab motion:',error);}
   finally{if(token===this.startToken){this.starting=false;this.sync();}}
  }
  stop({flush=true}={}){

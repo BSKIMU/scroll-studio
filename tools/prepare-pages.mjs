@@ -7,9 +7,9 @@ if(existsSync(output))throw Error('_site already exists. Keep it for review or c
 const commit=process.env.GITHUB_SHA||execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8',windowsHide:true}).trim();
 if(!/^[a-f\d]{40,64}$/i.test(commit))throw Error('Expected a Git commit ID');
 cpSync(join(root,'dist'),output,{recursive:true,filter:source=>!source.endsWith('ink-check.html')});
-for(const entry of readdirSync(output,{withFileTypes:true})){
+for(const entry of readdirSync(output,{withFileTypes:true,recursive:true})){
  if(!entry.isFile()||!['.html','.css','.js'].includes(extname(entry.name)))continue;
- const file=join(output,entry.name),text=readFileSync(file,'utf8');
+ const file=join(entry.parentPath,entry.name),text=readFileSync(file,'utf8');
  writeFileSync(file,text.replace(/\?v=[\w.-]+/g,`?v=gh-${commit}`));
 }
 writeFileSync(join(output,'.nojekyll'),'');
