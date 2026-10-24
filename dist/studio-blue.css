@@ -1,0 +1,122 @@
+/* Neutral working surfaces with one clear, consistent selection color. */
+body.studio-ui{--bg:#272a2d;--panel:#383d43;--panel2:#444b53;--line:#59636e;--muted:#b7c3ce;--accent:#37a7ee;--dark:#102d43;--overview-width:var(--overview-expanded-width,112px)}
+.studio-ui .toolbar,.studio-ui header{background:#363b40}
+.studio-ui .palette-grip{background:#404850;border-color:#59636e}
+.studio-ui button.primary,.studio-ui button.active,.studio-ui [role=tab][aria-selected=true],.studio-ui [data-tool][aria-pressed=true]{background:#238ed2!important;border-color:#65c5ff!important;color:white!important}
+.studio-ui input[type=range],.studio-ui input[type=checkbox]{accent-color:#37a7ee}
+.studio-ui button:focus-visible,.studio-ui input:focus-visible,.studio-ui select:focus-visible{outline:2px solid #52bbff;outline-offset:2px}
+.studio-ui .paint-layer.selected{background:#294e69!important;border-color:#45b4fa;outline:1px solid #45b4fa}
+.studio-ui #activeLayerBadge{background:#245679;color:#f2faff}
+.studio-ui .page-thumbnail.active{border-color:#39adf5;background:#255273}
+.studio-ui .gizmo-modes button.active,.studio-ui .scene-tabs button.active{background:#238ed2;color:white;border-color:#67c8ff}
+.studio-ui #layerPanel .paint-layer[data-layer=guide] input[type=range],.studio-ui #layerPanel .paint-layer[data-layer=background] input[type=range]{display:block;grid-column:1/-1;grid-row:2;width:100%;margin:5px 0 1px}
+.studio-ui #layerPanel .paint-layer[data-layer=guide],.studio-ui #layerPanel .paint-layer[data-layer=background]{min-height:55px}
+#balloonTools .balloon-colors{display:grid;grid-template-columns:1fr;gap:3px}
+#balloonTools .balloon-colors label{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:5px;margin:0;white-space:nowrap}
+#balloonTools .balloon-colors input[type=color]{width:32px;height:24px;padding:2px;margin:0;flex:none}
+#balloonTools .balloon-colors input[type=number]{width:65px;margin:0}
+#balloonTools .balloon-typography label{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;margin:5px 0;white-space:nowrap}
+#balloonTools .balloon-typography select{width:100px;max-width:100%;margin:0}
+.sidebar-quick-actions #addCut{display:none!important}
+.studio-ui .sidebar-quick-actions{grid-template-columns:1fr}
+#recognizePanels{border-color:#399bd4;color:#e8f8ff;background:#275371;width:100%}
+.studio-ui #pageOverview>.page-head b{writing-mode:horizontal-tb}
+#pageOverview #pageBrowser #pageThumbnails{display:flex;flex-direction:column;gap:8px}
+#pageOverview #pageBrowser .page-thumbnail{width:100%;max-width:180px;align-self:center}
+#pageOverview #pageBrowser .page-actions{display:grid;grid-template-columns:repeat(3,1fr)}
+#pageOverview #pageBrowser #bookOpen{grid-column:1/-1;font-size:9px}
+#pageOverview.side-minimized #pageBrowser{display:none}
+.studio-ui #pageOverview{position:relative;padding-right:8px;min-width:0}
+.studio-ui #pageOverview .page-head{justify-content:space-between;gap:2px;white-space:nowrap}
+.studio-ui #pageOverview #pageBrowser{padding:5px;min-width:0}
+.studio-ui #pageOverview .page-actions button{min-width:22px;padding:4px 0;font-size:13px;height:27px}
+.studio-ui #overviewWidthGrip{position:absolute;right:0;top:0;bottom:0;width:7px;z-index:40;cursor:col-resize;touch-action:none;border-right:1px solid #64778a;background:#2b333b}
+#overviewWidthGrip:after{content:'';position:absolute;top:45%;left:2px;height:32px;border-left:1px solid #85a2b8;border-right:1px solid #85a2b8;width:2px}
+#overviewWidthGrip:hover,#overviewWidthGrip:focus-visible,.resizing-overview #overviewWidthGrip{background:var(--accent)}
+#pageOverview.side-minimized #overviewWidthGrip{display:none}
+.resizing-overview,.resizing-overview *{cursor:col-resize!important;user-select:none!important}
+body.studio-ui.min-overview{--overview-width:24px}
+.studio-ui>header{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,28vw) minmax(0,1fr);gap:10px}
+.header-menu-region,.header-status-region{display:flex;align-items:center;gap:8px;min-width:0}
+.header-status-region{justify-content:flex-end;overflow:hidden}
+.studio-ui .project-name{border-inline:1px solid #59636e;padding-inline:12px;justify-content:center;min-width:0}
+.studio-ui .project-name #title{text-align:center;max-width:100%;font-size:12px}
+.studio-ui #navigatorPanel .navigator-controls{display:flex;flex-direction:column;gap:4px}
+.navigator-row{display:grid;grid-template-columns:minmax(30px,1fr) 36px repeat(4,24px);gap:2px;align-items:center;width:100%}
+.studio-ui .navigator-row input[type=range]{width:100%;min-width:0;margin:0;height:20px}
+.studio-ui .navigator-row button{width:24px;height:24px;padding:0;font-size:13px}
+.studio-ui .navigator-row output{font-size:10px;white-space:nowrap}
+.studio-ui #navActual{font-size:9px}
+.studio-ui #navReset{align-self:flex-end;font-size:10px;padding:3px 8px}
+@media(max-width:950px){.studio-ui>header{grid-template-columns:auto minmax(90px,1fr);gap:6px}.studio-ui .header-status-region{display:none}.studio-ui .project-name{border-right:0}}
+.pose-joint-controls{padding:8px;background:#283b4b;border:1px solid #426782;border-radius:3px;max-height:210px;overflow:auto}
+.pose-joint-controls label{display:flex;gap:5px;align-items:center;font-size:11px;margin:4px 0}
+.pose-joint-controls input[type=range]{flex:1;min-width:50px}
+.pose-joint-controls output{width:38px;text-align:right}
+.pose-joint-controls .pose-actions{display:flex;flex-wrap:wrap;gap:4px}
+.pose-joint-controls .pose-actions button{font-size:10px;padding:4px 6px}
+.hand-fingers label{display:flex;gap:5px;align-items:center;font-size:10px}
+.hand-fingers input{min-width:50px;flex:1}
+
+.pose-joint-controls{height:auto;flex:0 0 auto;box-sizing:border-box}.pose-joint-controls [hidden]{display:none!important}
+#recognitionToolbar{max-height:160px;overflow:auto}#recognitionToolbar select{max-width:145px}
+
+#balloonPicker [aria-selected=true]{background:#246b9a;border-color:#4dbbff;color:#fff}
+#balloonExamples{margin:6px 0 10px;border-color:#399bd4;background:#275371;color:#e8f8ff}
+#balloonPresetDialog{width:min(1060px,94vw);max-width:94vw;max-height:90vh;padding:20px;color:#eff5fb;background:#292f36;border:1px solid #65798c;border-radius:10px;overflow:auto}
+#balloonPresetDialog::backdrop{background:#08111ac2}
+.balloon-preset-head{display:flex;align-items:center;justify-content:space-between;gap:20px}.balloon-preset-head h2{margin:0;font-size:21px}
+#balloonPresetDialog p{font-size:13px;color:#bac9d8;line-height:1.6}
+.balloon-preset-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.balloon-preset-grid button{display:flex;flex-direction:column;padding:0 0 12px;overflow:hidden;text-align:left;background:#39434f;border:1px solid #5e7184;border-radius:6px;color:#eff5fb;white-space:normal}
+.balloon-preset-grid button:hover{border-color:#54baff;background:#23587d}.balloon-preset-grid canvas{width:100%;height:auto;background:#f4f7fa}.balloon-preset-grid b{font-size:14px;margin:10px 12px 5px}.balloon-preset-grid span{font-size:11px;margin:0 12px;line-height:1.5;color:#d2deea}
+.balloon-preset-foot a{color:#75c9ff}
+@media(max-width:800px){.balloon-preset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Text opens on typography; balloon-only properties stay with the balloon tool. */
+#balloonTools[data-context=text] [data-balloon-only],#balloonTools[data-context=text] #balloonExamples{display:none!important}
+#balloonTools .balloon-typography{display:flex;flex-direction:column;gap:7px;margin:8px 0}
+#balloonTools .balloon-typography label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}
+#balloonTools .balloon-typography select,#balloonTools .balloon-typography input:not([type=checkbox]){width:65%;margin:0;padding:4px;min-height:26px}
+#balloonTools .text-styles{display:flex;gap:12px;flex-wrap:wrap}
+#balloonTools .text-styles label{font-size:11px;gap:3px}
+#balloonTools .text-styles input{margin:0}
+#balloonTools[data-context=text] .balloon-colors:empty{display:none}
+#paper textarea.balloon-inline-input{outline:none!important;outline-offset:0}
+.page-mode.page-dialogue #paper .page-base{pointer-events:auto;z-index:19999999!important}
+.page-mode.page-dialogue #paper .panel-wrap:not(.page-base){pointer-events:auto}
+/* One vertical split at every dock width, including the expanded editor. */
+body.studio-ui .scene-dock .scene-layout.resizable-scene{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(100px,1fr) 8px var(--scene-settings-height,240px);min-height:0;overflow:hidden;flex:1}
+body.studio-ui .resizable-scene>.gizmo-toolbar{grid-row:1;grid-column:1;padding:4px 6px}
+body.studio-ui .resizable-scene>.pose-joint-controls{grid-row:2;grid-column:1;min-height:0;max-height:130px;padding:5px 7px}
+body.studio-ui .resizable-scene>#sceneView{grid-row:3;grid-column:1;height:100%;min-height:0;max-height:none;aspect-ratio:auto;width:100%}
+body.studio-ui .resizable-scene>.scene-controls{grid-row:5;grid-column:1;min-height:0;max-height:none;height:100%;width:100%;padding:4px 7px;overflow:auto}
+#sceneSettingsGrip{grid-row:4;grid-column:1;touch-action:none;cursor:row-resize;background:#282f37;border-block:1px solid #5b6e7d;position:relative}
+#sceneSettingsGrip:after{content:'';position:absolute;width:38px;left:calc(50% - 19px);top:2px;border-top:2px solid #97b6cc}
+#sceneSettingsGrip:hover,#sceneSettingsGrip:focus-visible,.resizing-scene-settings #sceneSettingsGrip{background:#238dcc}
+.resizing-scene-settings,.resizing-scene-settings *{cursor:row-resize!important;user-select:none!important}
+body.studio-ui .scene-controls .scene-tabs{top:-4px;margin:0 0 5px;padding:3px 0;gap:2px;grid-template-columns:repeat(5,minmax(0,1fr))}
+body.studio-ui .scene-controls .scene-tabs button{min-height:24px;padding:3px 2px;font-size:10px}
+body.studio-ui .scene-controls .scene-property-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px}
+body.studio-ui .scene-controls .scene-property-group label{margin-bottom:7px}
+body.studio-ui .scene-controls .scene-property-group button{min-height:24px;padding:4px 7px;margin-block:2px}
+body.studio-ui .scene-controls .scene-property-group p{margin:3px 0 7px;line-height:1.4;font-size:10px}
+body.studio-ui .scene-controls #modelImport{width:auto;justify-self:start}
+body.studio-ui .scene-controls .scene-property-group fieldset,body.studio-ui .scene-controls .scene-property-group details{grid-column:1/-1;min-width:0}
+body.studio-ui .scene-dock.show-properties .scene-layout.resizable-scene{display:none}
+@media(max-height:650px){body.studio-ui .resizable-scene>.pose-joint-controls{max-height:80px}}
+/* Coloring steps remain beside the layer stack, including narrow docks. */
+.coloring-layer-controls{display:grid;gap:5px;padding:6px 0;border-bottom:1px solid #526473;margin-bottom:6px}
+.color-layer-actions{display:flex;gap:4px;flex-wrap:wrap}
+.color-layer-actions button{flex:1;min-width:50px;padding:4px}
+.coloring-layer-controls>label:not(.check){display:grid;grid-template-columns:46px minmax(0,1fr);align-items:center;gap:5px;margin:0}
+.coloring-layer-controls select{min-width:0;padding:3px}
+.coloring-layer-controls small,#fillControls small{color:#b9c8d5;font-size:10px;line-height:1.4}
+#fillControls{display:grid;gap:8px;margin-bottom:8px}
+#fillControls[hidden],.coloring-layer-controls[hidden]{display:none}
+
+body.studio-ui .scene-dock .scene-layout.resizable-scene{grid-template-rows:auto auto auto minmax(100px,1fr) 8px var(--scene-settings-height,240px)}
+body.studio-ui .resizable-scene>.scene-lens-bar{grid-row:3;grid-column:1}
+body.studio-ui .resizable-scene>#sceneView{grid-row:4}
+body.studio-ui .resizable-scene>#sceneSettingsGrip{grid-row:5}
+body.studio-ui .resizable-scene>.scene-controls{grid-row:6}

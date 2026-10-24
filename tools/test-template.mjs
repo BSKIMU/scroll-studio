@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {planTemplate,commitTemplate,projectSummary} from '../dist/layer-template.js';
+const cuts=[{id:'a',paintLayers:[],strokes:[]},{id:'b',paintLayers:[],strokes:[]}];
+assert.equal(commitTemplate(planTemplate(cuts)),2);
+assert.equal(cuts[0].paintLayers.length,18);
+assert.equal(commitTemplate(planTemplate(cuts)),0);
+const before=JSON.stringify(cuts);
+assert.throws(()=>planTemplate([...cuts,{name:'full',paintLayers:Array.from({length:30},(_,i)=>({name:String(i)}))}]));
+assert.equal(JSON.stringify(cuts),before);
+assert.throws(()=>planTemplate(cuts,[{name:'bad',opacity:101}]));
+assert.equal(projectSummary({cuts}).paintLayers,36);
+assert.notEqual(cuts[0].paintLayers[0].id,cuts[1].paintLayers[0].id);
+console.log('PASS: batch, idempotency, atomic validation, unique IDs, summary');

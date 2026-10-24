@@ -1,0 +1,25 @@
+#welcome h1{font-size:clamp(32px,4.4vw,54px);line-height:1.3;letter-spacing:-.035em;margin:24px 0}
+#newWebtoon{max-width:760px;width:min(760px,94vw);max-height:94vh;overflow:auto}
+.canvas-tracks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 20px}
+.canvas-tracks button{text-align:left;padding:14px;border:1px solid #65717c}
+.canvas-tracks button[aria-pressed=true]{background:#22597a;border-color:#31aeef}
+.canvas-tracks b,.canvas-tracks small{display:block}.canvas-tracks small{margin-top:4px;font-size:12px}
+#newWebtoon [hidden]{display:none!important}
+#newWebtoon .canvas-presets section{display:grid;gap:8px}
+#newWebtoon .canvas-presets{display:block;align-self:start}
+#newWebtoon section{padding:0;margin:10px 0}
+#newWebtoon .canvas-dimensions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+#newWebtoon label{margin:0 0 6px}
+#newWebtoon .canvas-presets button{min-height:64px}
+#newWebtoon .canvas-setup{grid-template-columns:210px 1fr;gap:20px}
+#newWebtoon .canvas-preview-stage{height:110px;display:flex;align-items:center;justify-content:center}
+#canvasPreviewPaper{position:relative;display:block;background:white;flex:none}
+#canvasPreviewPaper i{position:absolute;border:1px solid;box-sizing:border-box}
+[data-guide=bleed]{color:#71808a;stroke:#71808a;stroke-dasharray:6 4}
+[data-guide=trim]{color:#248ad4;stroke:#248ad4}
+[data-guide=inner]{color:#a16ad9;stroke:#a16ad9;stroke-dasharray:4 4}
+.comic-page-guides{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:40000000;overflow:visible}
+.comic-page-guides rect{fill:none;stroke-width:1;vector-effect:non-scaling-stroke}
+#newSummary{font-size:12px;min-height:36px;margin:8px 0}
+#comicGuidesToggle[aria-pressed=true]{border-color:#31aeef;color:#c4e8ff}
+@media(max-width:600px){#newWebtoon .canvas-setup{grid-template-columns:1fr}#newWebtoon .canvas-presets section{grid-template-columns:repeat(2,1fr)}}

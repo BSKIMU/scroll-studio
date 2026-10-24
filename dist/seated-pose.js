@@ -1,0 +1,9 @@
+import * as T from 'three';
+// Contact-based editor pose. This is not a downloaded Mixamo animation clip.
+export class SeatedPose{
+ constructor(motion,seat){this.motion=motion;this.mode='sit';this.seat=seat;this.time=0;this.from=motion.rig.bones.map(b=>({b,p:b.position.clone(),q:b.quaternion.clone()}));this.root=motion.rig.root.position.clone();this.angle=motion.controller.heading;}
+ update(dt){const {controller:p,rig}=this.motion,s=this.seat;this.time+=dt;const u=Math.min(1,this.time/.32),t=u*u*(3-2*u);p.layer={name:'idle',time:0};p.heading=s.angle;p.groundY=this.root.y;p.root.set(this.root.x,0,this.root.z);p.renderPose();const yaw=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),s.angle),fwd=new T.Vector3(0,0,1).applyQuaternion(yaw),right=new T.Vector3(1,0,0).applyQuaternion(yaw);const hip=s.anchor.clone();hip.y+=.10;rig.pelvis.position.copy(rig.pelvis.parent.worldToLocal(hip.clone()));rig.root.updateMatrixWorld(true);
+  for(const [side,sign]of [['left',1],['right',-1]]){const leg=rig.chains[side+'Foot'],target=hip.clone().addScaledVector(fwd,leg.l1*.92).addScaledVector(right,sign*.13);target.y=Math.max(s.floor+.09,s.y-leg.l2+.06);p.solveLeg(leg,target,fwd,leg.c.getWorldQuaternion(new T.Quaternion()));rig.root.updateMatrixWorld(true);const arm=rig.chains[side+'Hand'],hand=hip.clone().addScaledVector(fwd,leg.l1*.66).addScaledVector(right,sign*.18);hand.y=s.y+.15;p.solveLeg(arm,hand,right.clone().multiplyScalar(sign),arm.c.getWorldQuaternion(new T.Quaternion()));rig.root.updateMatrixWorld(true);}
+  for(const {b,p:pos,q}of this.from){b.position.lerpVectors(pos,b.position,t);b.quaternion.slerpQuaternions(q,b.quaternion.clone(),t);}p.heading=this.angle+Math.atan2(Math.sin(s.angle-this.angle),Math.cos(s.angle-this.angle))*t;rig.root.quaternion.setFromAxisAngle(new T.Vector3(0,1,0),p.heading);rig.root.updateMatrixWorld(true);p.state=t<1?'앉는 중':'앉아 있음';this.motion.copy();
+ }
+}

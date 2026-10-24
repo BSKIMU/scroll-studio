@@ -1,0 +1,24 @@
+Korean Classroom — SCROLL STUDIO adaptation (2026-10-20)
+
+Based on “Classroom” by Pino_156 (Sketchfab username: titi_156)
+Original: https://sketchfab.com/3d-models/classroom-d4553cc2008242849214e4cbf8ad8551
+Author: https://sketchfab.com/titi_156
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/
+https://creativecommons.org/licenses/by/4.0/legalcode.en
+
+Changes: Rebuilt the room and desks in a Korean classroom style. Simplified and
+re-materialed the source chair. Replaced textures with flat materials. Added
+wood-framed windows, green chalkboard, lower mint walls, ceiling lights/AC,
+lockers, two separate sliding doors, seat anchors and SCROLL interaction metadata.
+
+This adaptation is distributed under CC BY 4.0. Free and commercial use,
+modification and redistribution are permitted under that license. Keep the
+original author, source link, license link and modification notice when sharing.
+No endorsement by the original author is implied. This is not a CC0 asset.
+The reference screenshot and original FBX/texture archive are not included.
+
+Copyable credit:
+“Korean Classroom”, adapted for SCROLL STUDIO from “Classroom” by Pino_156
+(titi_156), https://sketchfab.com/3d-models/classroom-d4553cc2008242849214e4cbf8ad8551,
+CC BY 4.0. Korean classroom rebuild, simplified chair and interactive metadata.

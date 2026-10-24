@@ -1,0 +1,22 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>원고 백업 · SCROLL STUDIO</title><style>body{background:#272a2d;color:#edf3fa;font:16px sans-serif;max-width:620px;margin:80px auto;padding:24px}button,a{background:#258dcc;color:white;border:0;border-radius:5px;padding:12px 18px;text-decoration:none}p{line-height:1.7}output{display:block;margin:20px 0;white-space:pre-wrap}</style><h1>이 기기에 저장된 원고 백업</h1><p>3D 장면을 열지 않고 열린 원고와 닫은 원고를 각각 파일로 보관합니다.</p><label>백업할 원고<select id="manuscript" style="display:block;width:100%;padding:10px;margin:18px 0"></select></label><button id="backup" disabled>원고 백업 저장</button><output id="status" role="status"></output><a href="./">작업실로 돌아가기</a><script type="module">
+import {projectFileBlob} from './project-file.js?v=20261025-release1';
+import {readStored,documentKey} from './canvas-documents.js?v=20261025-release1';
+const button=document.querySelector('#backup'),status=document.querySelector('#status'),select=document.querySelector('#manuscript');let db;
+try{
+ db=await new Promise((resolve,reject)=>{const r=indexedDB.open('scroll-studio-v1');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ const manifest=await readStored(db,'canvas-workspace');
+ for(const id of manifest?.tabs||[]){const record=await readStored(db,documentKey(id));if(record?.project)select.add(new Option('열림 · '+record.project.title,id));}
+ for(const item of manifest?.closed||[])select.add(new Option('닫힘 · '+item.title,item.id));
+ if(await readStored(db,'latest'))select.add(new Option('이전 버전 원고 백업','latest'));
+ if(manifest?.activeId)select.value=manifest.activeId;
+ if(select.selectedIndex<0&&select.options.length)select.selectedIndex=0;
+ if(!select.options.length)throw Error('자동 저장된 원고가 없습니다.');button.disabled=false;
+}catch(error){status.textContent='백업 목록을 읽지 못했습니다: '+error.message;}
+button.onclick=async()=>{button.disabled=true;status.textContent='자동 저장 원고를 읽는 중…';try{
+ const record=await readStored(db,select.value==='latest'?'latest':documentKey(select.value)),project=select.value==='latest'?record:record?.project;
+ if(!project)throw Error('자동 저장된 원고가 없습니다.');
+ const blob=projectFileBlob(project);status.textContent='백업 저장 중…';
+ if(['localhost','127.0.0.1'].includes(location.hostname)){const r=await fetch('/api/project-backup',{method:'POST',headers:{'Content-Type':'application/json'},body:blob});if(!r.ok)throw Error(await r.text());status.textContent='백업 완료\n'+(await r.json()).path;}
+ else{const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=(project.title||'원고')+'.scroll.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);status.textContent='백업 파일 다운로드를 시작했습니다.';}
+ }catch(error){status.textContent='백업 실패: '+error.message;}finally{button.disabled=false;}};
+</script></html>
