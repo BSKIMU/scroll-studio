@@ -56,18 +56,17 @@ export class SceneMovement{
   view.addEventListener('click',event=>{if(!this.active||event.button!==0||event.altKey||![surface,view].includes(event.target))return;const hit=pick(event);if(!hit)return;clearTimeout(clickTimer);const pendingMotion=this.motion,token=this.startToken;clickTimer=setTimeout(()=>{if(this.active&&this.motion===pendingMotion&&this.startToken===token&&!this.motion.interact({mode:'sit',point:hit.point,object:hit.object})){this.promptUntil=performance.now()+1800;this.status('의자 옆 빈 통로로 조금 더 가까이 이동하세요.');}},hit.object.userData.scrollSeat||hit.object.parent?.userData.scrollSeat?0:250);});
   view.addEventListener('dblclick',event=>{if(!this.active||event.button!==0||event.altKey||![surface,view].includes(event.target))return;clearTimeout(clickTimer);const hit=pick(event);if(!hit)return;event.preventDefault();event.stopImmediatePropagation();if(!this.motion.interact({mode:'lie',point:hit.point,object:hit.object})){this.promptUntil=performance.now()+1800;this.status('눕기에는 가까운 넓은 가구가 필요합니다.');}},true);
   document.addEventListener('keydown',event=>{ 
-   if(this.starting&&event.code==='Escape'&&focused(event.target)){event.preventDefault();event.stopImmediatePropagation();this.stop();return;}
-   if(!this.active||editableTarget(event.target)||!focused(event.target)||event.ctrlKey||event.metaKey||event.altKey)return;
+   if(!this.engaged||editableTarget(event.target)||!focused(event.target)||event.ctrlKey||event.metaKey||event.altKey)return;
    if(event.code==='Escape'){event.preventDefault();event.stopImmediatePropagation();this.stop();return;}
    if(event.code==='KeyE'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)this.motion?.interact();return;}if(!movementKeys.has(event.code))return;
    event.preventDefault();event.stopImmediatePropagation();this.keys.add(event.code);this.runInput.down(event.code,performance.now(),event.repeat);
-   if(event.code==='Space'&&!event.repeat)this.motion.requestJump();
+   if(event.code==='Space'&&!event.repeat)this.motion?.requestJump();
   },true);
-  document.addEventListener('keyup',event=>{this.keys.delete(event.code);this.runInput.up(event.code);if(this.active&&focused(event.target)&&movementKeys.has(event.code)&&!editableTarget(event.target)){event.preventDefault();event.stopImmediatePropagation();}},true);
+  document.addEventListener('keyup',event=>{this.keys.delete(event.code);this.runInput.up(event.code);if(this.engaged&&focused(event.target)&&movementKeys.has(event.code)&&!editableTarget(event.target)){event.preventDefault();event.stopImmediatePropagation();}},true);
   window.addEventListener('blur',()=>this.stop());
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.stop();});
-  document.addEventListener('focusin',event=>{if((this.active||this.starting||this.resumeAfterLoad)&&(!focused(event.target)||editableTarget(event.target)&&!panel.contains(event.target)))this.stop();});
-  document.addEventListener('pointerdown',event=>{if((this.active||this.starting||this.resumeAfterLoad)&&event.target!==tab&&!panel.contains(event.target)&&!$('sceneView').contains(event.target))this.stop();},true);
+  document.addEventListener('focusin',event=>{if(this.engaged&&(!focused(event.target)||editableTarget(event.target)&&!panel.contains(event.target)))this.stop();});
+  document.addEventListener('pointerdown',event=>{if(this.engaged&&event.target!==tab&&!panel.contains(event.target)&&!$('sceneView').contains(event.target))this.stop();},true);
   // Capture before loading so releasing during the first asset load cannot leave a key pressed.
   panel.querySelectorAll('[data-move]').forEach(button=>{
    button.onpointerdown=async event=>{if(event.button!==0)return;event.preventDefault();button.setPointerCapture(event.pointerId);button.classList.add('active');await this.start();if(!this.active||!button.hasPointerCapture(event.pointerId))return;this.keys.add(button.dataset.move);this.runInput.down(button.dataset.move,performance.now());if(button.dataset.move==='Space')this.motion.requestJump();};
@@ -75,37 +74,40 @@ export class SceneMovement{
    for(const name of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(name,release);
   });
  }
+ get engaged(){return !!(this.active||this.starting||this.resumeAfterLoad);}
+ sceneReady(){this.sync();if(this.resumeAfterLoad)queueMicrotask(()=>{if(this.resumeAfterLoad)this.start();});}
  settings(){const s=this.e.state;if(!s)return {...movementDefaults};const settings=s.movement??={};for(const [key,min,max]of [['walk',.3,3],['run',1,6]])settings[key]=Number.isFinite(settings[key])?Math.max(min,Math.min(max,settings[key])):movementDefaults[key];settings.follow=settings.follow===true;settings.seatTiming=['auto','fast','natural','slow'].includes(settings.seatTiming)?settings.seatTiming:'auto';settings.stairStyle=['stairs-up','stairs-ascend','stairs-run'].includes(settings.stairStyle)?settings.stairStyle:'stairs-up';return settings;}
  reset(){this.stop({flush:false});this.person=null;this.figure=null;this.status(this.e.state?.people[this.e.index]?'움직임 탭을 누르면 바로 조작합니다.':'인물 탭에서 인물 가이드를 추가하세요.');}
- sync(){const s=this.settings();for(const [id,key]of speeds){$(id).value=s[key];$(id+'Value').textContent=$(id).value+' m/s';}$('moveFollow').checked=s.follow;$('seatTiming').value=s.seatTiming;$('stairStyle').value=s.stairStyle;$('movementStop').disabled=!this.active&&!this.starting;this.renderSequence();}
+ sync(){const s=this.settings();for(const [id,key]of speeds){$(id).value=s[key];$(id+'Value').textContent=$(id).value+' m/s';}$('moveFollow').checked=s.follow;$('seatTiming').value=s.seatTiming;$('stairStyle').value=s.stairStyle;$('movementStop').disabled=!this.engaged;this.e.gizmo.transform.enabled=!this.engaged;$('sceneDialog').classList.toggle('movement-active',this.engaged);this.e.gizmo.sync();this.renderSequence();}
  sequenceSteps(){const s=this.settings();s.sequence=Array.isArray(s.sequence)?s.sequence.filter(id=>id in actionNames).slice(0,16):[];return s.sequence;}
  renderSequence(){const list=$('sequenceSteps');if(!list||!this.e.state)return;list.replaceChildren();this.sequenceSteps().forEach((id,i)=>{const li=document.createElement('li'),label=document.createElement('span');label.textContent=actionNames[id];li.append(label);for(const [text,title,fn]of [['↑','앞으로',()=>{const a=this.sequenceSteps();if(i)[a[i-1],a[i]]=[a[i],a[i-1]];}],['×','제거',()=>this.sequenceSteps().splice(i,1)]]){const b=document.createElement('button');b.textContent=text;b.title=title;b.onclick=()=>{fn();this.renderSequence();this.e.queueLive();};li.append(b);}list.append(li);});}
  async start(){
-  const e=this.e,p=e.state?.people[e.index];
+  const e=this.e;
   if(this.active){e.renderer.domElement.focus({preventScroll:true});return;}
   if(this.starting||!e.isOpen||e.gizmo.transform.dragging)return;
-  if(e.loading){this.resumeAfterLoad=true;this.status('장면 준비 후 움직임을 시작합니다…');return;}
-  if(!p){this.status('인물 탭에서 인물 가이드를 추가하세요.');return;}
-  e.flush();const token=++this.startToken,figure=e.figures.children[e.index];
+  if(e.loading){this.resumeAfterLoad=true;this.sync();e.renderer.domElement.focus({preventScroll:true});this.status('장면 준비 후 움직임을 시작합니다…');return;}
+  if(!e.state?.people[e.index]){this.stop();this.status('인물 탭에서 인물 가이드를 추가하세요.');return;}
+  const held=this.resumeAfterLoad?[...this.keys]:[];
+  e.flush();for(const code of held){this.keys.add(code);this.runInput.down(code,performance.now());}
+  const token=++this.startToken,p=e.state.people[e.index],figure=e.figures.children[e.index];
   if(!figure?.userData.motionRig){this.status('믹사모 인물 가이드에서 사용할 수 있습니다.');return;}
   this.starting=true;this.status('포즈랩 원본 모션을 불러오는 중…');this.sync();e.renderer.domElement.focus({preventScroll:true});
   try{
    const [controller,,bank]=await Promise.all([loadPoseLab(),initCollision(),loadInteractionClips()]);
    if(token!==this.startToken||!e.isOpen||e.loading||e.state.people[e.index]!==p||e.figures.children[e.index]!==figure)return;
    const resume=p.motionPose?.seatExit||p.motionPose?.feet;const feet=Array.isArray(resume)&&resume.length===3&&resume.every(Number.isFinite)?figure.localToWorld(new T.Vector3(...resume)):null;this.physics=new SceneCollision(e.environment,feet?{...p,x:feet.x,y:feet.y,z:feet.z}:p);this.motion=new PoseLabMotion(controller,figure,p,this.physics,bank);this.motion.doors=e.doors;this.motion.stairs=e.stairs;delete p.targets;this.motion.interactionOptions={stairStyle:$('stairStyle').value,seatTiming:this.settings().seatTiming,variant:$('interactionVariant').value,speed:+$('interactionSpeed').value,handrail:$('useStairRail').checked};$('interactionVariant').querySelector('[value=kimodo-seat]').disabled=!bank?.clips?.['kimodo-seat'];if(!bank?.clips?.['kimodo-seat']&&$('interactionVariant').value==='kimodo-seat')$('interactionVariant').value='auto';$('interactionSource').textContent=bank?.clips?.['kimodo-seat']?'Mixamo 문·계단·앉기 · 손발 접촉 보정':bank?'Mixamo 로컬 동작 · 문은 손잡이 IK':'기본 앉기 포즈 · 문은 손잡이 IK';
-   this.person=p;this.figure=figure;this.active=true;this.e.gizmo.sync();this.changed=true;this.keys.clear();this.runInput.reset();this.lastTime=0;
+   this.person=p;this.figure=figure;this.active=true;this.e.gizmo.sync();this.changed=true;this.lastTime=0;
    this.previousHint=document.querySelector('.view-hint').textContent;document.querySelector('.view-hint').textContent='WASD: 이동 · Shift: 달리기 · Space: 점프 · Esc: 현재 자세로 멈춤 · 마우스 드래그: 카메라';
-   e.gizmo.transform.enabled=false;e.gizmo.helper.visible=false;$('sceneDialog').classList.add('movement-active');
    e.queueLive();this.status('움직임 모드 · WASD / Space');
   }catch(error){this.physics?.dispose();this.physics=null;if(token===this.startToken)this.status('모션을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 움직임 탭을 다시 누르세요.');console.error('Pose Lab motion:',error);}
   finally{if(token===this.startToken){this.starting=false;this.sync();}}
  }
  stop({flush=true}={}){
-  this.resumeAfterLoad=false;this.cancelFurnitureClick?.();++this.startToken;const wasLoading=this.starting;this.starting=false;
+  const wasLoading=this.starting||this.resumeAfterLoad;this.resumeAfterLoad=false;this.cancelFurnitureClick?.();++this.startToken;this.starting=false;this.keys.clear();this.runInput.reset();
   if(!this.active){if(wasLoading){this.sync();this.status('정지 · 움직임 탭으로 다시 조작');}return;}
-  this.active=false;this.keys.clear();this.runInput.reset();this.lastTime=0;this.motion.freeze();this.motion=null;this.physics?.dispose();this.physics=null;$('interactSeat').hidden=true;$('interactLie').hidden=true;$('interactionTimeline').hidden=true;this.panel.querySelectorAll('[data-move]').forEach(b=>b.classList.remove('active'));
+  this.active=false;this.lastTime=0;this.motion.freeze();this.motion=null;this.physics?.dispose();this.physics=null;$('interactSeat').hidden=true;$('interactLie').hidden=true;$('interactionTimeline').hidden=true;this.panel.querySelectorAll('[data-move]').forEach(b=>b.classList.remove('active'));
   document.querySelector('.view-hint').textContent=this.previousHint;
-  const e=this.e;e.gizmo.transform.enabled=true;e.gizmo.setMode('translate');e.gizmo.setAxis(null);e.gizmo.sync();e.controlsUI();$('sceneDialog').classList.remove('movement-active');
+  const e=this.e;e.gizmo.setMode('translate');e.gizmo.setAxis(null);e.gizmo.sync();e.controlsUI();
   if(this.changed){e.movementCommit=true;e.queueLive();if(flush)e.flush();}
   this.sync();this.status('현재 자세가 컷에 반영됐습니다. · 움직임 탭으로 재개');
  }

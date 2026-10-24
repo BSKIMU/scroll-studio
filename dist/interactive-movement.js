@@ -8,7 +8,7 @@ const wrap=angle=>Math.atan2(Math.sin(angle),Math.cos(angle));
 
 export class InteractiveMovement{
  constructor(pose,physics=null){
-  this.physics=physics;this.launched=false;
+  this.physics=physics;this.launched=false;this.accumulator=0;
   this.pose=pose;this.velocity=new T.Vector3();this.phase=0;this.jumpRequest=0;this.blend=null;
   pose.fade=null;pose.jumpCarry=null;pose.jumpQueued=false;pose.pendingStop=pose.pendingLeap=null;
   pose.runBlend=0;pose.runShift=false;pose.headingVel=0;pose.lead=pose.leadVel=0;
@@ -63,8 +63,10 @@ export class InteractiveMovement{
   else p.state=wants?(run?'달리기':'걷기'):'정지';
  }
  update(seconds,direction,settings,run){
-  let remaining=Math.max(0,Math.min(seconds,.1));
-  while(remaining>1e-8){const dt=Math.min(remaining,1/120);this.advance(dt,direction,settings,run);remaining-=dt;}
+  // Rapier and gravity share a fixed step. Carry the frame remainder forward:
+  // near-zero shape casts can otherwise push a resting capsule off the floor.
+  const step=1/120;this.accumulator+=Math.max(0,Math.min(seconds,.1));
+  while(this.accumulator+1e-10>=step){this.advance(step,direction,settings,run);this.accumulator=Math.max(0,this.accumulator-step);}
   if(this.physics){const p=this.pose;let lift=0;if(jumping(p.layer.name)){const frame=p.contactFrame(p.parts());lift=Math.max(0,Math.min(frame.rel[0].y,frame.rel[2].y)-p.footHeight);}p.groundY=this.physics.feet.y-lift;}
   this.pose.renderPose();
   if(this.blend){

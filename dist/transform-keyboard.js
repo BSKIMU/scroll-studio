@@ -15,7 +15,7 @@ export class TransformKeyboard{
  }
  start(mode){
   const e=this.editor,g=this.gizmo;
-  if(!e.isOpen||e.loading||!e.state?.people[e.index]||e.movement?.active||g.transform.dragging)return;
+  if(!e.isOpen||e.loading||!e.state?.people[e.index]||e.movement?.engaged||g.transform.dragging)return;
   if(g.part!=='whole'&&mode!==(g.isJointPart?'rotate':'translate')){g.setMode(mode);return;}
   if(!this.active){e.flush();this.before=structuredClone(e.state.people[e.index]);g.sync();this.base=transformSnapshot(g.proxy);this.controlsEnabled=e.controls.enabled;this.active=true;e.controls.enabled=false;}
   e.state.people[e.index]=structuredClone(this.before);e.updatePerson({pose:true});

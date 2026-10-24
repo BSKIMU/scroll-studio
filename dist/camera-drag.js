@@ -13,7 +13,7 @@ export function installCameraDrag(editor){
   if(!editor.isOpen||editor.loading||editor.gizmo.keyboard?.active||e.button!==0||e.altKey||e.pointerType==='touch'||(e.target!==view&&e.target!==surface))return;
   const r=surface.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
   const inCanvas=Math.abs(pointer.x)<=1&&Math.abs(pointer.y)<=1;
-  if(inCanvas&&!editor.movement?.active){
+  if(inCanvas&&!editor.movement?.engaged){
    editor.gizmo.transform.pointerHover({x:pointer.x,y:pointer.y,button:0});
    if(editor.gizmo.transform.axis)return;
    ray.setFromCamera(pointer,editor.camera);
@@ -40,9 +40,9 @@ export function installCameraDrag(editor){
   const previous=drag;drag=null;suppressClick=previous.total>3;
   controls.enabled=previous.enabled;controls.enableDamping=previous.damping;view.classList.remove('camera-dragging');
   if(view.hasPointerCapture(e.pointerId))view.releasePointerCapture(e.pointerId);
-  if(!editor.movement?.active)editor.flush();
+  if(!editor.movement?.engaged)editor.flush();
  };
  for(const event of ['pointerup','pointercancel','lostpointercapture'])view.addEventListener(event,end,true);
  view.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.preventDefault();e.stopImmediatePropagation();}},true);
- controls.addEventListener('end',()=>{if(!editor.movement?.active)editor.flush();});
+ controls.addEventListener('end',()=>{if(!editor.movement?.engaged)editor.flush();});
 }

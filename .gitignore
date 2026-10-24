@@ -31,3 +31,4 @@ __pycache__/
 !/tools/check-release.mjs
 !/tools/prepare-pages.mjs
 !/tools/test-hosted-motion.mjs
+!/tools/test-movement-entry.mjs
