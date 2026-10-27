@@ -1,5 +1,6 @@
 import * as T from 'three';
-import {environmentHeight} from './environment-ground.js?v=20261027-selection4';
+import {environmentHeight} from './environment-ground.js?v=20261028-guide3';
+import {backgroundLocked} from './scene-background-lock.js?v=20261028-guide3';
 
 export function applyEnvironmentPlacement(editor){
  const value=editor.state.environmentPlacement?.[editor.state.asset]||{},o=editor.environment;
@@ -28,6 +29,7 @@ export function objectProxy(target,proxy){
  proxy.position.copy(o.localToWorld(target.pivot.clone()));o.getWorldQuaternion(proxy.quaternion);o.getWorldScale(proxy.scale);proxy.updateMatrixWorld(true);
 }
 export function applyObjectProxy(editor,target,proxy){
+ if((target.members||[target.object]).some(o=>backgroundLocked(editor,o)))return;
  if(target.members){
   proxy.updateMatrixWorld(true);target.frame.updateMatrixWorld(true);
   const delta=proxy.matrixWorld.clone().multiply(target.frame.matrixWorld.clone().invert());
@@ -64,7 +66,7 @@ export function restoreObject(editor,target,snapshot){
 export function pickSceneTarget(editor,ray){
  // Respect occlusion and hidden ancestors; helpers are handled by pose dragging.
  return ray.intersectObjects([editor.figures,editor.environment],true).find(hit=>{
-  if(!hit.object.isMesh||hit.object.userData.poseMarker)return false;
+  if(!hit.object.isMesh||hit.object.userData.poseMarker||backgroundLocked(editor,hit.object))return false;
   for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;
   return true;
  });

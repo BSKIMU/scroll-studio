@@ -2,7 +2,7 @@ import {followCamera,recoverFollow} from './camera-navigation.js?v=20261026-navi
 import {RunInput} from './run-input.js?v=20261025-release1';
 import {actionNames} from './action-sequence.js?v=20261025-release1';
 import {loadInteractionClips} from './furniture-motion.js?v=20261025-release1';
-import {initCollision,SceneCollision} from './scene-collision.js?v=20261026-navigation3';
+import {initCollision,SceneCollision} from './scene-collision.js?v=20261028-guide3';
 import * as T from 'three';
 import {movementDirection,movementKeys,editableTarget,movementDefaults} from './movement-controller.js?v=20261026-navigation2';
 import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261027-pose-camera1';

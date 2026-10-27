@@ -1,7 +1,7 @@
-import {canvasBlend} from './coloring.js?v=20261025-release1';
+import {canvasBlend} from './coloring.js?v=20261028-guide3';
 import {customBlend} from './blend-modes.js?v=20261025-release1';
 import {compositeStack} from './layer-compositor.js?v=20261025-release1';
-import {pageStack,pageLayerRank} from './page-layer-stack.js?v=20261025-release1';
+import {pageStack,pageLayerRank} from './page-layer-stack.js?v=20261028-guide3';
 
 // The interactive cut canvas remains the input target. Display layers are siblings
 // on the page so their order can cross cut boundaries without CSS stacking groups.

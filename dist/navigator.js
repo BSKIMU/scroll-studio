@@ -1,4 +1,4 @@
-import {pageDisplayLayers} from './page-layer-view.js?v=20261025-release1';
+import {pageDisplayLayers} from './page-layer-view.js?v=20261028-guide3';
 import {canvasDisplay,elementPoint,elementScreen} from './canvas-coordinates.js?v=20261025-release1';
 export function createNavigator(){const panel=document.createElement('section');panel.id='navigatorPanel';panel.innerHTML=`<canvas id="navigatorCanvas" width="220" height="250" aria-label="페이지 네비게이터"></canvas><div class="navigator-controls">
  <div class="navigator-row"><input id="navZoomSlider" type="range" min="10" max="200" step="1" aria-label="네비게이터 확대 비율"><output id="navZoomValue"></output><button id="navZoomOut" title="축소" aria-label="축소">−</button><button id="navZoomIn" title="확대" aria-label="확대">＋</button><button id="navActual" title="100% 원래 크기" aria-label="100% 원래 크기">1:1</button><button id="navFit" title="화면 너비에 맞춤" aria-label="화면 너비에 맞춤">▣</button></div>

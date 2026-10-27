@@ -1,5 +1,5 @@
 import {elementPoint} from './canvas-coordinates.js?v=20261025-release1';
-import {pageDisplayLayers,refreshPageComposite} from './page-layer-view.js?v=20261025-release1';
+import {pageDisplayLayers,refreshPageComposite} from './page-layer-view.js?v=20261028-guide3';
 import {compositeStack} from './layer-compositor.js?v=20261025-release1';
 export function setupEyedropper({getTool,setTool,selectedCut,toast}){
  const paper=document.getElementById('paper'),pane=document.getElementById('drawingTools'),controls=document.createElement('div');controls.id='eyedropperControls';controls.hidden=true;controls.innerHTML='<label>색 참조<select id="eyedropperSource"><option value="visible">표시된 모든 레이어</option><option value="current">현재 그리기 레이어</option></select></label><label class="check"><input id="eyedropperReturn" type="checkbox" checked>색 선택 후 이전 도구로</label><small>단축키 I · 그리는 중 Alt+클릭도 사용 가능</small><output id="eyedropperValue"></output>';pane.querySelector('.palette-body').prepend(controls);let previous='draw';

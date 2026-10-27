@@ -1,9 +1,9 @@
 import {elementPoint} from './canvas-coordinates.js?v=20261025-release1';
-import {paintLayerCanvas} from './paint-layer-render.js?v=20261025-release1';
+import {paintLayerCanvas} from './paint-layer-render.js?v=20261028-guide3';
 import {prepareLayerImages,rememberBitmap,rememberTransientBitmap,forgetBitmap,makeSurface} from './layer-effects.js?v=20261025-release1';
-import {layerVisible} from './layers.js?v=20261025-release1';
+import {layerVisible} from './layers.js?v=20261028-guide3';
 import {folderPath} from './layer-compositor.js?v=20261025-release1';
-import {pageDisplayLayers} from './page-layer-view.js?v=20261025-release1';
+import {pageDisplayLayers} from './page-layer-view.js?v=20261028-guide3';
 import {affinePoint,transformContext,alphaBounds,combineMask,maskOutline,liftPixels} from './selection-geometry.js?v=20261025-release1';
 
 // Selection is transient. Transform previews use a detached cut; only Apply writes

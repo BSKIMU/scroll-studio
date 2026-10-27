@@ -1,4 +1,4 @@
-import {pageStack,paintKey,placePageLayer} from './page-layer-stack.js?v=20261025-release1';
+import {pageStack,paintKey,placePageLayer} from './page-layer-stack.js?v=20261028-guide3';
 
 export {blendModes,canvasBlend} from './blend-modes.js?v=20261025-release1';
 export function addColorLayer(project,cut,kind){

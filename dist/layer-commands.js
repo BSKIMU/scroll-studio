@@ -1,11 +1,11 @@
 import {nextLayerName} from './layer-names.js?v=20261025-release1';
 import {prepareImageLayer,installImagePaste} from './image-layer.js?v=20261025-release1';
 import {elementPoint} from './canvas-coordinates.js?v=20261025-release1';
-import {pageStack,paintKey,placePageLayer} from './page-layer-stack.js?v=20261025-release1';
+import {pageStack,paintKey,placePageLayer} from './page-layer-stack.js?v=20261028-guide3';
 import {folderPath,compositeStack} from './layer-compositor.js?v=20261025-release1';
-import {addPaintLayer,duplicatePaintLayer,removePaintLayer,duplicateLayerFolder,removeLayerFolder,createLayerFolder,dissolveLayerFolder,folderKeys,storeLayerComp,applyLayerComp} from './layer-operations.js?v=20261025-release1';
+import {addPaintLayer,duplicatePaintLayer,removePaintLayer,duplicateLayerFolder,removeLayerFolder,createLayerFolder,dissolveLayerFolder,folderKeys,storeLayerComp,applyLayerComp} from './layer-operations.js?v=20261028-guide3';
 import {makeSurface,loadBitmap,rememberBitmap,prepareLayerImages,adjustmentTypes,applyAdjustment} from './layer-effects.js?v=20261025-release1';
-import {paintLayerCanvas,layerMaskCanvas} from './paint-layer-render.js?v=20261025-release1';
+import {paintLayerCanvas,layerMaskCanvas} from './paint-layer-render.js?v=20261028-guide3';
 import {blendModes} from './blend-modes.js?v=20261025-release1';
 import {newBalloonLayer,ensureBalloonLayers} from './balloon-model.js?v=20261025-release1';
 

@@ -27,7 +27,7 @@ export function layerKey(c,layer){
  if(layer.id==='frame')return 'frame';
  if(layer.id==='text')return 'text';
  if(c.pageBase&&(c.roughLayerIds||[]).includes(layer.id))return 'rough';
- if(['background','guide'].includes(layer.id))return 'guides';
+ if(['background','guide','guideScene'].includes(layer.id))return 'guides';
  return paintKey(c,layer.id);
 }
 export function pageLayerRank(stack,c,layer){

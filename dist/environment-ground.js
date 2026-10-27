@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {setupBackgroundLock} from './scene-background-lock.js?v=20261028-guide3';
 
 // Prefer a broad horizontal surface, not the lowest vertex of a backdrop/wall.
 // New imports opt into this detection; existing assets retain their saved alignment.
@@ -31,7 +32,7 @@ export function environmentHeight(state){const value=state.environmentPlacement?
 export function setupEnvironmentGround(editor){
  const panel=document.querySelector('.scene-property-group[data-group="0"]'),box=document.createElement('div');box.className='environment-ground';
  box.innerHTML='<label>배경 높이 Z · m<input id="environmentHeight" aria-label="배경 높이 Z" type="number" min="-1000" max="1000" step="0.01" value="0"></label><div class="two"><button type="button" id="groundEnvironment">바닥을 Z=0에 맞춤</button><button type="button" id="resetEnvironmentHeight">높이 초기화</button></div><p role="status" id="environmentGroundStatus">새 배경은 바닥을 Z=0에 자동으로 맞춥니다. 높이를 직접 조절할 수도 있습니다.</p>';
- panel.append(box);const input=box.querySelector('input'),status=box.querySelector('[role="status"]');
+ panel.append(box);const lock=setupBackgroundLock(editor,box),input=box.querySelector('input'),status=box.querySelector('[role="status"]');
  function sync(){input.value=String(+environmentHeight(editor.state).toFixed(6));const ground=editor.environment.children.find(o=>o.userData.scrollGround)?.userData.scrollGround;if(ground)status.textContent=environmentHeight(editor.state)!==0?'자동 바닥 기준에 수동 높이를 더했습니다.':ground.mode==='bounds'?'넓은 바닥 면이 없어 모델 최하단을 Z=0에 맞췄습니다.':'배경 바닥을 Z=0에 자동으로 맞췄습니다.';else status.textContent='저장된 배경 높이를 유지합니다. 바닥 맞춤이나 높이 입력으로 조절하세요.';}
  function apply(z){
   if(!Number.isFinite(z))return;
@@ -46,5 +47,5 @@ export function setupEnvironmentGround(editor){
   apply(environmentHeight(editor.state)-y);status.textContent='넓은 바닥 면을 Z=0에 맞췄습니다. 다층 건물은 높이를 직접 조절하세요.';
  };
  box.querySelector('#resetEnvironmentHeight').onclick=()=>{apply(presetGroundHeight(editor.state.asset));status.textContent='불러올 때의 배경 높이로 복원했습니다.';};
- return {sync};
+ return {sync(){lock.sync();sync();}};
 }

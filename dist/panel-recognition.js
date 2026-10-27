@@ -1,6 +1,6 @@
 import {elementPoint} from './canvas-coordinates.js?v=20261025-release1';
-import {paintStrokes} from './drawing.js?v=20261025-release1';
-import {layerVisible} from './layers.js?v=20261025-release1';
+import {paintStrokes} from './drawing.js?v=20261028-guide3';
+import {layerVisible} from './layers.js?v=20261028-guide3';
 // Proposals live over the actual paper until Apply; no cut or stroke is changed.
 export function setupPanelRecognition({getProject,apply,toast}){
  const paper=document.getElementById('paper'),viewport=document.getElementById('viewport');

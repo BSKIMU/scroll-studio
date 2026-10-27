@@ -4,32 +4,33 @@ import {numberNewLayers} from './layer-names.js?v=20261025-release1';
 import {paintTools,pageCanvasTools} from './tool-policy.js?v=20261025-release1';
 import {validateLayerData} from './layer-validation.js?v=20261025-release1';
 import {vectorControls} from './vector-edit.js?v=20261025-release1';
-import {layerDecorations} from './layer-decorations.js?v=20261025-release1';
+import {layerDecorations} from './layer-decorations.js?v=20261028-guide3';
 import {CanvasDocuments,restoreCanvasDocuments,persistCanvasDocuments,readStored,documentKey} from './canvas-documents.js?v=20261025-release1';
 import {setupCanvasDocumentTabs} from './canvas-documents-ui.js?v=20261025-release1';
 import {EditorHistory,editorShortcut,typingTarget} from './editor-history.js?v=20261025-release1';
+import {drawGuideComposite,drawGuidePass} from './guide-composite.js?v=20261028-guide3';
 import {comicConfig,drawFolio,MAX_PAGES,MAX_CUTS} from './comic-format.js?v=20261025-release1';
 import {normalizePageBalloons,nativeBalloon} from './balloon-model.js?v=20261025-release1';
 import {loadProjectFonts} from './balloon-fonts.js?v=20261025-release1';
 import {drawLayerThumbnail} from './layer-thumbnail-render.js?v=20261025-release1';
-import {paintLayerCanvas} from './paint-layer-render.js?v=20261025-release1';
+import {paintLayerCanvas} from './paint-layer-render.js?v=20261028-guide3';
 import {prepareLayerImages} from './layer-effects.js?v=20261025-release1';
 import {compositeLayer,compositeStack} from './layer-compositor.js?v=20261025-release1';
 import {drawBlended,psdBlend,customBlend} from './blend-modes.js?v=20261025-release1';
-import {queuePageComposite} from './page-layer-view.js?v=20261025-release1';
-import {setupLayerCommands} from './layer-commands.js?v=20261025-release1';
-import {setupEyedropper} from './eyedropper.js?v=20261025-release1';
-import {canvasBlend} from './coloring.js?v=20261025-release1';
-import {layerKey,pageStack,pageLayerRank,pageLayerSettings} from './page-layer-stack.js?v=20261025-release1';
-import {presentPageLayers} from './page-layer-view.js?v=20261025-release1';
+import {queuePageComposite} from './page-layer-view.js?v=20261028-guide3';
+import {setupLayerCommands} from './layer-commands.js?v=20261028-guide3';
+import {setupEyedropper} from './eyedropper.js?v=20261028-guide3';
+import {canvasBlend} from './coloring.js?v=20261028-guide3';
+import {layerKey,pageStack,pageLayerRank,pageLayerSettings} from './page-layer-stack.js?v=20261028-guide3';
+import {presentPageLayers} from './page-layer-view.js?v=20261028-guide3';
 import {projectFileBlob} from './project-file.js?v=20261025-release1';
 import {setupRetakeUI} from './studio-retake.js?v=20261025-release1';
 import {pngResolution} from './png-resolution.js?v=20261025-release1';
-import {InkSession} from './ink-session.js?v=20261027-studio4';
-import {setupNavigator} from './navigator.js?v=20261025-release1';
+import {InkSession} from './ink-session.js?v=20261028-guide3';
+import {setupNavigator} from './navigator.js?v=20261028-guide3';
 import {setupToolContext} from './tool-context.js?v=20261025-release1';
 import {elementPoint,elementScreen,canvasDisplay} from './canvas-coordinates.js?v=20261025-release1';
-import {setupPanelRecognition} from './panel-recognition.js?v=20261025-release1';
+import {setupPanelRecognition} from './panel-recognition.js?v=20261028-guide3';
 import {localBackgroundPresets} from './background-presets.js?v=20261025-release1';
 import {drawGuideImage,resizeCutBounds,cutRect,validateFrameGeometry,repairInheritedGuide} from './frame-geometry.js?v=20261025-release1';
 import {setupCanvasWorkspace} from './canvas-workspace.js?v=20261025-release1';
@@ -40,14 +41,14 @@ import {setupFrameTransform} from './frame-transform.js?v=20261025-release1';
 import {seedFigure} from './mannequin.js?v=20261027-pose-camera1';
 import {setupSidebarCollapse} from './sidebar-collapse.js?v=20261025-release1';
 import {setupSidebarWidth} from './sidebar-width.js?v=20261025-release1';
-import {setupPanels} from './panels.js?v=20261025-release1';
-import {setupPages,paintFrame,maskFrame,frameOrder} from './pages.js?v=20261027-studio4';
+import {setupPanels} from './panels.js?v=20261028-guide3';
+import {setupPages,paintFrame,maskFrame,frameOrder} from './pages.js?v=20261028-guide3';
 import {setupBookManager} from './book-manager.js?v=20261025-release1';
 import {balloonDraw,setupBalloons} from './balloons.js?v=20261025-release1';
-import {preparePencilLayer,ensureLayers,activePaint,layerStrokes,layerVisible,setupLayers} from './layers.js?v=20261025-release1';
-import {setupDrawing,paintStrokes} from './drawing.js?v=20261025-release1';
+import {preparePencilLayer,ensureLayers,activePaint,layerStrokes,layerVisible,setupLayers} from './layers.js?v=20261028-guide3';
+import {setupDrawing,paintStrokes} from './drawing.js?v=20261028-guide3';
 import './scroll-nav.js?v=20261025-release1';
-import {SceneEditor,defaultScene,objToGLB} from './scene.js?v=20261027-pose-camera1';
+import {SceneEditor,defaultScene,objToGLB} from './scene.js?v=20261028-guide3';
 import {writePsd,zipSync,strToU8} from './vendor/formats.js';
 const $=id=>document.getElementById(id),uid=()=>crypto.randomUUID(),clone=x=>structuredClone(x),clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const emptyScene=()=>({...defaultScene(),asset:'empty',people:[]});
@@ -114,15 +115,18 @@ async function getImage(src){
 function canvas(w,h){let c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c;}
 const strokeDraw=paintStrokes;
 const bubbleDraw=balloonDraw;
-function cutLayerIds(c){return ['paper',...['background','guide'].filter(k=>c[k]),...c.paintLayers.filter(l=>layerStrokes(c,l.id).length||l.bitmap||l.generated||l.adjustment||c.activeLayer===l.id).map(l=>l.id),...(!c.pageBase?['frame']:[]),'text'];}
+function cutLayerIds(c){return ['paper',...(c.background||c.guide?['guideScene']:[]),...c.paintLayers.filter(l=>layerStrokes(c,l.id).length||l.bitmap||l.generated||l.adjustment||c.activeLayer===l.id).map(l=>l.id),...(!c.pageBase?['frame']:[]),'text'];}
 async function cutLayers(c,scale=1,includeOutside=true,images={},only=null){
  ensureLayers(c);const stack=pageStack(project,c.pageId),wanted=id=>!only||only===id;
  const nativeWidth=(project.width+project.bleed)*c.width/100,w=Math.max(1,Math.round(nativeWidth*scale)),h=Math.max(1,Math.round(c.height*scale)),layers=[];
  if(wanted('paper')){const paper=canvas(w,h);paper.getContext('2d').fillStyle='#fafbf8';if((!c.pageId||c.pageBase||c.frame?.fill)&&!(c.pageBase&&c.onTop))paper.getContext('2d').fillRect(0,0,w,h);layers.push({id:'paper',name:'종이',canvas:paper});}
- for(const [key,name]of [['background','BG · 배경'],['guide','3D 인물 가이드']]){
-  if(!wanted(key)||(!c[key]&&!images[key]))continue;
-  const cv=canvas(w,h);drawGuideImage(cv.getContext('2d'),images[key]||await getImage(c[key]),c,w,h,project.width+project.bleed);const setting=c.layerSettings[key];
-  layers.push({id:key,name,canvas:cv,opacity:setting.opacity/100*c.guideOpacity/100,hidden:!setting.visible||!c.visible.background||!guideShown(c)});
+ if(wanted('guideScene')&&(c.background||c.guide||images.background||images.guide)){
+  const cv=canvas(w,h),sources={};for(const key of ['background','guide'])sources[key]=images[key]||await getImage(c[key]);
+  drawGuideComposite(cv.getContext('2d'),sources,c,w,h,project.width+project.bleed);
+  layers.push({id:'guideScene',name:'3D 가이드 · 배경 + 인물',canvas:cv,opacity:c.guideOpacity/100,hidden:!c.visible.background||!guideShown(c)});
+ }else if(['background','guide'].includes(only)&&(c[only]||images[only])){
+  const cv=canvas(w,h);drawGuideImage(cv.getContext('2d'),images[only]||await getImage(c[only]),c,w,h,project.width+project.bleed);
+  layers.push({id:only,name:only==='guide'?'3D 인물 가이드':'BG · 배경',canvas:cv,opacity:c.layerSettings[only].opacity/100*c.guideOpacity/100,hidden:!c.layerSettings[only].visible||!c.visible.background||!guideShown(c)});
  }
  for(const l of c.paintLayers){if(!wanted(l.id))continue;const strokes=layerStrokes(c,l.id);if(!strokes.length&&!l.bitmap&&!l.generated&&!l.adjustment&&c.activeLayer!==l.id)continue;const images=await prepareLayerImages(c,l.id);const cv=paintLayerCanvas(c,l,w,h,new Set(),images);layers.push({id:l.id,draft:!!l.draft,adjustment:l.adjustment,blendMode:l.blendMode||'normal',name:(l.group?l.group+' / ':'')+l.name,canvas:cv,opacity:l.opacity/100,hidden:!layerVisible(c,l)||!c.visible.sketch});}
  for(const l of layers)maskFrame(l.canvas.getContext('2d'),c,w,h);
@@ -174,7 +178,23 @@ $('closeScene').onclick=hideDock;
 $('dockPropsToggle').onclick=()=>{const show=$('dockProperties').hidden;$('dockProperties').hidden=!show;$('sceneDialog').classList.toggle('show-properties',show);$('dockPropsToggle').setAttribute('aria-pressed',String(show));};
 let previewOverlay=null;
 function guideShown(c){return c.guideVisible!==false&&project.cuts.find(x=>x.pageBase&&x.pageId===c.pageId)?.pageGuidesVisible!==false;}
-function previewScene(source,id,filter,pass='all'){const c=project.cuts.find(c=>c.id===id),cv=document.querySelector(`.panel-wrap[data-id="${id}"] canvas`);if(!c||!cv)return;if(cv.dataset.inking){cv.dataset.inkRedraw='1';return;}if(c.pageId&&!c.background&&c.scene.asset==='empty'&&!c.scene.people.length)return;ensureLayers(c);if(c.pageId){const display=[...document.querySelectorAll('.page-render-layer')].find(el=>el.dataset.cut===id&&el.dataset.layer===pass);if(display){const ctx=display.getContext('2d');ctx.clearRect(0,0,display.width,display.height);ctx.save();ctx.filter=filter;drawGuideImage(ctx,source,{...c,guideLayout:null},display.width,display.height,project.width+project.bleed);ctx.restore();maskFrame(ctx,c,display.width,display.height);queuePageComposite();}return;}cv.dataset.drawVersion=String((+cv.dataset.drawVersion||0)+1);const cx=cv.getContext('2d');if(pass!=='guide'){cx.clearRect(0,0,cv.width,cv.height);cx.fillStyle='#fafbf8';cx.fillRect(0,0,cv.width,cv.height);}const setting=c.layerSettings[pass==='guide'?'guide':'background'];if(c.visible.background&&setting.visible&&guideShown(c)){cx.save();cx.globalAlpha=setting.opacity/100*c.guideOpacity/100;cx.filter=filter;drawGuideImage(cx,source,{...c,guideLayout:null},cv.width,cv.height,project.width+project.bleed);cx.restore();}if(pass==='background')return;if(!previewOverlay||previewOverlay.id!==id||previewOverlay.width!==cv.width||previewOverlay.height!==cv.height){const overlay=canvas(cv.width,cv.height),oc=overlay.getContext('2d');if(c.visible.sketch)for(const l of c.paintLayers){if(!layerVisible(c,l))continue;const rough=paintLayerCanvas(c,l,cv.width,cv.height);oc.save();oc.globalAlpha=l.opacity/100;oc.globalCompositeOperation=canvasBlend(l.blendMode);oc.drawImage(rough,0,0);oc.restore();rough.width=1;}if(c.visible.text&&c.layerSettings.text.visible){oc.save();oc.globalAlpha=c.layerSettings.text.opacity/100;balloonUI.previewCut(c).bubbles.filter(b=>b.clipToFrame).forEach(b=>bubbleDraw(oc,b,cv.width,cv.height));oc.restore();}previewOverlay={id,width:cv.width,height:cv.height,canvas:overlay};}cx.drawImage(previewOverlay.canvas,0,0);const fc=canvas(cv.width,cv.height);paintFrame(fc.getContext('2d'),{...c,widthPixels:(project.width+project.bleed)*c.width/100},cv.width,cv.height);cx.drawImage(fc,0,0);maskFrame(cx,c,cv.width,cv.height);}
+let previewGuide=null;
+function previewScene(source,id,filter,pass='all'){
+ const c=project.cuts.find(c=>c.id===id),cv=document.querySelector(`.panel-wrap[data-id="${id}"] canvas`);
+ if(!c||!cv)return;if(cv.dataset.inking){cv.dataset.inkRedraw='1';return;}
+ if(c.pageId&&!c.background&&c.scene.asset==='empty'&&!c.scene.people.length)return;
+ ensureLayers(c);
+ const display=c.pageId?[...document.querySelectorAll('.page-render-layer')].find(el=>el.dataset.cut===id&&el.dataset.layer==='guideScene'):null;
+ if(c.pageId&&!display)return;
+ const w=display?.width||cv.width,h=display?.height||cv.height;
+ if(!previewGuide||previewGuide.id!==id||previewGuide.canvas.width!==w||previewGuide.canvas.height!==h){if(previewGuide)previewGuide.canvas.width=1;previewGuide={id,canvas:canvas(w,h)};}
+ const gc=previewGuide.canvas.getContext('2d');if(pass!=='guide')gc.clearRect(0,0,w,h);
+ gc.save();gc.filter=filter;drawGuidePass(gc,source,{...c,guideLayout:null},pass==='guide'?'guide':'background',w,h,project.width+project.bleed);gc.restore();
+ if(pass==='background')return;
+ if(display){const ctx=display.getContext('2d');ctx.clearRect(0,0,w,h);ctx.drawImage(previewGuide.canvas,0,0);maskFrame(ctx,c,w,h);queuePageComposite();return;}
+ cv.dataset.drawVersion=String((+cv.dataset.drawVersion||0)+1);const cx=cv.getContext('2d');cx.clearRect(0,0,w,h);cx.fillStyle='#fafbf8';cx.fillRect(0,0,w,h);
+ if(c.visible.background&&guideShown(c)){cx.save();cx.globalAlpha=c.guideOpacity/100;cx.drawImage(previewGuide.canvas,0,0);cx.restore();}
+ if(!previewOverlay||previewOverlay.id!==id||previewOverlay.width!==cv.width||previewOverlay.height!==cv.height){const overlay=canvas(cv.width,cv.height),oc=overlay.getContext('2d');if(c.visible.sketch)for(const l of c.paintLayers){if(!layerVisible(c,l))continue;const rough=paintLayerCanvas(c,l,cv.width,cv.height);oc.save();oc.globalAlpha=l.opacity/100;oc.globalCompositeOperation=canvasBlend(l.blendMode);oc.drawImage(rough,0,0);oc.restore();rough.width=1;}if(c.visible.text&&c.layerSettings.text.visible){oc.save();oc.globalAlpha=c.layerSettings.text.opacity/100;balloonUI.previewCut(c).bubbles.filter(b=>b.clipToFrame).forEach(b=>bubbleDraw(oc,b,cv.width,cv.height));oc.restore();}previewOverlay={id,width:cv.width,height:cv.height,canvas:overlay};}cx.drawImage(previewOverlay.canvas,0,0);const fc=canvas(cv.width,cv.height);paintFrame(fc.getContext('2d'),{...c,widthPixels:(project.width+project.bleed)*c.width/100},cv.width,cv.height);cx.drawImage(fc,0,0);maskFrame(cx,c,cv.width,cv.height);}
 async function openScene({captureOnly=false,previewOnly=false}={}){if(selectedCut()?.pageBase){chooseSceneCut();return;}scenePicking=false;$('sceneDialog').classList.remove('scene-picking');if(!selectedCut())addCut();try{if(!captureOnly)showDock();if(!editor)editor=new SceneEditor(()=>backgrounds.assets(),(patch,cutId,{live,movement,transform,initial}={})=>{const target=project.cuts.find(c=>c.id===cutId);if(!target)return;const now=Date.now();if(!initial&&JSON.stringify(target.scene)!==JSON.stringify(patch.scene)&&(movement||transform||!live||lastSceneUndoCut!==cutId||now-lastSceneUndo>900)){checkpoint();lastSceneUndo=now;lastSceneUndoCut=cutId;}const addedGuide=(!target.background&&patch.background)||(!target.guide&&patch.guide);Object.assign(target,patch);if(addedGuide&&selected===cutId)layerPanel.render();if(selected===cutId)project.defaultScene=clone(patch.scene);const cv=document.querySelector(`.panel-wrap[data-id="${cutId}"] canvas`);if(cv)drawCut(target,cv);const thumbnail=document.querySelector(`.cut-thumb[data-id="${cutId}"] img`);if(thumbnail&&patch.background)thumbnail.src=patch.background;const info=document.querySelector(`.cut-thumb[data-id="${cutId}"] small`);if(info)info.textContent=`${target.height} px · ${assetName(target.scene.asset)}`;save();if(!live)toast('현재 구도를 저장했습니다.');},()=>{chooseModelFile('scene');},previewScene,id=>backgrounds.resolve(id));const c=selectedCut();$('dockCutTitle').textContent=project.pages?c.name:`${String(project.cuts.indexOf(c)+1).padStart(2,'0')} · ${c.name}`;$('liveStatus').textContent='컷과 연결됨';await editor.open({...c,pageWidth:project.width+project.bleed},{transient:previewOnly});if(captureOnly&&editor.cut.id===c.id){if(!previewOnly)editor.apply({live:true});editor.close();}return editor;}catch(e){toast('3D 화면을 열지 못했습니다: '+e.message);}}
 const divider=$('sceneDivider');function dockWidth(value){const workspace=document.querySelector('.workspace'),max=Math.max(340,workspace.clientWidth-300),size=clamp(value,340,Math.min(800,max));workspace.style.setProperty('--dock-width',size+'px');divider.setAttribute('aria-valuenow',Math.round(size));}
 divider.onpointerdown=e=>{divider.setPointerCapture(e.pointerId);divider.dataset.drag='1';document.body.classList.add('resizing-dock');};divider.onpointermove=e=>{if(divider.dataset.drag==='1')dockWidth(document.querySelector('.workspace').getBoundingClientRect().right-e.clientX);};const endResize=()=>{delete divider.dataset.drag;document.body.classList.remove('resizing-dock');};divider.onpointerup=endResize;divider.onpointercancel=endResize;divider.onlostpointercapture=endResize;divider.onkeydown=e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();dockWidth(Number(divider.getAttribute('aria-valuenow'))+(e.key==='ArrowLeft'?20:-20));}};
@@ -193,7 +213,12 @@ async function composePage(target,placements,offset=0,scale=1,keepLayers=false,o
  for(const {p,id}of jobs)for(const l of await cutLayers(p.cut,scale,true,{},id)){
   const c=p.cut,r=layerCrop(l,p.x*scale,(p.y-offset)*scale,target.width,target.height);
   try{if(r){if(items.length&&items[0].folders?.[0]?.id!==l.folders?.[0]?.id)flush();complex ||= !!(l.adjustment||l.folders?.length||['glow-dodge','add-glow'].includes(l.blendMode));items.push({...l,args:[r.sx,r.sy,r.w,r.h,r.left,r.top,r.w,r.h]});
-   if(keepLayers){const crop=canvas(r.w,r.h);crop.getContext('2d').drawImage(l.canvas,r.sx,r.sy,r.w,r.h,0,0,r.w,r.h);children.push({name:`${c.name} / ${l.name}`,canvas:crop,opacity:l.opacity??1,blendMode:psdBlend(l.blendMode),hidden:!!l.hidden,left:r.left,top:r.top});}
+   if(keepLayers){
+    if(l.id==='guideScene'){
+     const sources=[];for(const key of ['background','guide'])for(const raw of await cutLayers(c,scale,true,{},key)){const crop=canvas(r.w,r.h);crop.getContext('2d').drawImage(raw.canvas,r.sx,r.sy,r.w,r.h,0,0,r.w,r.h);sources.push({name:raw.name,canvas:crop,opacity:c.layerSettings[key].opacity/100,hidden:!c.layerSettings[key].visible,left:r.left,top:r.top});raw.canvas.width=1;}
+     children.push({name:`${c.name} / 3D 가이드`,children:sources,opacity:l.opacity??1,blendMode:'normal',hidden:!!l.hidden});
+    }else{const crop=canvas(r.w,r.h);crop.getContext('2d').drawImage(l.canvas,r.sx,r.sy,r.w,r.h,0,0,r.w,r.h);children.push({name:`${c.name} / ${l.name}`,canvas:crop,opacity:l.opacity??1,blendMode:psdBlend(l.blendMode),hidden:!!l.hidden,left:r.left,top:r.top});}
+   }
   }if(!l.folders?.length)flush();}finally{if(!r)l.canvas.width=1;}
  }
  flush();
@@ -220,7 +245,7 @@ async function exportFiles(){editor?.flush();const format=$('exportFormat').valu
     children.push(...await composePage(composite,pagePlacements,offset,1,format==='psd',{exporting:true}));if(project.format==='comic'){drawFolio(ctx,project,project.pages[page]);if(format==='psd'&&project.comic.folio){const fc=canvas(width,h);drawFolio(fc.getContext('2d'),project,project.pages[page]);children.push({name:'쪽 번호',canvas:fc,left:0,top:0});}}
     const suffix=`-${String(page+1).padStart(2,'0')}`;
     if(format==='psd'){const psd=writePsd({width,height:h,canvas:composite,children,imageResources:{resolutionInfo:{horizontalResolution:project.dpi,horizontalResolutionUnit:'PPI',widthUnit:'Inches',verticalResolution:project.dpi,verticalResolutionUnit:'PPI',heightUnit:'Inches'}}},{generateThumbnail:false});files[safeName()+suffix+'.psd']=new Uint8Array(psd);}else files[safeName()+suffix+'.png']=await png(composite);
-    for(const child of children)child.canvas.width=1;composite.width=1;
+    const release=items=>{for(const child of items){if(child.canvas)child.canvas.width=1;if(child.children)release(child.children);}};release(children);composite.width=1;
    }
    if(format==='psd')files['PSD 안내.txt']=strToU8('일반 레이어의 합성 모드·불투명도는 PSD로 저장됩니다. 보정·폴더·발광 효과가 있는 페이지는 모양 보존용 합성 결과를 맨 위에 두고 원본을 아래 숨김 레이어로 보관합니다. 마스크와 벡터·말풍선은 픽셀로 출력됩니다. 모든 설정을 다시 편집하려면 .scroll.json 원고를 함께 보관하세요.');
    if(format==='psd')files['대사.txt']=strToU8(project.cuts.map((c,i)=>`[${i+1}] ${c.name}\n${c.bubbles.map(b=>b.text).join('\n')}\n메모: ${c.note}`).join('\n\n'));
@@ -280,6 +305,7 @@ document.addEventListener('keydown',e=>{
  const action=editorShortcut(e);
  if(action==='undo'||action==='redo'){e.preventDefault();action==='undo'?undo():redo();return;}
  if(action==='delete'&&!e.target.closest('#sceneDialog')){
+  if(layerPanel.deleteSelected(e))return;
   if(balloonUI.hasSelection()){e.preventDefault();balloonUI.removeSelected();return;}
   if(drawing.hasSelection()){e.preventDefault();drawing.removeSelected();return;}
   if(tool==='select'){e.preventDefault();deleteSelectedCut();return;}

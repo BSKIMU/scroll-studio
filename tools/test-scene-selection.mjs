@@ -22,4 +22,12 @@ const env=objectTarget(e,e.environment,new T.Vector3(0,0,0));objectProxy(env,pro
 const prop={data:{id:'door-1'},root:new T.Group()};prop.root.add(new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial()));e.environment.add(prop.root);e.doors.items=[prop];const propTarget=objectTarget(e,prop.root.children[0]);assert.equal(propTarget.kind,'prop');objectProxy(propTarget,proxy);proxy.position.x+=1;applyObjectProxy(e,propTarget,proxy);const propMatrix=prop.root.matrixWorld.clone();prop.root.position.set(0,0,0);applyObjectGroups(e);propMatrix.elements.forEach((x,i)=>assert(Math.abs(x-prop.root.matrixWorld.elements[i])<1e-6));
 // A wall in front wins over a person behind it. Hidden ancestry is excluded.
 const wall=new T.Mesh(new T.BoxGeometry(4,4,.1),new T.MeshBasicMaterial()),figure=new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial());figure.userData.person=0;figure.position.z=-2;e.figures.add(figure);const simple={environment:new T.Group(),figures:e.figures};simple.environment.add(wall);simple.environment.updateMatrixWorld(true);e.figures.updateMatrixWorld(true);const ray=new T.Raycaster(new T.Vector3(0,0,5),new T.Vector3(0,0,-1));assert.equal(pickSceneTarget(simple,ray).object,wall);simple.environment.visible=false;assert.equal(pickSceneTarget(simple,ray).object,figure);
-console.log('PASS: background/mesh/prop picking, occlusion, world axes under transformed parents, pivot rotation/scale, save/restore and cancellation.');
+// Locked scenery cannot intercept clicks or transform; added props still can.
+simple.environment.visible=true;simple.state={backgroundLocked:true};
+assert.equal(pickSceneTarget(simple,ray).object,figure);
+const added={root:new T.Group()};added.root.add(new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial()));added.root.position.z=1;simple.environment.add(added.root);simple.doors={items:[added]};simple.environment.updateMatrixWorld(true);
+assert.equal(pickSceneTarget(simple,ray).object,added.root.children[0]);
+e.state.backgroundLocked=true;const lockedPosition=box.position.clone();objectProxy(target,proxy);proxy.position.x+=3;applyObjectProxy(e,target,proxy);assert(box.position.equals(lockedPosition));
+objectProxy(propTarget,proxy);const propPosition=prop.root.position.clone();proxy.position.x+=2;applyObjectProxy(e,propTarget,proxy);assert(!prop.root.position.equals(propPosition));
+assert.equal(JSON.parse(JSON.stringify(e.state)).backgroundLocked,true);
+console.log('PASS: picking, background lock with editable props/people, occlusion, transforms, persistence and cancellation.');

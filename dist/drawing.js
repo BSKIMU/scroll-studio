@@ -1,17 +1,17 @@
 import {airbrushPresets,watercolorPresets} from './brush-presets.js?v=20261025-release1';
 import {brushTools,paintTools} from './tool-policy.js?v=20261025-release1';
-import {setupArtworkSelection} from './artwork-selection.js?v=20261025-release1';
-import {brushBoundary,correctStroke,vectorHit} from './brush-correction.js?v=20261025-release1';
+import {setupArtworkSelection} from './artwork-selection.js?v=20261028-guide3';
+import {brushBoundary,correctStroke,vectorHit} from './brush-correction.js?v=20261028-guide3';
 import {setupBrushDetails} from './brush-details.js?v=20261025-release1';
 import {paintBrushStroke} from './brush-engine.js?v=20261025-release1';
 import {folderPath} from './layer-compositor.js?v=20261025-release1';
 import {cachedBitmap} from './layer-effects.js?v=20261025-release1';
-import {drawFade} from './postprocess.js?v=20261025-release1';
-import {fillReferenceLayers} from './coloring.js?v=20261025-release1';
+import {drawFade} from './postprocess.js?v=20261028-guide3';
+import {fillReferenceLayers} from './coloring.js?v=20261028-guide3';
 import {drawAntialiased} from './pen-antialias.js?v=20261025-release1';
 import {curvePoints,shapeTools} from './shape-tools.js?v=20261025-release1';
 import {elementPoint} from './canvas-coordinates.js?v=20261025-release1';
-import {activePaint,layerVisible} from './layers.js?v=20261025-release1';
+import {activePaint,layerVisible} from './layers.js?v=20261028-guide3';
 import {setupDrawingAssist} from './drawing-assist.js?v=20261025-release1';
 import {readSut} from './brush-import.js?v=20261025-release1';
 import {setupBrushPicker,setupBrushSwitching} from './brush-picker.js?v=20261025-release1';
@@ -63,7 +63,7 @@ export function setupDrawing({getProject,getTool,setTool,checkpoint,save,select,
  }
  async function runFill(c,cv,p,layer,{project,strokes,style,mode,expand}){
   if(getProject()!==project||c.strokes!==strokes||!cv.isConnected||!c.paintLayers.includes(layer)||layer.locked||!layerVisible(c,layer))return;
-  const {prepareLayerImages}=await import('./layer-effects.js?v=20261025-release1'),{paintLayerCanvas,layerMaskCanvas}=await import('./paint-layer-render.js?v=20261025-release1');
+  const {prepareLayerImages}=await import('./layer-effects.js?v=20261025-release1'),{paintLayerCanvas,layerMaskCanvas}=await import('./paint-layer-render.js?v=20261028-guide3');
   const version=strokes.length,nativeWidth=(project.width+project.bleed)*c.width/100;
   const scale=Math.min(1,Math.sqrt(8000000/(nativeWidth*c.height))),ref=document.createElement('canvas');
   ref.width=Math.max(1,Math.round(nativeWidth*scale));ref.height=Math.max(1,Math.round(c.height*scale));

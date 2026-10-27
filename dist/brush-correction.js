@@ -1,6 +1,6 @@
 import {floodSpans} from './flood-fill.js?v=20261025-release1';
-import {paintLayerCanvas} from './paint-layer-render.js?v=20261025-release1';
-import {fillReferenceLayers} from './coloring.js?v=20261025-release1';
+import {paintLayerCanvas} from './paint-layer-render.js?v=20261028-guide3';
+import {fillReferenceLayers} from './coloring.js?v=20261028-guide3';
 export function brushBoundary(c,layer,p,nativeWidth){
  const refs=fillReferenceLayers(c,layer,'reference').filter(l=>l.id!==layer.id||l.reference);if(!refs.length)return null;
  const scale=Math.min(1,Math.sqrt(2000000/(nativeWidth*c.height))),w=Math.max(1,Math.round(nativeWidth*scale)),h=Math.max(1,Math.round(c.height*scale)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const ctx=cv.getContext('2d',{willReadFrequently:true});

@@ -1,5 +1,5 @@
-import {paintStrokes} from './drawing.js?v=20261025-release1';
-import {layerStrokes,layerVisible} from './layers.js?v=20261025-release1';
+import {paintStrokes} from './drawing.js?v=20261028-guide3';
+import {layerStrokes,layerVisible} from './layers.js?v=20261028-guide3';
 import {cachedBitmap,paintGenerated,applyLayerEffects} from './layer-effects.js?v=20261025-release1';
 const surface=(w,h)=>{const cv=document.createElement('canvas');cv.width=w;cv.height=h;return cv;};
 // Clipping is baked into this layer's alpha, keeping its editable strokes and

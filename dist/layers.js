@@ -1,7 +1,7 @@
 import {nextLayerName} from './layer-names.js?v=20261025-release1';
 import {layerCaption,lockIcon} from './layer-row-label.js?v=20261025-release1';
-import {setupColoringUI} from './coloring-ui.js?v=20261025-release1';
-import {setupPageLayerPanel} from './page-layer-panel.js?v=20261025-release1';
+import {setupColoringUI} from './coloring-ui.js?v=20261028-guide3';
+import {setupPageLayerPanel} from './page-layer-panel.js?v=20261028-guide3';
 import {eyeIcon} from './eye-icon.js?v=20261025-release1';
 import {setupLayerThumbnails} from './layer-thumbnails.js?v=20261025-release1';
 import {blankLayerStyle,webtoonLayers,templateLayers,defaultLayers,templateKey,planTemplate,commitTemplate,projectSummary} from './layer-template.js?v=20261025-release1';
@@ -23,6 +23,7 @@ export function preparePencilLayer(c){
 export function activePaint(c){ensureLayers(c);return c.paintLayers.find(l=>l.id===c.activeLayer);}
 export const layerVisible=(c,l)=>l.visible&&c.layerGroups?.[l.group]?.visible!==false;
 export const layerStrokes=(c,id)=>{const l=c.paintLayers.find(l=>l.id===id);return c.strokes.filter(s=>(s.layerId||'rough')===id).map(s=>({...s,color:l?.displayColor||s.color,layerOutline:l?.outline,outlineWidth:l?.outlineWidth}));};
+import {setupLayerDeleteShortcut} from './layer-delete-shortcut.js?v=20261028-guide3';
 export function setupLayers({setTool,select,renderPage,getProject,selectedCut,checkpoint,save,redraw,clearSelection,toast,thumbnail=()=>{}}){
  const box=document.createElement('section');box.id='layerPanel';box.innerHTML='<div class="sectionhead">레이어 <span>선택한 컷</span></div><label class="guide-opacity">가이드 불투명도 <output id="guideOpacityValue">100%</output><input id="guideOpacity" type="range" min="0" max="100" value="100" aria-label="전체 가이드 불투명도"><small>BG + 3D 인물 함께</small></label><label class="bg-opacity">BG 가이드 불투명도 <output id="bgOpacityValue">100%</output><input id="bgOpacity" type="range" min="0" max="100" value="100"></label><div class="layer-actions"><button id="newPaintLayer">＋ 레이어</button><button id="duplicatePaintLayer" title="선화 레이어 복제">⧉</button><button id="layerUp" title="선화 레이어 위로">↑</button><button id="layerDown" title="선화 레이어 아래로">↓</button><button id="deletePaintLayer" title="선화 레이어 삭제">−</button></div><button id="webtoonLayerPreset" class="full" title="스케치·선화·효과음·인물 조명을 개별 그리기 레이어로 추가">웹툰 템플릿 적용</button><div class="template-actions"><button id="saveLayerTemplate" title="레이어 이름·순서·색상·불투명도만 저장">내 템플릿 저장</button><button id="applySavedTemplate">불러오기</button></div><div id="activeLayerBadge" role="status"></div><div id="layerRows"></div><p>그릴 선화 레이어를 선택하세요.<br>지우개는 선택한 선화만 지웁니다.</p>';
  const extra=document.createElement('details');extra.className='layer-template-options';const summary=document.createElement('summary');summary.textContent='템플릿 · 개별 가이드 설정';extra.append(summary,box.querySelector('.bg-opacity'),box.querySelector('#webtoonLayerPreset'),box.querySelector('.template-actions'));box.querySelector('#layerRows').after(extra);box.querySelector('.guide-opacity').after(box.querySelector('#activeLayerBadge'));
@@ -63,5 +64,5 @@ export function setupLayers({setTool,select,renderPage,getProject,selectedCut,ch
  $('duplicatePaintLayer').onclick=()=>{const c=selectedCut(),l=c&&activePaint(c);if(!l)return toast('복제할 선화 레이어를 선택하세요.');if(c.paintLayers.length>=30)return;checkpoint();const n={...structuredClone(l),id:crypto.randomUUID(),name:l.name+' 복사',locked:false};c.paintLayers.splice(c.paintLayers.indexOf(l)+1,0,n);c.strokes.push(...structuredClone(c.strokes.filter(s=>(s.layerId||'rough')===l.id)).map(s=>({...s,layerId:n.id})));c.activeLayer=n.id;clearSelection();render();repaint();};
  $('deletePaintLayer').onclick=()=>{const c=selectedCut(),l=c&&activePaint(c);if(!l)return toast('선화 레이어를 선택하세요.');if(l.locked)return toast('레이어 잠금을 해제하세요.');if(c.paintLayers.length===1)return toast('선화 레이어를 최소 하나 남겨 주세요.');checkpoint();c.strokes=c.strokes.filter(s=>(s.layerId||'rough')!==l.id);c.paintLayers=c.paintLayers.filter(p=>p!==l);c.activeLayer=c.paintLayers[0].id;clearSelection();render();repaint();};
  for(const [id,d]of [['layerUp',1],['layerDown',-1]])$(id).onclick=()=>{const c=selectedCut();if(!c)return;const i=c.paintLayers.findIndex(l=>l.id===c.activeLayer),j=i+d;if(i<0||j<0||j>=c.paintLayers.length||c.paintLayers[i].group!==c.paintLayers[j].group)return;checkpoint();[c.paintLayers[i],c.paintLayers[j]]=[c.paintLayers[j],c.paintLayers[i]];render();repaint();};
- return {render};
+ return {render,deleteSelected:setupLayerDeleteShortcut(box,$('deletePaintLayer'))};
 }

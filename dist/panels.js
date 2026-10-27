@@ -1,4 +1,4 @@
-import {createNavigator} from './navigator.js?v=20261025-release1';
+import {createNavigator} from './navigator.js?v=20261028-guide3';
 import {addPaletteEdges} from './palette-edges.js?v=20261025-release1';
 const $=id=>document.getElementById(id),key='scroll-palette-layout-v1';
 export function setupPanels(){

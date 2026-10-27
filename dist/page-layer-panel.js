@@ -1,7 +1,7 @@
 import {nextLayerName} from './layer-names.js?v=20261025-release1';
 import {layerCaption,lockIcon} from './layer-row-label.js?v=20261025-release1';
 import {balloonLayerRows,balloonLayerAction} from './balloon-layer-panel.js?v=20261025-release1';
-import {pageStack,paintKey,movePageLayer,placePageLayer} from './page-layer-stack.js?v=20261025-release1';
+import {pageStack,paintKey,movePageLayer,placePageLayer} from './page-layer-stack.js?v=20261028-guide3';
 import {eyeIcon} from './eye-icon.js?v=20261025-release1';
 
 export function setupPageLayerPanel({getProject,selectedCut,select,checkpoint,save,renderPage,clearSelection,toast,box,thumbnails}){

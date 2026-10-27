@@ -4,11 +4,12 @@ import {storageAxis} from './blender-transform.js?v=20261026-walk2';
 import {applyPersonTransform} from './person-transform.js?v=20261025-release1';
 import {precisionStep,transformSnapshot,copyTransform,thickenGizmo,nearbyGround} from './manipulation.js?v=20261026-walk2';
 import * as T from 'three';
+import {backgroundLocked} from './scene-background-lock.js?v=20261028-guide3';
 import {TransformControls} from 'three/addons/controls/TransformControls.js';
 const $=id=>document.getElementById(id);
 import {jointBones,jointNames,limitJoint} from './joint-pose.js?v=20261025-release1';
 import {setupPoseControls} from './pose-controls.js?v=20261027-selection4';
-import {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject,pickSceneTarget} from './scene-object-transform.js?v=20261027-selection4';
+import {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject,pickSceneTarget} from './scene-object-transform.js?v=20261028-guide3';
 import {relatedMeshes,collectionTarget,combineSelection,targetMeshes,selectionBounds,saveSelectionGroup,removeSelectionGroup} from './scene-selection.js?v=20261027-studio4';
 export class PersonGizmo{
  constructor(editor){
@@ -49,7 +50,7 @@ export class PersonGizmo{
  snapshotTarget(){return this.objectTarget?snapshotObject(this.editor,this.objectTarget):structuredClone(this.editor.state.people[this.editor.index]);}
  restoreTarget(value){if(this.objectTarget){restoreObject(this.editor,this.objectTarget,value);this.objectChanged();}else{this.editor.state.people[this.editor.index]=structuredClone(value);this.editor.updatePerson({pose:true});}}
  selectPerson(index=this.editor.index){this.objectTarget=null;this.editor.index=index;$('personSelect').value=String(index);this.part='whole';$('jointSelect').value='whole';this.editor.controlsUI();this.setAxis(null);this.setMode('translate');this.editor.invalidate();}
- selectObject(object,point,{individual=false,additive=false}={}){const e=this.editor;if(!object)return;e.flush();let target=objectTarget(e,object),scope=individual?'mesh':$('backgroundSelection')?.value||'object';
+ selectObject(object,point,{individual=false,additive=false}={}){const e=this.editor;if(!object||backgroundLocked(e,object))return;e.flush();let target=objectTarget(e,object),scope=individual?'mesh':$('backgroundSelection')?.value||'object';
   if(target.kind==='mesh'){
    if(scope==='background')target=objectTarget(e,e.environment);
    else if(scope!=='mesh'){const group=relatedMeshes(e,object);if(group.members.length>1)target=collectionTarget(e,group.members,group.label,group.groupId);}

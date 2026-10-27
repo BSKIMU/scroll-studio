@@ -1,4 +1,4 @@
-import {layerMaskCanvas} from './paint-layer-render.js?v=20261025-release1';
+import {layerMaskCanvas} from './paint-layer-render.js?v=20261028-guide3';
 export function layerDecorations(c,target){
  const wrap=target.parentElement;if(!target.isConnected||!wrap)return;
  for(const old of wrap.querySelectorAll('.pixel-selection-preview,.layer-ruler-preview'))old.remove();

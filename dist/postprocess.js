@@ -1,4 +1,4 @@
-import {pageStack} from './page-layer-stack.js?v=20261025-release1';
+import {pageStack} from './page-layer-stack.js?v=20261028-guide3';
 export function drawFade(ctx,s,w,h){
  const vertical=['top','bottom'].includes(s.edge),reverse=['bottom','right'].includes(s.edge),length=Math.max(.001,Math.min(1,s.length||.25));
  const end=vertical?h:w,start=reverse?end:0,stop=reverse?end*(1-length):end*length;

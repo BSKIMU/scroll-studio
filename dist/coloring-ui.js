@@ -1,5 +1,5 @@
-import {setupPostprocess} from './postprocess.js?v=20261025-release1';
-import {addColorLayer,blendModes} from './coloring.js?v=20261025-release1';
+import {setupPostprocess} from './postprocess.js?v=20261028-guide3';
+import {addColorLayer,blendModes} from './coloring.js?v=20261028-guide3';
 export function setupColoringUI({box,getProject,selectedCut,checkpoint,save,redraw,render,setTool,toast}){
  setupPostprocess({box,getProject,selectedCut,checkpoint,save,redraw,render,setTool,toast});
  const controls=document.createElement('div');controls.className='coloring-layer-controls';

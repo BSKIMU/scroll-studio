@@ -1,7 +1,7 @@
-import {paintStrokes} from './drawing.js?v=20261025-release1';
-import {layerStrokes,layerVisible} from './layers.js?v=20261025-release1';
-import {drawGuideImage} from './frame-geometry.js?v=20261025-release1';
-import {maskFrame,paintFrame} from './pages.js?v=20261027-studio4';
+import {paintStrokes} from './drawing.js?v=20261028-guide3';
+import {layerStrokes,layerVisible} from './layers.js?v=20261028-guide3';
+import {drawGuideComposite} from './guide-composite.js?v=20261028-guide3';
+import {maskFrame,paintFrame} from './pages.js?v=20261028-guide3';
 import {balloonDraw} from './balloons.js?v=20261025-release1';
 
 const SIZE=256,BUDGET=24*1024*1024;
@@ -29,7 +29,7 @@ export class InkSession{
   if(this.tiles.size>=this.limit){const [key,old]=this.tiles.entries().next().value;for(const cv of [old.base,old.active,old.over])cv.width=1;this.tiles.delete(key);}
   const size=SIZE+2*this.pad,tile={x:tx-this.pad,y:ty-this.pad,tx,ty,base:surface(size,size),active:surface(size,size),over:surface(size,size),done:this.stroke.brush==='airbrush'?0:1},c=this.cut;
   this.at(tile.base,tile,ctx=>{ctx.fillStyle='#fafbf8';if((!c.pageId||c.pageBase||c.frame?.fill)&&!(c.pageBase&&c.onTop))ctx.fillRect(0,0,this.w,this.h);});this.mask(tile.base,tile);
-  if(this.guides&&c.visible.background)for(const key of ['background','guide']){const image=this.images[key],setting=c.layerSettings[key];if(!image||!setting.visible)continue;clear(this.scratch);this.at(this.scratch,tile,ctx=>drawGuideImage(ctx,image,c,this.w,this.h,this.pageWidth));this.mask(this.scratch,tile);const ctx=tile.base.getContext('2d');ctx.globalAlpha=setting.opacity/100*c.guideOpacity/100;ctx.drawImage(this.scratch,0,0);ctx.globalAlpha=1;}
+  if(this.guides&&c.visible.background){clear(this.scratch);this.at(this.scratch,tile,ctx=>drawGuideComposite(ctx,this.images,c,this.w,this.h,this.pageWidth));this.mask(this.scratch,tile);const ctx=tile.base.getContext('2d');ctx.globalAlpha=c.guideOpacity/100;ctx.drawImage(this.scratch,0,0);ctx.globalAlpha=1;}
   let above=false;for(const {layer,strokes}of this.layers){if(layer.id===this.layer.id){this.at(tile.active,tile,ctx=>paintStrokes(ctx,strokes,this.w,this.h));above=true;continue;}if(!layerVisible(c,layer)||!c.visible.sketch||!strokes.length)continue;clear(this.scratch);this.at(this.scratch,tile,ctx=>paintStrokes(ctx,strokes,this.w,this.h,{surface:{width:size,height:size,x:tile.x,y:tile.y}}));this.mask(this.scratch,tile);const ctx=(above?tile.over:tile.base).getContext('2d');ctx.globalAlpha=layer.opacity/100;ctx.drawImage(this.scratch,0,0);ctx.globalAlpha=1;}
   clear(this.scratch);this.at(this.scratch,tile,ctx=>paintFrame(ctx,{...c,widthPixels:this.pageWidth*c.width/100},this.w,this.h));tile.over.getContext('2d').drawImage(this.scratch,0,0);
   if(c.visible.text&&c.layerSettings.text.visible)for(const b of c.bubbles)if(b.clipToFrame){clear(this.scratch);this.at(this.scratch,tile,ctx=>balloonDraw(ctx,b,this.w,this.h));this.mask(this.scratch,tile);const ctx=tile.over.getContext('2d');ctx.globalAlpha=c.layerSettings.text.opacity/100;ctx.drawImage(this.scratch,0,0);ctx.globalAlpha=1;}

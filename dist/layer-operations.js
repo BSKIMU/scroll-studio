@@ -1,6 +1,6 @@
 import {nextLayerName} from './layer-names.js?v=20261025-release1';
-import {pageStack,paintKey,placePageLayer} from './page-layer-stack.js?v=20261025-release1';
-import {ensureLayers} from './layers.js?v=20261025-release1';
+import {pageStack,paintKey,placePageLayer} from './page-layer-stack.js?v=20261028-guide3';
+import {ensureLayers} from './layers.js?v=20261028-guide3';
 export function addPaintLayer(project,cut,properties={},after=null){
  ensureLayers(cut);if(cut.paintLayers.length>=30)throw Error('이 작업 영역의 레이어가 30개입니다. 다른 컷이나 페이지 레이어를 사용하세요.');
  const layer={id:crypto.randomUUID(),name:nextLayerName(project),type:'raster',nativeWidth:(project.width+project.bleed)*cut.width/100,opacity:100,visible:true,locked:false,keepVisible:true,...properties};cut.paintLayers.push(layer);cut.activeLayer=layer.id;
