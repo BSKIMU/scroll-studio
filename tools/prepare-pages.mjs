@@ -20,6 +20,6 @@ for(const entry of readdirSync(output,{withFileTypes:true,recursive:true})){
 }
 writeFileSync(join(output,'.nojekyll'),'');
 const files={};
-for(const entry of readdirSync(output,{withFileTypes:true,recursive:true})){if(!entry.isFile())continue;const path=join(entry.parentPath,entry.name),key=path.slice(output.length+1).replaceAll('\\','/'),bytes=readFileSync(path);files[key]={bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};}
+for(const entry of readdirSync(output,{withFileTypes:true,recursive:true})){if(!entry.isFile()||entry.name==='.nojekyll')continue;const path=join(entry.parentPath,entry.name),key=path.slice(output.length+1).replaceAll('\\','/'),bytes=readFileSync(path);files[key]={bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};}
 writeFileSync(join(output,'release.json'),JSON.stringify({commit,builtAt:new Date().toISOString(),files},null,2)+'\n');
 console.log(`Prepared GitHub Pages from ${commit.slice(0,12)}`);

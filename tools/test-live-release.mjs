@@ -16,7 +16,8 @@ async function download(path){
  for(let i=0;i<3;i++)try{const r=await fetch(url,{signal:AbortSignal.timeout(90000)});assert(r.ok,`${path}: HTTP ${r.status}`);return Buffer.from(await r.arrayBuffer());}catch(e){if(i===2)throw e;await new Promise(r=>setTimeout(r,1000));}
 }
 const manifest=JSON.parse(await download('release.json'));assert.equal(manifest.commit,commit,'Pages must serve the requested commit');
-const entries=Object.entries(manifest.files||{});assert(entries.length>200,'Release must include its full integrity inventory');
+// Pages consumes .nojekyll as deployment metadata and does not serve it.
+const entries=Object.entries(manifest.files||{}).filter(([name])=>name!=='.nojekyll');assert(entries.length>200,'Release must include its full integrity inventory');
 mkdirSync(output,{recursive:true});let count=0,total=0,index=0;
 const hash=b=>createHash('sha256').update(b).digest('hex');
 async function worker(){while(index<entries.length){
