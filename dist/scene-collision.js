@@ -1,8 +1,8 @@
 import * as T from 'three';
 import R from './vendor/rapier.mjs';
 import {closedMeshVolume} from './mesh-volume.js?v=20261026-navigation3';
-import {assignedSeat} from './imported-background.js?v=20261028-guide3';
-import {findGroundSurface} from './environment-ground.js?v=20261028-guide3';
+import {assignedSeat} from './imported-background.js?v=20261028-lock-position1';
+import {findGroundSurface} from './environment-ground.js?v=20261028-lock-position1';
 let initialized;
 export const initCollision=()=>initialized??=R.init();
 const inherited=(o,key)=>{for(;o;o=o.parent)if(o.userData[key])return o;return null;};

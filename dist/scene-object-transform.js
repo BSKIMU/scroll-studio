@@ -1,6 +1,6 @@
 import * as T from 'three';
-import {environmentHeight} from './environment-ground.js?v=20261028-guide3';
-import {backgroundLocked} from './scene-background-lock.js?v=20261028-guide3';
+import {environmentHeight} from './environment-ground.js?v=20261028-lock-position1';
+import {backgroundLocked} from './scene-background-lock.js?v=20261028-lock-position1';
 
 export function applyEnvironmentPlacement(editor){
  const value=editor.state.environmentPlacement?.[editor.state.asset]||{},o=editor.environment;

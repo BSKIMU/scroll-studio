@@ -1,9 +1,9 @@
-import {backgroundLocked} from './scene-background-lock.js?v=20261028-guide3';
+import {backgroundLocked} from './scene-background-lock.js?v=20261028-lock-position1';
 import {setupSkyPicker} from './scene-sky-picker.js?v=20261027-aurora1';
 import {LineSegments2} from './vendor/addons/lines/LineSegments2.js';
 import {LineSegmentsGeometry} from './vendor/addons/lines/LineSegmentsGeometry.js';
 import {LineMaterial} from './vendor/addons/lines/LineMaterial.js';
-import {applyObjectGroups} from './scene-object-transform.js?v=20261028-guide3';
+import {applyObjectGroups} from './scene-object-transform.js?v=20261028-lock-position1';
 import {applyRenderProjection} from './scene-projection.js?v=20261027-studio4';
 import * as T from 'three';
 import {SkyPresets,skyPresets,hdriLook,hdriAzimuth,legacySkyIds} from './sky-presets.js?v=20261027-natural1';

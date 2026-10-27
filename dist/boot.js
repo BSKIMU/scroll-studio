@@ -1,7 +1,7 @@
 // The start dialog is already in the HTML; never expose the unfinished editor.
 const welcome=document.getElementById('welcome'),status=document.getElementById('bootStatus');
 try{
- await import('./app.js?v=20261028-guide3');
+ await import('./app.js?v=20261028-lock-position1');
  welcome.inert=false;status.hidden=true;document.documentElement.classList.remove('app-starting');
 }catch(error){
  console.error('Studio startup failed:',error);
