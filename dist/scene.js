@@ -15,7 +15,7 @@ import {applyProjection,applyRenderProjection,projectionFor,viewportSize,applyVi
 import {environmentHeight,setupEnvironmentGround} from './environment-ground.js?v=20261027-selection4';
 import {applyFigureTransform} from './hand-pose.js?v=20261027-pose-camera1';
 import {setupHandControls} from './scene-hands.js?v=20261027-studio4';
-import {ScenePreview} from './scene-preview.js?v=20261027-studio4';
+import {ScenePreview} from './scene-preview.js?v=20261028-motion-perf1';
 import {guideRect} from './frame-geometry.js?v=20261025-release1';
 import {captureSceneLayers} from './scene-capture.js?v=20261027-studio4';
 import {loadMannequin,mannequin,defaultPerson,hasFigureModel,figureModels,applyMovementPose} from './mannequin.js?v=20261027-pose-camera1';

@@ -17,5 +17,6 @@ for(const {name} of files){
  }
 }
 const tests=['test-template','test-tool-switching','test-tool-order','test-frame-input','test-editing-history','test-canvas-documents','test-hosted-motion','test-movement-entry','test-camera-navigation','test-walk-navigation','test-background-ground','test-scene-workspace','test-scene-sky','test-hand-closure','test-hdri-lighting','test-shot-camera','test-scene-selection','test-scene-groups','check-site-assets'];
+tests.push('test-scene-preview');
 for(const test of tests)run(['--import','./tools/test-module-loader.mjs',`tools/${test}.mjs`]);
 console.log(`PASS: ${files.length} source files, relative entry points and ${tests.length} editing/3D/asset checks`);

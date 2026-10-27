@@ -17,26 +17,40 @@ export class ScenePreview{
  }
  setQuality(){const e=this.editor;e.renderer.setPixelRatio(this.light?1:Math.min(devicePixelRatio,1.5));if(e.cut)e.resize();this.request();}
  request(){this.loop.setActive(this.editor.isOpen&&!document.hidden);this.loop.request();}
- stop(){this.loop.setActive(false);this.outline.release();this.status.textContent='대기 중 · 자동 절전';}
+ stop(){this.loop.setActive(false);this.lastFrame=null;this.outline.release();this.status.textContent='대기 중 · 자동 절전';}
  paint(){this.shading.paint();this.outline.paint();}
  draw(time){
   const e=this.editor;if(!e.isOpen||e.loading||document.hidden)return false;
-  // Motion uses elapsed seconds, independent of display refresh or manuscript zoom.
-  // Keep the light preview at 30 rendered frames/s, including its expensive skeleton pass.
-  if(this.light&&(e.movement?.active||e.fly?.active)&&time-(this.lastPaint??-Infinity)<1000/30-.5)return true;
-  this.lastPaint=time;
   const start=performance.now();e.renderer.info.autoReset=false;e.renderer.info.reset();
   const moving=e.fly?.active?false:e.controls.update();e.fly?.tick(time);e.advanced?.cameraRoll();e.movement?.tick(time);
-  const capture=!e.advanced.skies.pending&&e.previewDirty&&time-(this.lastPreview??-Infinity)>=Math.max(this.light?160:80,(this.captureMs||0)*3);
-  if(capture){const start=performance.now();e.preview();this.captureMs=performance.now()-start;this.lastPreview=time;}
+  const motionMs=performance.now()-start;
+  // Only the dock has a visible manuscript consumer. Keep dirty state while it
+  // is covered; stop/restore/save flush the final pose at the original resolution.
+  const manuscriptVisible=!document.body.classList.contains('scene-maximized')&&!document.fullscreenElement?.contains(e.renderer.domElement);
+  const previewPending=manuscriptVisible&&e.previewDirty&&!e.advanced.skies.pending;
+  const capture=previewPending&&time-(this.lastPreview??-Infinity)>=Math.max(this.light?160:80,(this.captureMs||0)*3);
+  if(capture){const captureStart=performance.now();e.preview();this.captureMs=performance.now()-captureStart;this.lastPreview=time;}
+  const paintStart=performance.now();
   this.paint();this.frames++;
-  const active=!!(moving||e.fly?.active||e.movement?.active||e.previewDirty&&!e.advanced.skies.pending);
-  this.status.textContent=active?(this.light?'가벼운 화면 · 조작 중':'일반 화면 · 조작 중'):'대기 중 · 자동 절전';
-  this.status.dataset.renderCount=String(this.frames);
-  const sampleKey=JSON.stringify([this.shading.mode,e.state?.look?.skyPreset]);if(this.sampleKey!==sampleKey){this.timings=[];this.sampleKey=sampleKey;}this.timings.push(performance.now()-start);if(this.timings.length>120)this.timings.shift();const samples=[...this.timings].sort((a,b)=>a-b);
-  this.status.dataset.metrics=JSON.stringify({shading:this.shading.mode,samples:samples.length,medianMs:+samples[Math.floor(samples.length*.5)].toFixed(2),p95Ms:+samples[Math.floor(samples.length*.95)].toFixed(2),capture,captureMs:Math.round((this.captureMs||0)*10)/10,geometryBytes:e.geometryBytes||0,frameMs:Math.round((performance.now()-start)*10)/10,calls:e.renderer.info.render.calls,triangles:e.renderer.info.render.triangles,geometries:e.renderer.info.memory.geometries,textures:e.renderer.info.memory.textures});
-  if(capture)this.status.dataset.captureMetrics=this.status.dataset.metrics;
+  const active=!!(moving||e.fly?.active||e.movement?.active||previewPending&&e.previewDirty);
+  this.measure(time,{start,motionMs,paintMs:performance.now()-paintStart,capture,manuscriptVisible,active});
   e.renderer.info.autoReset=true;
   return active;
+ }
+ measure(time,{start,motionMs,paintMs,capture,manuscriptVisible,active}){
+  const e=this.editor,frameMs=performance.now()-start,key=JSON.stringify([this.shading.mode,e.state?.look?.skyPreset,manuscriptVisible,!!e.movement?.active,!!e.fly?.active]);
+  if(this.sampleKey!==key){this.timings=[];this.intervals=[];this.lastFrame=null;this.sampleKey=key;}
+  if(this.lastFrame!==null)this.intervals.push(time-this.lastFrame);
+  this.lastFrame=active?time:null;
+  this.timings.push(frameMs);if(this.timings.length>120)this.timings.shift();if(this.intervals.length>120)this.intervals.shift();
+  this.status.dataset.renderCount=String(this.frames);
+  // Publish diagnostics at 5 Hz, not by sorting and rewriting DOM every frame.
+  if(active&&!capture&&time-(this.lastMetrics??-Infinity)<200)return;
+  this.lastMetrics=time;
+  const samples=[...this.timings].sort((a,b)=>a-b),intervals=[...this.intervals].sort((a,b)=>a-b),round=n=>Math.round(n*100)/100;
+  const fps=intervals.length?1000*intervals.length/intervals.reduce((a,b)=>a+b,0):0;
+  this.status.textContent=active?`${this.light?'가벼운 화면':'일반 화면'} · ${Math.round(fps)} fps`:'대기 중 · 자동 절전';
+  this.status.dataset.metrics=JSON.stringify({shading:this.shading.mode,samples:samples.length,medianMs:round(samples[Math.floor(samples.length*.5)]),p95Ms:round(samples[Math.floor(samples.length*.95)]),fps:round(fps),frameP95Ms:round(intervals[Math.floor(intervals.length*.95)]||0),motionMs:round(motionMs),paintMs:round(paintMs),manuscriptVisible,capture,captureMs:capture?round(this.captureMs):0,geometryBytes:e.geometryBytes||0,frameMs:round(frameMs),calls:e.renderer.info.render.calls,triangles:e.renderer.info.render.triangles,geometries:e.renderer.info.memory.geometries,textures:e.renderer.info.memory.textures});
+  if(capture)this.status.dataset.captureMetrics=this.status.dataset.metrics;
  }
 }

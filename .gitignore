@@ -53,3 +53,4 @@ __pycache__/
 !/tools/test-scene-groups.mjs
 !/tools/check-site-assets.mjs
 !/tools/test-live-release.mjs
+!/tools/test-scene-preview.mjs

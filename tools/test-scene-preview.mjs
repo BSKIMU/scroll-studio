@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+registerHooks({resolve(s,c,next){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(s,c);}});
+const {ScenePreview}=await import('../dist/scene-preview.js');
+
+let maximized=true,fullscreen=false,captures=0,paints=0,ticks=0;
+globalThis.document={hidden:false,body:{classList:{contains:()=>maximized}},get fullscreenElement(){return fullscreen?{contains:()=>true}:null;}};
+const info={autoReset:true,reset(){},render:{calls:155,triangles:961028},memory:{geometries:70,textures:44}};
+const editor={isOpen:true,renderer:{info,domElement:{}},controls:{update:()=>false},advanced:{skies:{pending:false},cameraRoll(){}},state:{look:{skyPreset:'hdri-sunset'}},movement:{active:true,tick(){ticks++;editor.previewDirty=true;}},previewDirty:true,preview(){captures++;editor.previewDirty=false;}};
+const loop=Object.assign(Object.create(ScenePreview.prototype),{editor,light:true,frames:0,timings:[],status:{dataset:{}},shading:{mode:'sky'},paint(){paints++;}});
+for(let i=0;i<120;i++)assert(loop.draw(i*1000/60));
+assert.equal(ticks,120,'WASD animation is updated at display cadence, not throttled to 30 Hz');
+assert.equal(paints,120);assert.equal(captures,0,'Covered manuscript consumes no render passes');
+assert(editor.previewDirty,'Deferred preview remains dirty for restore/flush');
+let metrics=JSON.parse(loop.status.dataset.metrics);assert(Math.abs(metrics.fps-60)<.01);assert.equal(metrics.captureMs,0);
+editor.movement.active=false;assert.equal(loop.draw(2000),false,'Hidden dirty cut must not keep an idle render loop alive');
+maximized=false;assert.equal(loop.draw(2200),false);assert.equal(captures,1,'Returning to dock paints pending manuscript');
+editor.movement.active=true;
+for(let i=0;i<120;i++)loop.draw(2400+i*1000/60);
+assert(captures>=10&&captures<=14,'Visible manuscript retains bounded live preview');
+const before=captures;fullscreen=true;
+for(let i=0;i<120;i++)loop.draw(4500+i*1000/60);
+assert.equal(captures,before,'Fullscreen also covers the manuscript');
+fullscreen=false;editor.advanced.skies.pending=true;loop.draw(6600);assert.equal(captures,before,'Do not capture a half-loaded sky');
+editor.advanced.skies.pending=false;loop.draw(6800);assert.equal(captures,before+1);
+editor.isOpen=false;assert.equal(loop.draw(7000),false);assert.equal(info.autoReset,true);
+console.log('PASS: display-cadence motion, hidden/fullscreen capture suppression, dock refresh, idle sleep and pending sky');
