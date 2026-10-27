@@ -1,0 +1,25 @@
+import './test-module-loader.mjs';
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+registerHooks({resolve(s,c,next){if(s==='three')return{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true};return next(s,c);}});
+const T=await import('three');
+const {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject,applyEnvironmentPlacement,applyObjectGroups,pickSceneTarget}=await import('../dist/scene-object-transform.js');
+const e={scene:new T.Scene(),environment:new T.Group(),figures:new T.Group(),state:{asset:'room',look:{objects:{}}},doors:{items:[]},stairs:{items:[]}};
+e.scene.add(e.environment,e.figures);
+const parent=new T.Group();parent.position.set(2,.4,-3);parent.rotation.y=.6;parent.scale.setScalar(.6);e.environment.add(parent);
+const box=new T.Mesh(new T.BoxGeometry(1,2,1),new T.MeshBasicMaterial());box.position.set(1,2,0);box.rotation.set(.2,.1,-.1);parent.add(box);
+const base={position:box.position.clone(),rotation:box.rotation.clone(),scale:box.scale.clone()};e.advanced={meshes:[box],bases:new Map([[box,base]]),settings:()=>e.state.look};
+const target=objectTarget(e,box),proxy=new T.Object3D();e.scene.add(proxy);objectProxy(target,proxy);
+const before=snapshotObject(e,target),start=proxy.position.clone();proxy.position.add(new T.Vector3(1,2,3));applyObjectProxy(e,target,proxy);
+assert(box.localToWorld(target.pivot.clone()).distanceTo(start.clone().add(new T.Vector3(1,2,3)))<1e-6,'World axes work under transformed import parents');
+const pivot=proxy.position.clone();proxy.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),.7));proxy.scale.multiplyScalar(1.5);applyObjectProxy(e,target,proxy);
+assert(box.localToWorld(target.pivot.clone()).distanceTo(pivot)<1e-6,'Rotation and scale preserve the selected pivot');
+const saved=JSON.parse(JSON.stringify(e.state.look.objects[0])),matrix=box.matrixWorld.clone();
+box.position.copy(base.position).add(new T.Vector3(...saved.position));box.rotation.set(...saved.rotation.map((a,i)=>base.rotation.toArray()[i]+T.MathUtils.degToRad(a)));box.scale.copy(base.scale).multiply(new T.Vector3(...saved.scale));box.updateMatrixWorld(true);
+matrix.elements.forEach((x,i)=>assert(Math.abs(x-box.matrixWorld.elements[i])<1e-6,'Saved local deltas reproduce the transformed mesh'));
+restoreObject(e,target,before);assert(box.position.equals(base.position));assert.deepEqual(e.state.look.objects,{});
+const env=objectTarget(e,e.environment,new T.Vector3(0,0,0));objectProxy(env,proxy);proxy.position.set(4,2,-1);proxy.rotation.y=.4;proxy.scale.setScalar(1.2);applyObjectProxy(e,env,proxy);const expectedEnv=e.environment.position.clone(),savedEnv=JSON.parse(JSON.stringify(e.state));e.environment.position.set(0,0,0);e.environment.rotation.set(0,0,0);e.environment.scale.setScalar(1);e.state=savedEnv;applyEnvironmentPlacement(e);assert(e.environment.position.distanceTo(expectedEnv)<1e-6);assert.equal(e.state.environmentPlacement.room.z,expectedEnv.y);
+const prop={data:{id:'door-1'},root:new T.Group()};prop.root.add(new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial()));e.environment.add(prop.root);e.doors.items=[prop];const propTarget=objectTarget(e,prop.root.children[0]);assert.equal(propTarget.kind,'prop');objectProxy(propTarget,proxy);proxy.position.x+=1;applyObjectProxy(e,propTarget,proxy);const propMatrix=prop.root.matrixWorld.clone();prop.root.position.set(0,0,0);applyObjectGroups(e);propMatrix.elements.forEach((x,i)=>assert(Math.abs(x-prop.root.matrixWorld.elements[i])<1e-6));
+// A wall in front wins over a person behind it. Hidden ancestry is excluded.
+const wall=new T.Mesh(new T.BoxGeometry(4,4,.1),new T.MeshBasicMaterial()),figure=new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial());figure.userData.person=0;figure.position.z=-2;e.figures.add(figure);const simple={environment:new T.Group(),figures:e.figures};simple.environment.add(wall);simple.environment.updateMatrixWorld(true);e.figures.updateMatrixWorld(true);const ray=new T.Raycaster(new T.Vector3(0,0,5),new T.Vector3(0,0,-1));assert.equal(pickSceneTarget(simple,ray).object,wall);simple.environment.visible=false;assert.equal(pickSceneTarget(simple,ray).object,figure);
+console.log('PASS: background/mesh/prop picking, occlusion, world axes under transformed parents, pivot rotation/scale, save/restore and cancellation.');

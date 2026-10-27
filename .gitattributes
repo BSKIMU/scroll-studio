@@ -10,3 +10,7 @@
 *.ttf binary
 *.woff2 binary
 *.wasm binary
+*.hdr binary
+*.bin binary
+*.png binary
+*.webp binary

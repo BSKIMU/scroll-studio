@@ -32,3 +32,24 @@ __pycache__/
 !/tools/prepare-pages.mjs
 !/tools/test-hosted-motion.mjs
 !/tools/test-movement-entry.mjs
+!/tools/check-figure-rig.mjs
+!/tools/convert-body-figures.py
+
+!/tools/test-camera-navigation.mjs
+
+!/tools/test-background-ground.mjs
+!/tools/test-scene-workspace.mjs
+!/tools/test-walk-navigation.mjs
+!/tools/generate-cloud-noise.py
+!/tools/render-figure-portraits.py
+!/tools/test-scene-sky.mjs
+
+# Preserve original local sky copies; authorized web derivatives are in assets/skies.
+/dist/assets/local-skies/
+!/tools/test-hand-closure.mjs
+!/tools/test-hdri-lighting.mjs
+!/tools/test-shot-camera.mjs
+!/tools/test-scene-selection.mjs
+!/tools/test-scene-groups.mjs
+!/tools/check-site-assets.mjs
+!/tools/test-live-release.mjs

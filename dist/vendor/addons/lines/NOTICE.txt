@@ -1,0 +1,4 @@
+LineMaterial.js, LineSegments2.js and LineSegmentsGeometry.js
+Official Three.js r180 examples, matching the bundled Three.js revision.
+https://github.com/mrdoob/three.js/tree/r180/examples/jsm/lines
+MIT license: ../../THREE-LICENSE.txt

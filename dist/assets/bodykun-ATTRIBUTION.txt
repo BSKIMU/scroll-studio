@@ -1,0 +1,17 @@
+Male figure: original BodyKun body with the reviewed replacement face.
+
+Head source: homework2 male Head
+Author: Liang0110
+License of the supplied head: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+Supplied file: homework2_male_head.glb
+
+Modifications: fitted face and neck to the existing BodyKun body; adjusted facial
+proportions, nose, lips, ears and silhouette; softened cheek, mouth and chin folds.
+Restored the original BodyKun torso and lower neck parts, undoing the trapezius
+lowering. A short neck connector joins the unchanged reviewed face/upper neck.
+The original torso and limb geometry, normals and skin weights are preserved.
+The 62 web rig bones and their inverse bind matrices are unchanged.
+This attribution describes the head component, not a new license for the BodyKun body.
+Original supplied source files are preserved outside the repository. The web GLB
+is included at the project owner's request (2026-10-27).

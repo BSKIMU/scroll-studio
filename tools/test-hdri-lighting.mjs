@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import {registerHooks} from 'node:module';
+registerHooks({resolve(s,c,next){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(s,c);}});
+const T=await import('three'),{analyzeHDRLighting,rotatedHDRDirection}=await import('../dist/hdri-lighting.js'),{applyLighting,updateLightFrame,lightingDefaults}=await import('../dist/lighting-rig.js');
+function panorama(value){const width=128,height=64,data=new Uint16Array(width*height*4);for(let y=0;y<height;y++)for(let x=0;x<width;x++){const c=value(x,y);for(let k=0;k<3;k++)data[(y*width+x)*4+k]=T.DataUtils.toHalfFloat(c[k]);}return {data,width,height};}
+const sky=analyzeHDRLighting(panorama(()=>[1,1,1]));assert(Math.abs(sky.mean-1)<.001,'Uniform sky is integrated by solid angle, including poles');
+assert.equal(sky.lobes.length,3);assert(sky.lobes.every(l=>l.direction[1]>0&&l.intensity>0));
+const black=analyzeHDRLighting(panorama(()=>[0,0,0]));assert.deepEqual(black,{mean:0,lobes:[]});
+const patch=scale=>panorama((x,y)=>x>=62&&x<66&&y>=14&&y<18?[scale,scale*.5,scale*.25]:[0,0,0]);
+const low=analyzeHDRLighting(patch(4)),high=analyzeHDRLighting(patch(8));assert(Math.abs(high.mean/low.mean-2)<1e-6,'HDR brightness scales linearly');
+assert(low.lobes[0].color[0]>low.lobes[0].color[1]&&low.lobes[0].color[1]>low.lobes[0].color[2]);
+assert(low.lobes[0].direction[0]>.6&&low.lobes[0].direction[1]>.6,'Source longitude and upper hemisphere match panorama mapping');
+const direction=rotatedHDRDirection([1,0,0],90);assert(direction.distanceTo(new T.Vector3(0,0,-1))<1e-9);
+const e={scene:new T.Scene(),camera:new T.PerspectiveCamera(),controls:{target:new T.Vector3(0,1,0)},sun:new T.DirectionalLight(),fillLight:new T.DirectionalLight(),rimLight:new T.DirectionalLight(),ambient:new T.HemisphereLight(),renderer:{shadowMap:{}},hdriLighting:sky};
+e.camera.position.set(4,2,5);
+const settings={...lightingDefaults,skyPreset:'hdri-day',hdriNatural:true,hdriLight:.7,skyRotation:35,shadows:true,exposure:1,sun:3,ambient:1,lightColor:'#fff',ground:'#333',azimuth:40,altitude:45};
+const saved=structuredClone(settings);applyLighting(e,settings);assert.deepEqual(settings,saved,'Automatic lighting does not overwrite manual settings');
+assert([e.sun,e.fillLight,e.rimLight].every(l=>l.castShadow));assert.equal(e.ambient.intensity,0);assert(e.scene.environmentIntensity<.2,'Only a weak residual environment bypasses walls');
+const before=e.fillLight.position.clone().sub(e.fillLight.target.position).normalize();e.camera.position.set(-5,1,0);updateLightFrame(e,settings);assert(before.distanceTo(e.fillLight.position.clone().sub(e.fillLight.target.position).normalize())<1e-9,'Natural light never follows the camera');
+applyLighting(e,{...settings,hdriNatural:false});assert.equal(e.sun.intensity,3);assert.equal(e.ambient.intensity,1);assert.equal(e.fillLight.castShadow,false);assert.equal(e.scene.environmentIntensity,.7);
+applyLighting(e,{...settings,hdriLight:0});assert([e.sun,e.fillLight,e.rimLight].every(l=>l.intensity===0));assert.equal(e.scene.environmentIntensity,0);
+console.log('PASS: spherical HDR energy, direction/color, brightness scaling, fixed camera-independent natural lights, occlusion budget and manual override');

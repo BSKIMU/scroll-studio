@@ -1,0 +1,25 @@
+#startImportStatus{color:#c3d6ed;font-size:13px;line-height:1.5}
+#startImportStatus[hidden]{display:none}
+.editor-workspaces{display:flex;gap:2px;align-items:center;border:1px solid #5e7284;border-radius:4px;padding:2px;margin-left:6px}
+.editor-workspaces button{border:0;padding:4px 10px;white-space:nowrap}
+.editor-workspaces [aria-pressed=true]{background:#287aad;color:white}
+#sceneDockHandle{cursor:grab;touch-action:none;min-width:0;flex:1}
+#sceneDockHandle:focus-visible{outline:1px solid #67bdff;outline-offset:2px}
+#maximizeScene{width:30px;height:28px;padding:5px;display:grid;place-items:center;flex:none}
+#maximizeScene svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+#sceneDockDrop{position:fixed;z-index:2147483000;pointer-events:none;border:3px solid #67bfff;background:#258ee859;display:grid;place-items:center;font:600 16px system-ui;color:white;box-sizing:border-box}
+#sceneDockDrop[hidden]{display:none}
+.scene-docking,.scene-docking *{cursor:grabbing!important;user-select:none!important}
+body.studio-ui.scene-maximized #sceneDialog{position:fixed;inset:var(--scene-max-top,64px) 0 0 0;width:auto;height:auto;max-width:none;max-height:none;z-index:100000;border-left:0;display:flex}
+body.studio-ui.scene-maximized #sceneDialog .scene-layout.resizable-scene{display:grid;grid-template-columns:minmax(0,1fr) 310px;grid-template-rows:auto 14px minmax(120px,1fr);gap:0}
+body.studio-ui.scene-maximized #sceneDialog .scene-controls{grid-column:2;grid-row:1/4;border-left:1px solid #596876;min-width:0;height:100%;max-height:none}
+body.studio-ui.scene-maximized #sceneDialog #sceneView{grid-column:1;grid-row:3;min-height:0}
+body.studio-ui.scene-maximized #sceneSettingsGrip,body.studio-ui.scene-maximized #dockProperties{display:none}
+body.studio-ui.scene-maximized #sceneDialog .scene-property-group{grid-template-columns:minmax(0,1fr)}
+body.studio-ui.scene-maximized #sceneDialog .scene-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){body.studio-ui.scene-maximized #sceneDialog .scene-layout.resizable-scene{grid-template-columns:minmax(0,1fr) 220px}.editor-workspaces button{padding:4px}}
+#welcome{background:#252d35;border-color:#576c80;color:#e8eff5}
+#welcome .start.primary{background:#3186b6;border-color:#4b9bc9;color:white}
+#welcome .start{border-color:#526a7d;background:#303b47;color:#e5edf5}
+#welcome .welcome-top .eyebrow,#welcome .version{color:#a8c6dc}
+#welcome .busy-overlay{background:#202831ed;color:#c9e6fa;z-index:100}

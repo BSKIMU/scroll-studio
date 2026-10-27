@@ -16,5 +16,6 @@ for(const {name} of files){
   assert(existsSync(resolve(dirname(file),ref.split(/[?#]/)[0])),`${name}: missing ${ref}`);
  }
 }
-for(const test of ['test-template','test-tool-switching','test-tool-order','test-frame-input','test-editing-history','test-canvas-documents','test-hosted-motion','test-movement-entry'])run(['--import','./tools/test-module-loader.mjs',`tools/${test}.mjs`]);
-console.log(`PASS: ${files.length} source files, relative entry points, 6 editing and 2 movement checks`);
+const tests=['test-template','test-tool-switching','test-tool-order','test-frame-input','test-editing-history','test-canvas-documents','test-hosted-motion','test-movement-entry','test-camera-navigation','test-walk-navigation','test-background-ground','test-scene-workspace','test-scene-sky','test-hand-closure','test-hdri-lighting','test-shot-camera','test-scene-selection','test-scene-groups','check-site-assets'];
+for(const test of tests)run(['--import','./tools/test-module-loader.mjs',`tools/${test}.mjs`]);
+console.log(`PASS: ${files.length} source files, relative entry points and ${tests.length} editing/3D/asset checks`);

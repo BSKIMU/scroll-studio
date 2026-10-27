@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {DoorMotion} from './door-motion.js?v=20261025-release1';
 import {SlidingDoorMotion} from './sliding-door-motion.js?v=20261025-release1';
-import {movementDefaults} from './movement-controller.js?v=20261025-release1';
+import {movementDefaults} from './movement-controller.js?v=20261026-navigation2';
 export class DoorPassageMotion{
  constructor(m,selection,options={}){this.motion=m;this.selection=selection;this.door=selection.door;this.options=options;this.speed=options.speed||1;this.mode='door';this.paused=false;this.done=false;this.error='';this.time=0;this.grip=0;this.startFeet=m.physics.feet.clone();this.startHeading=m.controller.heading;this.startAngle=this.door.data.angle;this.reset();}
  make(open,side){return new (this.door.data.kind==='sliding'?SlidingDoorMotion:DoorMotion)(this.motion,{door:this.door,side},{...this.options,open,speed:1});}

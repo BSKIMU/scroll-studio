@@ -1,0 +1,71 @@
+Static HDRI environments (2048 x 1024 Radiance RGBE)
+
+Kloofendal 48d Partly Cloudy (Pure Sky)
+Greg Zaal (original), Jarod Guest (sky edits), Poly Haven
+https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
+MD5: 2eba3a4d7eeb23cbfbeca364c97e7980
+
+Kloppenheim 06 (Pure Sky)
+Greg Zaal (original), Jarod Guest (sky edits), Poly Haven
+https://polyhaven.com/a/kloppenheim_06_puresky
+MD5: 590a829b3cf71216451655e601d542c6
+
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+Asset license: https://polyhaven.com/license
+Downloaded from official Poly Haven files API on 2026-10-27.
+Original HDR radiance retained; no personal images or uploaded assets involved.
+
+HDRLoader.js is the official Three.js r180 loader, distributed under the
+existing vendor/THREE-LICENSE.txt (MIT).
+
+Qwantani Night (Pure Sky)
+Greg Zaal (Photography), Jarod Guest (Processing), Poly Haven
+https://polyhaven.com/a/qwantani_night_puresky
+MD5: a2ef5b92f49f77b5bad15add5dad4feb
+CC0 1.0. Original 2k HDR radiance retained. Downloaded 2026-10-27.
+
+Additional sky presets (downloaded from official Poly Haven on 2026-10-27):
+
+Belfast Sunset (Pure Sky)
+Dimitrios Savva, Greg Zaal, Jarod Guest
+https://polyhaven.com/a/belfast_sunset_puresky
+File: belfast_sunset_puresky_2k.hdr
+
+Snow Field (Pure Sky)
+Jarod Guest, Sergej Majboroda
+https://polyhaven.com/a/snow_field_puresky
+File: snow_field_puresky_2k.hdr
+
+Kloofendal Overcast (Pure Sky)
+Greg Zaal
+https://polyhaven.com/a/kloofendal_overcast_puresky
+File: kloofendal_overcast_puresky_2k.hdr
+
+All three are CC0 1.0. Source HDR files are unchanged. Twilight, rain,
+storm and horror presets apply a static colour grade while loading;
+these variants are not separate photographs. Round WebP previews are
+derived from the same panoramas. No per-frame cloud simulation is used.
+
+Qwantani Dawn (Pure Sky)
+Greg Zaal (Photography), Jarod Guest (Processing), Poly Haven
+https://polyhaven.com/a/qwantani_dawn_puresky
+MD5: 4cb126e77a8f28c6ea0638f2ca471366
+CC0 1.0. Original 2k HDR radiance retained. Downloaded 2026-10-27.
+
+Qwantani Sunrise (Pure Sky)
+Greg Zaal (Photography), Jarod Guest (Processing), Poly Haven
+https://polyhaven.com/a/qwantani_sunrise_puresky
+MD5: b5d5244221b3571199032dae0d9d6c5c
+CC0 1.0. Original 2k HDR radiance retained. Downloaded 2026-10-27.
+
+Qwantani Dusk 2 (Pure Sky)
+Greg Zaal (Photography), Jarod Guest (Processing), Poly Haven
+https://polyhaven.com/a/qwantani_dusk_2_puresky
+MD5: a6754f300315d6b2e06c4682009a7991
+CC0 1.0. Original 2k HDR radiance retained. Downloaded 2026-10-27.
+
+Clarens Night 02 (moonlit clouds; active night preset)
+Dimitrios Savva (Photography), Jarod Guest (Processing), Poly Haven
+https://polyhaven.com/a/clarens_night_02
+MD5: 38cd55b96bd7430d57bb9c1f690c6c6e
+CC0 1.0. Original 2k HDR radiance retained. Downloaded 2026-10-27.

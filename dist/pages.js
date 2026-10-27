@@ -10,12 +10,12 @@ import {appendComicGuides,drawFolio,printRegion,MAX_PAGES,MAX_CUTS} from './comi
 import {pageStack} from './page-layer-stack.js?v=20261025-release1';
 import {toolIcon} from './tool-icons.js?v=20261025-release1';
 import {elementPoint,rasterScale} from './canvas-coordinates.js?v=20261025-release1';
-import {inheritedSceneCut} from './scene-projection.js?v=20261025-release1';
+import {inheritedSceneCut} from './scene-projection.js?v=20261027-studio4';
 import {eyeIcon} from './eye-icon.js?v=20261025-release1';
 import {resizeCutBounds,guideRect} from './frame-geometry.js?v=20261025-release1';
 import {drawOutsideBalloons,splitBalloons} from './balloon-render.js?v=20261025-release1';
 import {splitFrame} from './frame-split.js?v=20261025-release1';
-import {seedFigure} from './mannequin.js?v=20261025-release1';
+import {seedFigure} from './mannequin.js?v=20261027-pose-camera1';
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const frameOrder=(a,b)=>(a.pageBase?(a.onTop?1:-1):0)-(b.pageBase?(b.onTop?1:-1):0);

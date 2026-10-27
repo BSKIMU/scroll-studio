@@ -16,7 +16,12 @@ export function thickenGizmo(helper){
  const gizmo=helper.children.find(o=>o.gizmo);
  for(const mode of ['translate','scale'])for(const mesh of gizmo.gizmo[mode].children){
   if(!mesh.isMesh||!['X','Y','Z'].includes(mesh.name))continue;
-  mesh.geometry=mesh.geometry.clone();const s=[2.4,2.4,2.4];s['XYZ'.indexOf(mesh.name)]=1;mesh.geometry.scale(...s);
+  const old=mesh.geometry,axis=mesh.name.toLowerCase();old.computeBoundingBox();const center=old.boundingBox.getCenter(new T.Vector3()),size=old.boundingBox.getSize(new T.Vector3());
+  if(Math.abs(center[axis])>.35&&size[axis]<.3){
+   const direction=new T.Vector3();direction[axis]=Math.sign(center[axis]);
+   mesh.geometry=new T.ConeGeometry(.065,.2,16).applyQuaternion(new T.Quaternion().setFromUnitVectors(new T.Vector3(0,1,0),direction)).translate(center.x,center.y,center.z);
+  }else{mesh.geometry=old.clone();const s=[2.4,2.4,2.4];s['XYZ'.indexOf(mesh.name)]=1;mesh.geometry.scale(...s);}
+  old.dispose();
  }
 }
 

@@ -179,7 +179,7 @@ export class WalkController {
   }
   attach(rig){
     if(!rig.supported||!rig.pelvis)throw Error('Walk 보행의 뼈 대응이 없는 소체입니다.');
-    this.rig=rig;this.base=rig.snapshot();rig.reset();
+    this.rig=rig;this.base=rig.snapshot();rig.reset();this.poseFloorOffset=0;
     this.bindings=this.makeBindings(rig,this.source);this.bodyBindings=new Map(this.bindings.map(b=>[b.target,b]));
     this.jumpBindings=new Map(this.makeBindings(rig,this.jumpSource).map(b=>[b.target,b]));
     this.legRatio=(rig.chains.leftFoot.l1+rig.chains.leftFoot.l2)/(this.source.chains.leftFoot.l1+this.source.chains.leftFoot.l2);
@@ -448,9 +448,18 @@ export class WalkController {
       if(f.release&&(f.release.u+=dt/RELEASE)>=1)f.release=null;
     }
   }
+  calibrateGround(){
+    // Leg-length retargeting alone leaves different ankle/hip proportions
+    // floating. Measure the actual skinned soles once, in the neutral clip.
+    this.rig.root.updateMatrixWorld(true);
+    this.rig.object.traverse(o=>{if(o.skeleton)o.skeleton.update();});
+    let bottom=Infinity;
+    for(const foot of Object.values(this.feet))for(const {mesh,index}of foot.skinVertices)bottom=Math.min(bottom,mesh.getVertexPosition(index,V()).applyMatrix4(mesh.matrixWorld).y);
+    if(Number.isFinite(bottom)){this.poseFloorOffset+=bottom-(this.groundY||0);this.renderPose();}
+  }
   hipOffset(r,k,hip){
     // Pelvis in root space: the source sway around hipS, and the source height above its standing floor.
-    return hip.add(V(r.hip.x-r.hipS.x,r.hip.y-(r.floor[0]+r.floor[2])/2+this.footHeight,r.hip.z-r.hipS.z).multiplyScalar(k));
+    return hip.add(V(r.hip.x-r.hipS.x,r.hip.y-(r.floor[0]+r.floor[2])/2+this.footHeight-(this.poseFloorOffset||0),r.hip.z-r.hipS.z).multiplyScalar(k));
   }
   contactFrame(parts){
     // Contact points of the blended output relative to the root (source axes), by forward kinematics with

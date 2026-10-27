@@ -1,0 +1,16 @@
+Web sky derivatives included at the project owner's request, 2026-10-27.
+The original Blender files and linked source images remain outside this repository.
+
+Aurora Dark Night Clouds
+BlenderKit asset_base_id: 823d0f03-9dd1-423f-8416-e39c33c19299
+Asset version: 29063b89-76f9-4b49-a280-e87b42145927
+https://www.blenderkit.com/asset-gallery-detail/823d0f03-9dd1-423f-8416-e39c33c19299/
+Embedded BlenderKit metadata reports license: CC0 (cc_zero).
+The supplied 4500x2250 linear EXR was downsampled to a 2048x1024 Radiance HDR.
+hdri-aurora.webp is a derived spherical preview.
+
+Anime Sky
+Source: user-supplied Toon Skydome.blend, packed awan biru.png (16000x4000).
+The hemisphere UV was baked in Blender into anime-sky.webp (4096x1024).
+This notice records provenance and does not grant a separate asset license.
+The source asset retains its original rights; it is not covered by library licenses.

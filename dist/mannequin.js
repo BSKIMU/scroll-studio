@@ -1,23 +1,40 @@
 import {updatePhone} from './scene-phone.js?v=20261025-release1';
 import {jointBones,limitJoint} from './joint-pose.js?v=20261025-release1';
-import {createHandRig,applyHandPose,applyFigureTransform} from './hand-pose.js?v=20261025-release1';
+import {createHandRig,applyHandPose,applyFigureTransform,automaticHands,clearIdleHands} from './hand-pose.js?v=20261027-pose-camera1';
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone} from 'three/addons/utils/SkeletonUtils.js';
 import {solveLimb} from './pose-math.js?v=20261025-release1';
-let template,pending;
-export const defaultPerson=()=>({model:'mixamo',x:0,z:0,rotation:0,height:175,pose:'stand'});
-export function seedFigure(c){c.scene.people.forEach(p=>p.model='mixamo');if(!c.scene.people.length){c.scene.people=[defaultPerson()];if(c.scene.asset==='empty'){c.scene.camera=[.3,1.2,2.8];c.scene.target=[0,.9,0];}}return c;}
-export async function loadMannequin(){if(template)return;pending??=new GLTFLoader().loadAsync('./assets/mixamo.glb').then(g=>{template=g.scene;}).catch(e=>{pending=null;throw e;});await pending;}
+export const figureModels=Object.freeze({bodychan:'여성',bodykun:'남성',mixamo:'Mixamo'});
+export const figureHeights=Object.freeze({bodychan:165,bodykun:180,mixamo:175});
+const templates=new Map(),pending=new Map();
+export const hasFigureModel=p=>Object.hasOwn(figureModels,p?.model);
+export const defaultPerson=(model='bodychan')=>({model,x:0,z:0,rotation:0,height:figureHeights[model],pose:'stand'});
+export function seedFigure(c){if(!c.scene.people.length){c.scene.people=[defaultPerson()];if(c.scene.asset==='empty'){c.scene.camera=[.3,1.2,2.8];c.scene.target=[0,.9,0];}}return c;}
+export function setFigureModel(person,model){
+ if(!Object.hasOwn(figureModels,model)||person.model===model)return false;
+ person.model=model;person.height=figureHeights[model];person.pose='stand';
+ // Frozen local transforms belong to their original skeleton and proportions.
+ for(const key of ['motionPose','joints','targets','jointLocks','hands','fingers','handMode'])delete person[key];
+ return true;
+}
+export async function loadMannequin(){
+ await Promise.all(Object.keys(figureModels).map(async key=>{
+  if(templates.has(key))return;
+  if(!pending.has(key))pending.set(key,new GLTFLoader().loadAsync(new URL(`./assets/${key}.glb${key==='bodykun'?'?v=20261027-body-restore1':''}`,import.meta.url).href).then(g=>templates.set(key,g.scene)).finally(()=>pending.delete(key)));
+  await pending.get(key);
+ }));
+}
 // Pose Lab retargets from the bind pose in world metres, independently of the displayed pose.
 export function movementModel(p){
- const model=clone(template);model.updateMatrixWorld(true);
+ const model=clone(templates.get(p.model));model.updateMatrixWorld(true);
  let box=new T.Box3().setFromObject(model);model.scale.multiplyScalar(1.75/(box.max.y-box.min.y));model.updateMatrixWorld(true);
  box=new T.Box3().setFromObject(model);model.position.y-=box.min.y;
  const scale=new T.Vector3().fromArray(p.scale||[1,1,1]).multiplyScalar(p.height/175);
  model.position.multiply(scale);model.scale.multiply(scale);model.updateMatrixWorld(true);return model;
 }
 export function mannequin(p,i){
+ const template=templates.get(p.model);
  if(!template)return null;
  const g=new T.Group(),model=clone(template);g.add(model);g.userData.person=i;g.userData.landmarks={};
  model.traverse(o=>{if(o.isMesh){o.geometry=o.geometry.clone();o.material=o.material.clone();o.frustumCulled=false;}});
@@ -29,7 +46,8 @@ export function mannequin(p,i){
  function aim(b,end,target){const start=pos(b),dir=pos(end).sub(start).normalize(),to=new T.Vector3(...target).sub(start).normalize(),world=b.getWorldQuaternion(new T.Quaternion()),parent=b.parent.getWorldQuaternion(new T.Quaternion());b.quaternion.copy(parent.invert().multiply(new T.Quaternion().setFromUnitVectors(dir,to).multiply(world)));g.updateMatrixWorld(true);}
  for(const [side,sign] of [['Left',1],['Right',-1]]){
   const arm=bones[side+'Arm'],fore=bones[side+'ForeArm'],hand=bones[side+'Hand'],leg=bones[side+'UpLeg'],knee=bones[side+'Leg'],foot=bones[side+'Foot'];
-  let a=pos(arm);aim(arm,fore,[a.x+sign*.07,a.y-.3,a.z+.015]);a=pos(fore);aim(fore,hand,[a.x-sign*.01,a.y-.28,a.z+.055]);
+  const relaxed=p.model==='bodychan';
+  let a=pos(arm);aim(arm,fore,[a.x+sign*(relaxed?(sign===1?.05:.06):.07),a.y-.3,a.z+.015]);a=pos(fore);aim(fore,hand,[a.x+sign*(relaxed?.025:p.model==='bodykun'?.01:-.01),a.y-.28,a.z+(relaxed?(sign===1?.035:.045):.055)]);
   if(p.pose==='reach'&&sign===1){a=pos(arm);aim(arm,fore,[a.x+.4,a.y,a.z+.1]);a=pos(fore);aim(fore,hand,[a.x+.3,a.y,a.z]);}
   if(p.pose==='walk'){a=pos(leg);aim(leg,knee,[a.x,a.y-.45,a.z+sign*.22]);a=pos(arm);aim(arm,fore,[a.x+sign*.08,a.y-.3,a.z-sign*.15]);}
   if(p.pose==='sit'){a=pos(leg);aim(leg,knee,[a.x,a.y-.04,a.z+.45]);a=pos(knee);aim(knee,foot,[a.x,a.y-.45,a.z]);}
@@ -38,7 +56,7 @@ export function mannequin(p,i){
    const hit=new T.Mesh(new T.SphereGeometry(.065,8,6),new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));hit.position.fromArray(g.userData.landmarks[key]);hit.userData.part=key;hit.userData.poseMarker=true;hit.material.color.set(0x9e8bdf);hit.material.opacity=.65;hit.material.depthTest=false;g.add(hit);
   }
  }
- g.userData.basePose=p.pose;g.userData.motionRig={bones,model,fingers,jointFrames:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,b.parent.getWorldQuaternion(new T.Quaternion())])),transforms:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,{p:b.position.clone(),s:b.scale.clone()}])),modelBase:{p:model.position.clone(),q:model.quaternion.clone(),s:model.scale.clone()},base:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,b.quaternion.clone()]))};
+ g.userData.baseModel=p.model;g.userData.basePose=p.pose;g.userData.motionRig={bones,model,fingers,jointFrames:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,b.parent.getWorldQuaternion(new T.Quaternion())])),transforms:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,{p:b.position.clone(),s:b.scale.clone()}])),modelBase:{p:model.position.clone(),q:model.quaternion.clone(),s:model.scale.clone()},base:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,b.quaternion.clone()]))};
  applyMovementPose(g,p);
  applyFigureTransform(g,p);return g;
 }
@@ -79,6 +97,7 @@ export function applyMovementPose(g,p){
   const point=g.localToWorld(new T.Vector3(...target)),[mid,end]=solveLimb(world(a).toArray(),world(b).toArray(),world(c).toArray(),point.toArray());aim(a,b,mid);aim(b,c,end);if(p.jointLimits!==false){a.quaternion.copy(limitJoint(rig,upper,a.quaternion));b.quaternion.copy(limitJoint(rig,lower,b.quaternion));g.updateMatrixWorld(true);}
  }
 
+ if(!pose&&p.pose==='stand'&&p.model==='bodychan'||pose?.kind==='pose-lab'&&pose.handGrip===undefined&&p.pose==='stand'&&automaticHands(p))clearIdleHands(g,p);
  applyHandPose(g,p);g.position.copy(placement.p);g.quaternion.copy(placement.q);g.scale.copy(placement.s);updateFigureLandmarks(g);updatePhone(g,p);
 }
 export function updateFigureLandmarks(g){

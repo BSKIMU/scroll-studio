@@ -1,7 +1,8 @@
 import * as T from 'three';
+import {rotatedHDRDirection} from './hdri-lighting.js?v=20261027-natural1';
 
 export const lightingDefaults={ambientColor:'#e6efff',fill:.35,fillColor:'#b9d1ff',rim:.3,rimColor:'#ffe0bb',shadowSoftness:2,shadowFocus:12};
-const base={shadows:true,contrast:100,saturation:100,exposure:1,shadowFocus:12,shadowSoftness:2,...lightingDefaults};
+const base={hdriNatural:false,shadows:true,contrast:100,saturation:100,exposure:1,shadowFocus:12,shadowSoftness:2,...lightingDefaults};
 export const lightingPresets=[
  ['창가 자연광',{...base,sun:3.2,ambient:1.4,lightColor:'#fff0d9',ambientColor:'#e3eeff',ground:'#b0bac3',azimuth:-90,altitude:32,fill:.45,rim:.15,shadowSoftness:3,shadowFocus:5,exposure:1.1}],
  ['스튜디오',{...base,sun:3,ambient:1.1,lightColor:'#fff5e9',ground:'#8893a5',azimuth:35,altitude:55}],
@@ -17,18 +18,33 @@ export const lightingPresets=[
 // A fixed-size map covers the current composition rather than the whole palace.
 export function updateLightFrame(e,s){
  const center=e.controls.target.clone(),radius=T.MathUtils.clamp(s.shadowFocus||12,4,40),a=T.MathUtils.degToRad(s.azimuth),h=T.MathUtils.degToRad(s.altitude);
- e.sun.target.position.copy(center);e.sun.position.copy(center).add(new T.Vector3(Math.sin(a)*Math.cos(h),Math.sin(h),Math.cos(a)*Math.cos(h)).multiplyScalar(60));
- const eye=e.camera.position.clone().sub(center);eye.y=Math.max(2,eye.y);eye.normalize();
- e.fillLight.position.copy(center).addScaledVector(eye,20);e.rimLight.position.copy(center).addScaledVector(eye,-20);e.rimLight.position.y+=10;
+ const natural=s.hdriNatural!==false&&s.skyPreset?.startsWith('hdri-')&&e.hdriLighting;
+ if(natural){
+  [e.sun,e.fillLight,e.rimLight].forEach((light,i)=>{const lobe=natural.lobes[i];light.position.copy(center).addScaledVector(lobe?rotatedHDRDirection(lobe.direction,s.skyRotation):new T.Vector3(0,1,0),60);});
+ }else{
+  e.sun.position.copy(center).add(new T.Vector3(Math.sin(a)*Math.cos(h),Math.sin(h),Math.cos(a)*Math.cos(h)).multiplyScalar(60));
+  const eye=e.camera.position.clone().sub(center);eye.y=Math.max(2,eye.y);eye.normalize();
+  e.fillLight.position.copy(center).addScaledVector(eye,20);e.rimLight.position.copy(center).addScaledVector(eye,-20);e.rimLight.position.y+=10;
+ }
  for(const light of [e.sun,e.fillLight,e.rimLight]){light.target.position.copy(center);if(!light.target.parent)e.scene.add(light.target);}
- Object.assign(e.sun.shadow.camera,{left:-radius,right:radius,top:radius,bottom:-radius,near:.5,far:160});e.sun.shadow.camera.updateProjectionMatrix();
+ for(const light of [e.sun,e.fillLight,e.rimLight]){Object.assign(light.shadow.camera,{left:-radius,right:radius,top:radius,bottom:-radius,near:.5,far:160});light.shadow.camera.updateProjectionMatrix();}
 }
 
 export function applyLighting(e,s){
- e.sun.color.set(s.lightColor);e.sun.intensity=s.sun;e.sun.castShadow=s.shadows;
- e.ambient.color.set(s.ambientColor);e.ambient.intensity=s.ambient;e.ambient.groundColor.set(s.ground);
- e.fillLight.color.set(s.fillColor);e.fillLight.intensity=s.fill;e.rimLight.color.set(s.rimColor);e.rimLight.intensity=s.rim;
+ const natural=s.hdriNatural!==false&&s.skyPreset?.startsWith('hdri-')&&e.hdriLighting,lights=[e.sun,e.fillLight,e.rimLight];
+ if(natural){
+  const gain=Math.max(0,s.hdriLight??1);
+  lights.forEach((light,i)=>{const lobe=natural.lobes[i];light.color.setRGB(...(lobe?.color||[1,1,1]));light.intensity=Math.min(16,(lobe?.intensity||0)*gain*.85);light.castShadow=!!s.shadows&&light.intensity>.001;});
+  // A small residual IBL approximates soft bounce; the main energy now uses
+  // shadowed lights so an opaque wall no longer receives full outdoor light.
+  e.scene.environmentIntensity=gain*.15;e.ambient.intensity=0;
+ }else{
+  e.sun.color.set(s.lightColor);e.sun.intensity=s.sun;e.sun.castShadow=s.shadows;
+  e.ambient.color.set(s.ambientColor);e.ambient.intensity=s.ambient;e.ambient.groundColor.set(s.ground);
+  e.fillLight.color.set(s.fillColor);e.fillLight.intensity=s.fill;e.rimLight.color.set(s.rimColor);e.rimLight.intensity=s.rim;
+  e.fillLight.castShadow=e.rimLight.castShadow=false;e.scene.environmentIntensity=s.hdriLight??1;
+ }
  e.renderer.toneMappingExposure=s.exposure;e.renderer.shadowMap.enabled=s.shadows;e.renderer.shadowMap.type=T.PCFShadowMap;
- e.sun.shadow.mapSize.set(2048,2048);e.sun.shadow.normalBias=.012;e.sun.shadow.bias=-.00008;e.sun.shadow.radius=s.shadowSoftness;
+ lights.forEach((light,i)=>{light.shadow.mapSize.set(i?1024:2048,i?1024:2048);light.shadow.normalBias=.006;light.shadow.bias=-.00003;light.shadow.radius=natural?Math.max(2,s.shadowSoftness*2):s.shadowSoftness;});
  updateLightFrame(e,s);
 }

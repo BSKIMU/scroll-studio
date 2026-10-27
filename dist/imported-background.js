@@ -1,18 +1,22 @@
 import * as T from 'three';
+import {findGroundSurface} from './environment-ground.js?v=20261027-selection4';
 const vector=a=>Array.isArray(a)&&a.length===3&&a.every(Number.isFinite);
 
 // Preset coordinates are in source world metres, independent of GLB quantization.
 export function prepareImportedBackground(object,asset){
  let preset=null;object.traverse(o=>{if(o.userData.scrollPreset)preset=o.userData.scrollPreset;});
  const bounds=new T.Box3().setFromObject(object),size=bounds.getSize(new T.Vector3()),center=vector(preset?.normalizationCenter)?new T.Vector3(...preset.normalizationCenter):bounds.getCenter(new T.Vector3());
- const scale=asset.scale||Math.min(1,18/Math.max(size.x,size.z,size.y)),floor=Number.isFinite(preset?.floorY)?preset.floorY:bounds.min.y;
- const wrapper=new T.Group();wrapper.name=asset.name;wrapper.add(object);wrapper.scale.setScalar(scale);wrapper.position.set(-center.x*scale,-floor*scale,-center.z*scale);
+ const scale=asset.scale||Math.min(1,18/Math.max(size.x,size.z,size.y));
+ const explicitFloor=Number.isFinite(preset?.floorY),surface=!explicitFloor&&asset.groundMode==='auto'?findGroundSurface(object):null;
+ const floor=explicitFloor?preset.floorY:surface??bounds.min.y;
+ const wrapper=new T.Group();wrapper.name=asset.name;wrapper.userData.scrollImportRoot=true;object.userData.scrollSourceRoot=true;wrapper.add(object);wrapper.scale.setScalar(scale);wrapper.position.set(-center.x*scale,-floor*scale,-center.z*scale);
  for(const seat of preset?.seats||[]){
   if(!vector(seat.anchor)||!vector(seat.forward))continue;
   const proxy=new T.Group();proxy.name=seat.label||'의자';proxy.userData.scrollSeat={...seat,virtual:true};wrapper.add(proxy);
  }
  if(preset?.seats?.length)object.userData.scrollNoSeat=true;
  wrapper.userData.scrollPresetFloor=Number.isFinite(preset?.floorY);wrapper.updateMatrixWorld(true);
+ if(asset.groundMode==='auto')wrapper.userData.scrollGround={mode:explicitFloor?'preset':surface===null?'bounds':'surface',sourceY:floor};
  const camera=preset&&vector(preset.camera)&&vector(preset.target)?{position:wrapper.localToWorld(new T.Vector3(...preset.camera)),target:wrapper.localToWorld(new T.Vector3(...preset.target)),fov:T.MathUtils.clamp(preset.fov||60,20,100)}:null;
  return {wrapper,camera};
 }

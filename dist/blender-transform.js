@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {transformSnapshot} from './manipulation.js?v=20261025-release1';
+import {transformSnapshot} from './manipulation.js?v=20261026-walk2';
 
 // Blender-facing axes over the existing Y-up project format. No saved data migration.
 export const blenderAxes={X:new T.Vector3(1,0,0),Y:new T.Vector3(0,0,-1),Z:new T.Vector3(0,1,0)};

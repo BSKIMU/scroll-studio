@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "1f879a26b89aaa4b5a7f112f14ec149d08057661",
+  "format": "R8, X fastest, repeat, linear",
+  "volumes": [
+    {
+      "name": "shape",
+      "size": 128,
+      "bytes": 2097152,
+      "sha256": "77ac84ec3722f7f813e7925ab1fb4f26c5a6588f938a126bd57d3d56a56fa7e6"
+    },
+    {
+      "name": "detail",
+      "size": 32,
+      "bytes": 32768,
+      "sha256": "db29e9bf217343cdc98f23e2db8aacca0b5b0e9c02d14fbbfff75e472732d53f"
+    }
+  ]
+}

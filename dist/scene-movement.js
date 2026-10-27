@@ -1,10 +1,11 @@
+import {followCamera,recoverFollow} from './camera-navigation.js?v=20261026-navigation2';
 import {RunInput} from './run-input.js?v=20261025-release1';
 import {actionNames} from './action-sequence.js?v=20261025-release1';
 import {loadInteractionClips} from './furniture-motion.js?v=20261025-release1';
-import {initCollision,SceneCollision} from './scene-collision.js?v=20261025-release1';
+import {initCollision,SceneCollision} from './scene-collision.js?v=20261026-navigation3';
 import * as T from 'three';
-import {movementDirection,movementKeys,editableTarget,movementDefaults} from './movement-controller.js?v=20261025-release1';
-import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261025-release1';
+import {movementDirection,movementKeys,editableTarget,movementDefaults} from './movement-controller.js?v=20261026-navigation2';
+import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261027-pose-camera1';
 const $=id=>document.getElementById(id),speeds=[['moveWalk','walk'],['moveRun','run']];
 
 export class SceneMovement{
@@ -22,6 +23,7 @@ export class SceneMovement{
    <label class="check"><input id="moveFollow" type="checkbox">카메라 따라가기</label>
    <p class="advanced-note">빠른 입력 반응 · 원본 모션<br>카메라를 돌리면 이동 방향도 함께 바뀝니다. 모든 배경의 벽·가구와 충돌하며, 점프해서 윗면에 착지합니다. 가까운 가구 클릭: 앉기 · 넓은 침대 더블클릭: 눕기 · E: 앉기/일어나기. 동작 바를 끌어 원하는 순간에 멈출 수 있습니다.</p>`;
   controls.append(panel);this.panel=panel;
+  panel.prepend(panel.querySelector('.movement-pad'));
   const seatTiming=document.createElement('label');seatTiming.innerHTML='앉기 전환<select id=seatTiming><option value=auto>자동 · 가까운 의자 빠르게</option><option value=fast>빠르게 · 0.45초</option><option value=natural>자연스럽게 · 1.65초</option><option value=slow>천천히 · 2.4초</option></select>';$('interactionSpeed').closest('label').after(seatTiming);$('seatTiming').onchange=e=>{this.settings().seatTiming=e.target.value;if(this.motion){this.motion.interactionOptions.seatTiming=e.target.value;this.motion.seated?.configureTiming?.(e.target.value);}editor.queueLive();};
   const stairStyle=document.createElement('label');stairStyle.innerHTML='계단 오르기<select id=stairStyle><option value=stairs-up>Mixamo · 걷기</option><option value=stairs-ascend>Mixamo · 오르기</option><option value=stairs-run>Mixamo · 뛰어오르기</option></select>';$('seatTiming').closest('label').after(stairStyle);$('stairStyle').onchange=e=>{this.settings().stairStyle=e.target.value;if(this.motion)this.motion.interactionOptions.stairStyle=e.target.value;editor.queueLive();};
   $('interactionVariant').prepend(new Option('자동 · 자연스럽게 자세 바꾸기','auto'));$('interactionVariant').add(new Option('Kimodo · 앉은 호흡 / 미세 움직임','kimodo-seat'));$('interactionVariant').value='auto';
@@ -39,7 +41,7 @@ export class SceneMovement{
 
   const tab=document.createElement('button');tab.textContent='움직임';tab.id='movementTab';
   tab.onclick=()=>{controls.querySelectorAll('.scene-property-group').forEach(p=>p.hidden=p!==panel);tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tab));this.start();};tabs.children[1].after(tab);
-  $('movementStop').onclick=()=>this.stop();$('interactionFreeze').onclick=()=>this.stop();
+  const freeze=()=>{this.stop();surface.focus({preventScroll:true});};$('movementStop').onclick=freeze;$('interactionFreeze').onclick=freeze;
   $('interactLie').onclick=()=>{this.motion?.interact({mode:'lie'});surface.focus({preventScroll:true});};
   $('interactionPause').onclick=()=>{const m=this.motion?.seated;if(m)m.paused=!m.paused;};
   $('interactionReplay').onclick=()=>{const m=this.motion?.seated;if(m?.seek){m.seek(0);m.paused=false;}};
@@ -47,8 +49,8 @@ export class SceneMovement{
   $('interactionVariant').onchange=e=>{if(this.motion){this.motion.interactionOptions.variant=e.target.value;const current=this.motion.seated;if(current?.mode==='sit'){this.motion.perform('pose');this.motion.seated.variant=e.target.value;}}};
   $('interactionSpeed').onchange=e=>{if(this.motion){this.motion.interactionOptions.speed=+e.target.value;if(this.motion.seated)this.motion.seated.speed=+e.target.value;}};$('interactSeat').onclick=()=>{this.motion?.interact();editor.renderer.domElement.focus({preventScroll:true});};
   for(const [id,key]of speeds)$(id).oninput=()=>{this.settings()[key]=Number($(id).value);$(id+'Value').textContent=$(id).value+' m/s';editor.queueLive();};
-  $('moveFollow').onchange=()=>{this.settings().follow=$('moveFollow').checked;editor.queueLive();};
-  const surface=editor.renderer.domElement,focused=target=>target===surface||target===tab||panel.contains(target);
+  $('moveFollow').onchange=()=>{this.settings().follow=$('moveFollow').checked;if(this.settings().follow&&this.active)this.frameFollow();editor.queueLive();};
+  const surface=editor.renderer.domElement,focused=target=>$('sceneDialog').contains(target),movementSelected=()=>!panel.hidden;
   let clickTimer=0;this.cancelFurnitureClick=()=>clearTimeout(clickTimer);const ray=new T.Raycaster(),view=$('sceneView');
   const pick=event=>{const r=surface.getBoundingClientRect();ray.setFromCamera(new T.Vector2((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1),editor.camera);return ray.intersectObject(editor.environment,true)[0];};
   // Camera drag captures pointers on sceneView and suppresses clicks after a drag.
@@ -56,10 +58,14 @@ export class SceneMovement{
   view.addEventListener('click',event=>{if(!this.active||event.button!==0||event.altKey||![surface,view].includes(event.target))return;const hit=pick(event);if(!hit)return;clearTimeout(clickTimer);const pendingMotion=this.motion,token=this.startToken;clickTimer=setTimeout(()=>{if(this.active&&this.motion===pendingMotion&&this.startToken===token&&!this.motion.interact({mode:'sit',point:hit.point,object:hit.object})){this.promptUntil=performance.now()+1800;this.status('의자 옆 빈 통로로 조금 더 가까이 이동하세요.');}},hit.object.userData.scrollSeat||hit.object.parent?.userData.scrollSeat?0:250);});
   view.addEventListener('dblclick',event=>{if(!this.active||event.button!==0||event.altKey||![surface,view].includes(event.target))return;clearTimeout(clickTimer);const hit=pick(event);if(!hit)return;event.preventDefault();event.stopImmediatePropagation();if(!this.motion.interact({mode:'lie',point:hit.point,object:hit.object})){this.promptUntil=performance.now()+1800;this.status('눕기에는 가까운 넓은 가구가 필요합니다.');}},true);
   document.addEventListener('keydown',event=>{ 
-   if(!this.engaged||editableTarget(event.target)||!focused(event.target)||event.ctrlKey||event.metaKey||event.altKey)return;
+   if(editor.fly?.active||(!this.engaged&&!movementSelected())||editableTarget(event.target)||!focused(event.target)||event.ctrlKey||event.metaKey||event.altKey||event.isComposing)return;
    if(event.code==='Escape'){event.preventDefault();event.stopImmediatePropagation();this.stop();return;}
    if(event.code==='KeyE'){event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)this.motion?.interact();return;}if(!movementKeys.has(event.code))return;
-   event.preventDefault();event.stopImmediatePropagation();this.keys.add(event.code);this.runInput.down(event.code,performance.now(),event.repeat);
+   event.preventDefault();event.stopImmediatePropagation();
+   // A layout change or blur may have frozen motion. The selected movement tab
+   // still owns WASD, including S, so resume without falling into Scale.
+   if(!this.engaged)this.start();
+   this.keys.add(event.code);this.runInput.down(event.code,performance.now(),event.repeat);
    if(event.code==='Space'&&!event.repeat)this.motion?.requestJump();
   },true);
   document.addEventListener('keyup',event=>{this.keys.delete(event.code);this.runInput.up(event.code);if(this.engaged&&focused(event.target)&&movementKeys.has(event.code)&&!editableTarget(event.target)){event.preventDefault();event.stopImmediatePropagation();}},true);
@@ -76,29 +82,35 @@ export class SceneMovement{
  }
  get engaged(){return !!(this.active||this.starting||this.resumeAfterLoad);}
  sceneReady(){this.sync();if(this.resumeAfterLoad)queueMicrotask(()=>{if(this.resumeAfterLoad)this.start();});}
- settings(){const s=this.e.state;if(!s)return {...movementDefaults};const settings=s.movement??={};for(const [key,min,max]of [['walk',.3,3],['run',1,6]])settings[key]=Number.isFinite(settings[key])?Math.max(min,Math.min(max,settings[key])):movementDefaults[key];settings.follow=settings.follow===true;settings.seatTiming=['auto','fast','natural','slow'].includes(settings.seatTiming)?settings.seatTiming:'auto';settings.stairStyle=['stairs-up','stairs-ascend','stairs-run'].includes(settings.stairStyle)?settings.stairStyle:'stairs-up';return settings;}
+ settings(){const s=this.e.state;if(!s)return {...movementDefaults};const settings=s.movement??={};for(const [key,min,max]of [['walk',.3,3],['run',1,6]])settings[key]=Number.isFinite(settings[key])?Math.max(min,Math.min(max,settings[key])):movementDefaults[key];settings.follow=typeof settings.follow==='boolean'?settings.follow:movementDefaults.follow;settings.seatTiming=['auto','fast','natural','slow'].includes(settings.seatTiming)?settings.seatTiming:'auto';settings.stairStyle=['stairs-up','stairs-ascend','stairs-run'].includes(settings.stairStyle)?settings.stairStyle:'stairs-up';return settings;}
  reset(){this.stop({flush:false});this.person=null;this.figure=null;this.status(this.e.state?.people[this.e.index]?'움직임 탭을 누르면 바로 조작합니다.':'인물 탭에서 인물 가이드를 추가하세요.');}
- sync(){const s=this.settings();for(const [id,key]of speeds){$(id).value=s[key];$(id+'Value').textContent=$(id).value+' m/s';}$('moveFollow').checked=s.follow;$('seatTiming').value=s.seatTiming;$('stairStyle').value=s.stairStyle;$('movementStop').disabled=!this.engaged;this.e.gizmo.transform.enabled=!this.engaged;$('sceneDialog').classList.toggle('movement-active',this.engaged);this.e.gizmo.sync();this.renderSequence();}
+ sync(){const s=this.settings();for(const [id,key]of speeds){$(id).value=s[key];$(id+'Value').textContent=$(id).value+' m/s';}$('moveFollow').checked=s.follow;$('seatTiming').value=s.seatTiming;$('stairStyle').value=s.stairStyle;$('movementStop').disabled=!this.engaged;const icon=$('cameraMovement');if(icon){icon.classList.toggle('active',this.engaged);icon.setAttribute('aria-pressed',String(this.engaged));}this.e.gizmo.transform.enabled=!this.engaged&&!this.e.fly?.active;$('sceneDialog').classList.toggle('movement-active',this.engaged);this.e.gizmo.sync();this.renderSequence();}
  sequenceSteps(){const s=this.settings();s.sequence=Array.isArray(s.sequence)?s.sequence.filter(id=>id in actionNames).slice(0,16):[];return s.sequence;}
  renderSequence(){const list=$('sequenceSteps');if(!list||!this.e.state)return;list.replaceChildren();this.sequenceSteps().forEach((id,i)=>{const li=document.createElement('li'),label=document.createElement('span');label.textContent=actionNames[id];li.append(label);for(const [text,title,fn]of [['↑','앞으로',()=>{const a=this.sequenceSteps();if(i)[a[i-1],a[i]]=[a[i],a[i-1]];}],['×','제거',()=>this.sequenceSteps().splice(i,1)]]){const b=document.createElement('button');b.textContent=text;b.title=title;b.onclick=()=>{fn();this.renderSequence();this.e.queueLive();};li.append(b);}list.append(li);});}
  async start(){
   const e=this.e;
   if(this.active){e.renderer.domElement.focus({preventScroll:true});return;}
   if(this.starting||!e.isOpen||e.gizmo.transform.dragging)return;
+  e.gizmo.keyboard?.finish(false);e.gizmo.quick?.cancel();
   if(e.loading){this.resumeAfterLoad=true;this.sync();e.renderer.domElement.focus({preventScroll:true});this.status('장면 준비 후 움직임을 시작합니다…');return;}
   if(!e.state?.people[e.index]){this.stop();this.status('인물 탭에서 인물 가이드를 추가하세요.');return;}
   const held=this.resumeAfterLoad?[...this.keys]:[];
-  e.flush();for(const code of held){this.keys.add(code);this.runInput.down(code,performance.now());}
+  e.flush();e.gizmo.setMode('translate');e.gizmo.setAxis(null);for(const code of held){this.keys.add(code);this.runInput.down(code,performance.now());}
   const token=++this.startToken,p=e.state.people[e.index],figure=e.figures.children[e.index];
   if(!figure?.userData.motionRig){this.status('믹사모 인물 가이드에서 사용할 수 있습니다.');return;}
   this.starting=true;this.status('포즈랩 원본 모션을 불러오는 중…');this.sync();e.renderer.domElement.focus({preventScroll:true});
   try{
    const [controller,,bank]=await Promise.all([loadPoseLab(),initCollision(),loadInteractionClips()]);
    if(token!==this.startToken||!e.isOpen||e.loading||e.state.people[e.index]!==p||e.figures.children[e.index]!==figure)return;
-   const resume=p.motionPose?.seatExit||p.motionPose?.feet;const feet=Array.isArray(resume)&&resume.length===3&&resume.every(Number.isFinite)?figure.localToWorld(new T.Vector3(...resume)):null;this.physics=new SceneCollision(e.environment,feet?{...p,x:feet.x,y:feet.y,z:feet.z}:p);this.motion=new PoseLabMotion(controller,figure,p,this.physics,bank);this.motion.doors=e.doors;this.motion.stairs=e.stairs;delete p.targets;this.motion.interactionOptions={stairStyle:$('stairStyle').value,seatTiming:this.settings().seatTiming,variant:$('interactionVariant').value,speed:+$('interactionSpeed').value,handrail:$('useStairRail').checked};$('interactionVariant').querySelector('[value=kimodo-seat]').disabled=!bank?.clips?.['kimodo-seat'];if(!bank?.clips?.['kimodo-seat']&&$('interactionVariant').value==='kimodo-seat')$('interactionVariant').value='auto';$('interactionSource').textContent=bank?.clips?.['kimodo-seat']?'Mixamo 문·계단·앉기 · 손발 접촉 보정':bank?'Mixamo 로컬 동작 · 문은 손잡이 IK':'기본 앉기 포즈 · 문은 손잡이 IK';
-   this.person=p;this.figure=figure;this.active=true;this.e.gizmo.sync();this.changed=true;this.lastTime=0;
+   const resume=p.motionPose?.seatExit||p.motionPose?.feet,feet=Array.isArray(resume)&&resume.length===3&&resume.every(Number.isFinite)?figure.localToWorld(new T.Vector3(...resume)):new T.Vector3(p.x||0,p.y||0,p.z||0);
+   this.physics=new SceneCollision(e.environment,{...p,x:feet.x,y:feet.y,z:feet.z});
+   const standing=this.physics.walkingStart(feet);
+   if(!standing){this.physics.dispose();this.physics=null;this.status('주변에 서 있을 바닥과 빈 공간을 찾지 못했습니다. 인물을 넓은 바닥으로 옮겨 주세요.');return;}
+   const relocated=standing.distanceTo(feet)>.08;this.physics.setFeet(standing);
+   this.motion=new PoseLabMotion(controller,figure,p,this.physics,bank);this.motion.doors=e.doors;this.motion.stairs=e.stairs;delete p.targets;this.motion.interactionOptions={stairStyle:$('stairStyle').value,seatTiming:this.settings().seatTiming,variant:$('interactionVariant').value,speed:+$('interactionSpeed').value,handrail:$('useStairRail').checked};$('interactionVariant').querySelector('[value=kimodo-seat]').disabled=!bank?.clips?.['kimodo-seat'];if(!bank?.clips?.['kimodo-seat']&&$('interactionVariant').value==='kimodo-seat')$('interactionVariant').value='auto';$('interactionSource').textContent=bank?.clips?.['kimodo-seat']?'Mixamo 문·계단·앉기 · 손발 접촉 보정':bank?'Mixamo 로컬 동작 · 문은 손잡이 IK':'기본 앉기 포즈 · 문은 손잡이 IK';
+   this.person=p;this.figure=figure;this.active=true;this.e.gizmo.sync();this.changed=true;this.lastTime=0;if(this.settings().follow)this.frameFollow();
    this.previousHint=document.querySelector('.view-hint').textContent;document.querySelector('.view-hint').textContent='WASD: 이동 · Shift: 달리기 · Space: 점프 · Esc: 현재 자세로 멈춤 · 마우스 드래그: 카메라';
-   e.queueLive();this.status('움직임 모드 · WASD / Space');
+   e.queueLive();this.status(relocated?'빈 바닥으로 위치를 맞췄습니다. · WASD / Space':'움직임 모드 · WASD / Space');
   }catch(error){this.physics?.dispose();this.physics=null;if(token===this.startToken)this.status('모션을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 움직임 탭을 다시 누르세요.');console.error('Pose Lab motion:',error);}
   finally{if(token===this.startToken){this.starting=false;this.sync();}}
  }
@@ -109,7 +121,7 @@ export class SceneMovement{
   document.querySelector('.view-hint').textContent=this.previousHint;
   const e=this.e;e.gizmo.setMode('translate');e.gizmo.setAxis(null);e.gizmo.sync();e.controlsUI();
   if(this.changed){e.movementCommit=true;e.queueLive();if(flush)e.flush();}
-  this.sync();this.status('현재 자세가 컷에 반영됐습니다. · 움직임 탭으로 재개');
+  this.sync();this.status('현재 자세가 컷에 반영됐습니다. · WASD로 바로 재개');
  }
  tick(time){
   if(!this.active)return;
@@ -118,8 +130,9 @@ export class SceneMovement{
   const direction=movementDirection(this.keys,e.camera.getWorldDirection(new T.Vector3()),this.forward,new T.Vector3().setFromMatrixColumn(e.camera.matrixWorld,0));this.forward=direction.forward;
   const before=this.figure.position.clone(),run=this.runInput.running||this.keys.has('ShiftLeft')||this.keys.has('ShiftRight');
   this.motion.update(dt,direction,this.settings(),run);const playback=this.motion.seated;$('interactionTimeline').hidden=!playback?.seek;if(playback?.seek){$('interactionPause').textContent=playback.paused?'▶ 재생':'Ⅱ 일시 정지';if(document.activeElement!==$('interactionTime'))$('interactionTime').value=Math.round(playback.progress*1000);$('interactionTimeValue').textContent=Math.round(playback.progress*100)+'%';}if(time-(this.proximityTime||0)>140){this.proximityTime=time;$('interactLie').hidden=!this.motion.bank||!this.physics?.nearestSeat({lying:true});const seated=['sit','lie'].includes(playback?.mode),stair=e.stairs.nearest(this.physics),door=e.doors.nearest(this.physics),seat=seated||this.physics?.nearestSeat();$('interactSeat').hidden=!seat&&!door&&!stair;$('interactSeat').disabled=['door','stand','stairs'].includes(playback?.mode)&&!playback.done;$('interactSeat').textContent=seated?'E · 일어나기':stair?(stair.down?'E · 계단 내려가기':'E · 계단 올라가기'):door?(door.door.open?'E · 문 닫기':'E · 문 열기'):'E · 가까운 가구에 앉기';}if(this.motion.sequence)$('sequenceStatus').textContent=this.motion.sequence.label;
-  if(this.settings().follow){const delta=this.figure.position.clone().sub(before);e.camera.position.add(delta);e.controls.target.add(delta);e.state.camera=e.camera.position.toArray();e.state.target=e.controls.target.toArray();}
+  if(this.settings().follow){const delta=this.figure.position.clone().sub(before);followCamera(e.camera,e.controls.target,delta);e.state.camera=e.camera.position.toArray();e.state.target=e.controls.target.toArray();}
   this.changed=true;e.queueLive();if(time>(this.promptUntil||0)&&time-(this.statusTime||0)>100){this.status(this.motion.state);this.statusTime=time;}
  }
+ frameFollow(){const e=this.e;if(!this.figure)return;recoverFollow(e.camera,e.controls.target,this.figure.position,this.person.height/100);e.storeCamera();}
  status(message){const p=this.person||this.e.state?.people[this.e.index],metres=v=>(Math.abs(v||0)<.005?0:v).toFixed(2);$('movementStatus').textContent=message+(p?` · X ${metres(p.x)} / Y ${metres(-p.z)} / Z ${metres(p.y)} m`:'');}
 }

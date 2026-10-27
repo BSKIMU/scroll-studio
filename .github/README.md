@@ -39,6 +39,16 @@ Open the **Movement** tab and keep focus in the 3D viewport.
 
 Door and stair actions use the editor's interactive objects. You can add them from the Movement tab.
 
+### Models, skies, and cameras
+
+The character picker includes **BodyChan (165 cm), BodyKun (180 cm), and Mixamo (175 cm)**, with the reviewed male head, distinct standing poses, and automatic relaxed/fist hand transitions. Walking, running, and jumping use the same bundled files locally and on GitHub Pages. Thirteen additional interaction clips cover sitting variants, lying down, stairs, and doors.
+
+The **하늘** (Sky) picker includes day, sunset, twilight, moonlit night, pre-dawn, sunrise, aurora, and Anime Sky. HDR radiance drives camera-independent natural light and window shadows. Static panoramas, environment maps, horizon ground, and fading grid lines are reused while navigating.
+
+**Fly / eye-level camera:** hold the left mouse button to look around, WASD to move. Eye level defaults to 1.3 m; hold Shift to crouch and Space to jump. Character movement still uses Shift to run. **Shot camera:** configure focal length/FOV, Sensor Fit, and sensor size; select the frame border and press R, then X/Y/Z to rotate, Enter to confirm, or Esc to cancel. Background objects/groups and characters have transform handles.
+
+Personal projects and imported assets remain in their own browser/site storage. Transfer them with a project file; deployment does not upload your artwork.
+
 ## Save your work
 
 Projects are automatically saved in the browser you are using. To keep a portable backup or move to another browser, device, or site address, choose **파일 → 프로젝트 저장** (File → Save Project). Use **프로젝트 열기** (Open Project) to load that file later.
@@ -69,8 +79,12 @@ Importing a Blender `.blend` source file requires a local Blender installation. 
 
 Each deployment updates the browser cache version. Failed checks stop publication. To undo a published change, revert its commit and push again.
 
+`node tools/test-live-release.mjs` verifies the live release commit, downloads every published file over HTTPS, checks SHA-256 against the local commit, and runs the real loaders and motion engine against those downloaded models and clips. Browser/GPU rendering is checked separately.
+
 The app lives in `dist/`, local server and validation tools in `tools/`, and the deployment workflow in `.github/workflows/deploy.yml`.
 
 ## Bundled assets
 
 Third-party libraries, fonts, and assets retain their individual licenses and attribution notices. See the [classroom asset attribution](../dist/assets/korean-classroom-ATTRIBUTION.txt) for that environment's credits and modifications.
+
+Additional notices: [male head](../dist/assets/bodykun-ATTRIBUTION.txt), [HDRIs](../dist/assets/hdri/NOTICE.txt), [aurora and Anime Sky](../dist/assets/skies/NOTICE.txt), and [cloud noise](../dist/assets/clouds/NOTICE.txt). Application/library licenses do not grant new rights to third-party assets.

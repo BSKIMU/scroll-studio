@@ -1,6 +1,6 @@
 import * as T from 'three';
-import {transformSnapshot,copyTransform} from './manipulation.js?v=20261025-release1';
-import {constrainedTransform} from './blender-transform.js?v=20261025-release1';
+import {transformSnapshot,copyTransform} from './manipulation.js?v=20261026-walk2';
+import {constrainedTransform} from './blender-transform.js?v=20261026-walk2';
 
 export class TransformKeyboard{
  constructor(gizmo){
@@ -15,10 +15,10 @@ export class TransformKeyboard{
  }
  start(mode){
   const e=this.editor,g=this.gizmo;
-  if(!e.isOpen||e.loading||!e.state?.people[e.index]||e.movement?.engaged||g.transform.dragging)return;
+  if(!e.isOpen||e.loading||!g.hasTarget||e.movement?.engaged||g.transform.dragging)return;
   if(g.part!=='whole'&&mode!==(g.isJointPart?'rotate':'translate')){g.setMode(mode);return;}
-  if(!this.active){e.flush();this.before=structuredClone(e.state.people[e.index]);g.sync();this.base=transformSnapshot(g.proxy);this.controlsEnabled=e.controls.enabled;this.active=true;e.controls.enabled=false;}
-  e.state.people[e.index]=structuredClone(this.before);e.updatePerson({pose:true});
+  if(!this.active){e.flush();this.before=g.snapshotTarget();g.sync();this.base=transformSnapshot(g.proxy);this.controlsEnabled=e.controls.enabled;this.active=true;e.controls.enabled=false;}
+  g.restoreTarget(this.before);
   this.mode=mode;this.axis=null;this.local=false;this.plane=false;this.numeric='';this.delta=new T.Vector2();
   g.setMode(mode);g.setAxis(null);g.transform.setSpace('world');copyTransform(g.proxy,this.base);
   const surface=e.renderer.domElement,r=surface.getBoundingClientRect();this.last=this.pointer||{x:r.left+r.width*.7,y:r.top+r.height*.5};
@@ -61,7 +61,7 @@ export class TransformKeyboard{
  finish(commit){
   if(!this.active)return;
   const e=this.editor,g=this.gizmo;
-  if(!commit){e.state.people[e.index]=structuredClone(this.before);e.updatePerson({pose:true});}
+  if(!commit){g.restoreTarget(this.before);}
   this.active=false;this.readout.hidden=true;e.controls.enabled=this.controlsEnabled;g.dragFinished=performance.now();g.transform.setSpace(g.space||'world');g.setAxis(null);g.sync();e.controlsUI();
   if(commit){e.transformCommit=true;e.queueLive();e.flush();}else{clearTimeout(e.liveTimer);e.liveTimer=null;e.pending=false;e.previewDirty=true;e.invalidate();document.getElementById('liveStatus').textContent='변형 취소 · 원래 자세로 복원';}
  }

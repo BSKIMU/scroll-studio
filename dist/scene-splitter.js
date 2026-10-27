@@ -7,7 +7,8 @@ export function setupSceneSplitter(controls){
  try{const saved=Number(localStorage.getItem('scroll-scene-settings-height'));if(saved>=100)preferred=saved;}catch{}
  function fit(){
   if(!layout.clientHeight)return;
-  const available=layout.clientHeight-(toolbar?.offsetHeight||0)-(pose?.offsetHeight||0)-(layout.querySelector('.scene-lens-bar')?.offsetHeight||0)-8;
+  const top=layout.querySelector('#sceneTopControls');
+  const available=layout.clientHeight-(top?top.offsetHeight+14:(toolbar?.offsetHeight||0)+(pose?.offsetHeight||0)+(layout.querySelector('.scene-lens-bar')?.offsetHeight||0))-8;
   const max=Math.max(100,available-120),height=Math.min(max,Math.max(100,preferred));
   layout.style.setProperty('--scene-settings-height',height+'px');
   grip.setAttribute('aria-valuemin','100');grip.setAttribute('aria-valuemax',String(Math.round(max)));grip.setAttribute('aria-valuenow',String(Math.round(height)));
@@ -20,4 +21,5 @@ export function setupSceneSplitter(controls){
  grip.ondblclick=()=>{preferred=240;fit();persist();};
  grip.onkeydown=e=>{if(e.key==='Escape'){end(true);return;}if(!['ArrowUp','ArrowDown','Home'].includes(e.key))return;e.preventDefault();preferred=e.key==='Home'?240:controls.offsetHeight+(e.key==='ArrowUp'?1:-1)*(e.shiftKey?40:10);fit();persist();};
  const observer=new ResizeObserver(fit);for(const el of [layout,toolbar,pose])if(el)observer.observe(el);fit();
+ return {fit,observe:el=>observer.observe(el)};
 }

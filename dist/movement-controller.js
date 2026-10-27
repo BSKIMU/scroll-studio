@@ -1,4 +1,4 @@
-export const movementDefaults={walk:1.3,run:3.6,follow:false};
+export const movementDefaults={walk:1.3,run:3.6,follow:true};
 export const movementKeys=new Set(['KeyW','KeyA','KeyS','KeyD','ShiftLeft','ShiftRight','Space']);
 export const editableTarget=target=>!!target&&(target.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 export function movementDirection(keys,look,previous={x:0,z:-1},cameraRight){

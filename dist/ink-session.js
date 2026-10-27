@@ -1,7 +1,7 @@
 import {paintStrokes} from './drawing.js?v=20261025-release1';
 import {layerStrokes,layerVisible} from './layers.js?v=20261025-release1';
 import {drawGuideImage} from './frame-geometry.js?v=20261025-release1';
-import {maskFrame,paintFrame} from './pages.js?v=20261025-release1';
+import {maskFrame,paintFrame} from './pages.js?v=20261027-studio4';
 import {balloonDraw} from './balloons.js?v=20261025-release1';
 
 const SIZE=256,BUDGET=24*1024*1024;
