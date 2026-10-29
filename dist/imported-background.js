@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {findGroundSurface} from './environment-ground.js?v=20261028-lock-position1';
+import {findGroundSurface} from './environment-ground.js?v=20261029-library1';
 const vector=a=>Array.isArray(a)&&a.length===3&&a.every(Number.isFinite);
 
 // Preset coordinates are in source world metres, independent of GLB quantization.

@@ -18,18 +18,24 @@ export function createHandRig(bones){
   const palm=world(index).sub(world(hand)).cross(world(pinky).sub(world(hand))).normalize();if(palm.dot(down)<0)palm.negate();
   for(const finger of ['Thumb','Index','Middle','Ring','Pinky'])for(let segment=1;segment<=3;segment++){
   const bone=bones[`${prefix}Hand${finger}${segment}`],next=bones[`${prefix}Hand${finger}${segment+1}`];if(!bone||!next)continue;
-  const direction=next.getWorldPosition(new T.Vector3()).sub(bone.getWorldPosition(new T.Vector3()));
+  const direction=next.getWorldPosition(new T.Vector3()).sub(bone.getWorldPosition(new T.Vector3())).normalize();
+  const palmar=palm.clone().addScaledVector(direction,-palm.dot(direction)).normalize(),local=bone.getWorldQuaternion(new T.Quaternion()).invert();
+  const basis=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(direction.clone().applyQuaternion(local),palmar.clone().applyQuaternion(local),direction.clone().cross(palmar).applyQuaternion(local)));
   const toward=finger==='Thumb'?world(bones[prefix+'HandPinky1']).sub(world(bone)).normalize().addScaledVector(palm,.45).normalize():palm;
-  const axis=direction.cross(toward).normalize().applyQuaternion(bone.getWorldQuaternion(new T.Quaternion()).invert()).normalize();
+  const axis=direction.clone().cross(toward).normalize().applyQuaternion(local).normalize();
   if(axis.lengthSq()<.5)continue;
-  fingers.push({bone,side,finger,axis,rest:bone.quaternion.clone().normalize(),degrees:curl[finger==='Thumb'?'Thumb':'finger'][segment-1]});
+  fingers.push({bone,side,finger,segment,basis,axis,rest:bone.quaternion.clone().normalize(),degrees:curl[finger==='Thumb'?'Thumb':'finger'][segment-1]});
  }
  }
  return fingers;
 }
 export function applyHandPose(figure,person,automaticGrip){
+ const preserve=person.motionPose?.preserveHands&&automaticGrip===undefined&&automaticHands(person);
  const rotation=new T.Quaternion();
- for(const {bone,side,finger,axis,rest,degrees}of figure.userData.motionRig?.fingers||[]){
+ for(const {bone,side,finger,segment,basis,axis,rest,degrees}of figure.userData.motionRig?.fingers||[]){
+  const saved=person.handPose?.[side]?.joints?.[finger+segment];
+  if(Array.isArray(saved)&&saved.length===4&&saved.every(Number.isFinite)&&Math.hypot(...saved)>.1){bone.quaternion.copy(rest).multiply(basis).multiply(rotation.fromArray(saved).normalize()).multiply(basis.clone().invert()).normalize();continue;}
+  if(preserve)continue;
   const auto=automaticHands(person),grip=auto?(automaticGrip??person.motionPose?.handGrip??(person.pose==='walk'?100:relaxedGrip)):person.fingers?.[side]?.[finger]??person.hands?.[side];if(!Number.isFinite(grip))continue;
   bone.quaternion.copy(rest).multiply(rotation.setFromAxisAngle(axis,T.MathUtils.degToRad(degrees*T.MathUtils.clamp(grip,0,100)/100)));
  }
@@ -37,6 +43,7 @@ export function applyHandPose(figure,person,automaticGrip){
 // Keep relaxed wrists beside the thighs. Female idle has a narrower, slightly
 // asymmetric arm line; the male clearance remains unchanged. Manual arms win.
 export function clearIdleHands(figure,person,weight=1){
+ if(person.motionPose?.preserveHands)return;
  if(!['bodychan','bodykun'].includes(person.model)||weight<=0)return;
  const bones=figure.userData.motionRig?.bones;if(!bones)return;
  figure.updateMatrixWorld(true);

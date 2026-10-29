@@ -103,3 +103,6 @@ body.page-mode #paper.paged-paper>.panel-wrap>canvas:not(.selection-overlay){opa
 
 .page-stack-row .layer-name small{display:block;color:#aabdc9;font-size:9px}
 #layerPanel .page-stack-row .layer-name{display:flex;line-height:1.4}
+
+#cutPanel .cut-guide-option{display:flex;align-items:center;gap:6px;min-height:28px;padding:4px 6px;margin-top:6px;border:1px solid #536578;border-radius:3px;background:#293b4b;cursor:pointer;color:#d9e7f3}
+#cutPanel .cut-guide-option input{width:14px;height:14px;margin:0;accent-color:#299bd2;flex:none}

@@ -26,7 +26,7 @@ import {presentPageLayers} from './page-layer-view.js?v=20261028-guide3';
 import {projectFileBlob} from './project-file.js?v=20261025-release1';
 import {setupRetakeUI} from './studio-retake.js?v=20261025-release1';
 import {pngResolution} from './png-resolution.js?v=20261025-release1';
-import {InkSession} from './ink-session.js?v=20261028-guide3';
+import {InkSession} from './ink-session.js?v=20261029-library1';
 import {setupNavigator} from './navigator.js?v=20261028-guide3';
 import {setupToolContext} from './tool-context.js?v=20261025-release1';
 import {elementPoint,elementScreen,canvasDisplay} from './canvas-coordinates.js?v=20261025-release1';
@@ -38,17 +38,17 @@ import {setupStudioShell} from './studio-shell.js?v=20261025-release1';
 import {setupCanvasPan} from './canvas-pan.js?v=20261025-release1';
 import {balloonLayers,drawOutsideBalloons,layerCrop} from './balloon-render.js?v=20261025-release1';
 import {setupFrameTransform} from './frame-transform.js?v=20261025-release1';
-import {seedFigure} from './mannequin.js?v=20261027-pose-camera1';
+import {seedFigure} from './mannequin.js?v=20261029-hands2';
 import {setupSidebarCollapse} from './sidebar-collapse.js?v=20261025-release1';
 import {setupSidebarWidth} from './sidebar-width.js?v=20261025-release1';
 import {setupPanels} from './panels.js?v=20261028-guide3';
-import {setupPages,paintFrame,maskFrame,frameOrder} from './pages.js?v=20261028-guide3';
+import {setupPages,paintFrame,maskFrame,frameOrder} from './pages.js?v=20261030-ssscolor1';
 import {setupBookManager} from './book-manager.js?v=20261025-release1';
 import {balloonDraw,setupBalloons} from './balloons.js?v=20261025-release1';
 import {preparePencilLayer,ensureLayers,activePaint,layerStrokes,layerVisible,setupLayers} from './layers.js?v=20261028-guide3';
 import {setupDrawing,paintStrokes} from './drawing.js?v=20261028-guide3';
 import './scroll-nav.js?v=20261025-release1';
-import {SceneEditor,defaultScene,objToGLB} from './scene.js?v=20261028-lock-position1';
+import {SceneEditor,defaultScene,objToGLB} from './scene.js?v=20261030-ssscolor1';
 import {writePsd,zipSync,strToU8} from './vendor/formats.js';
 const $=id=>document.getElementById(id),uid=()=>crypto.randomUUID(),clone=x=>structuredClone(x),clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const emptyScene=()=>({...defaultScene(),asset:'empty',people:[]});
@@ -157,7 +157,7 @@ function render(options={}){if(canvasDocuments.active)canvasDocuments.active.pro
  project.cuts.forEach((c,i)=>{let wrap=document.createElement('div');wrap.className='panel-wrap'+(c.id===selected?' selected':'');wrap.dataset.id=c.id;wrap.style.width=c.width+'%';wrap.style.height=c.height*zoom+'px';let cv=canvas(totalWidth*c.width/100,c.height);cv.setAttribute('aria-label',`컷 ${i+1} ${c.name}`);cv.setAttribute('role','img');wrap.append(cv);let n=document.createElement('span');n.className='panel-number';n.textContent=String(i+1).padStart(2,'0');wrap.append(n);$('paper').append(wrap);let gap=document.createElement('div');gap.className='gap';gap.style.height=c.gap*zoom+'px';gap.innerHTML=`<span>${c.gap} px · 여백</span>`;$('paper').append(gap);drawCut(c,cv);bindCanvas(c,cv);let bt=document.createElement('button');bt.className='cut-thumb'+(c.id===selected?' selected':'');bt.dataset.id=c.id;let im=document.createElement('img');im.className='thumb-image';im.alt='';if(c.background)im.src=c.background;else im.src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="57"><rect width="48" height="57" fill="#e9ece4"/><rect x="5" y="10" width="38" height="37" fill="none" stroke="#939f90"/></svg>');let info=document.createElement('div'),b=document.createElement('b'),sm=document.createElement('small');b.textContent=`${String(i+1).padStart(2,'0')}  ${c.name}`;sm.textContent=`${c.height} px · ${c.reference?'CLIP 가이드':assetName(c.scene?.asset)}`;info.append(b,sm);bt.append(im,info);bt.onclick=()=>{select(c.id);wrap.scrollIntoView({behavior:'smooth',block:'center'});};$('cutList').append(bt);});properties();layerPanel.render();if(editor?.isOpen)openScene();}
 function properties(){const c=selectedCut();if(!c)return;ensureLayers(c);$('selectedLabel').textContent=String(project.cuts.indexOf(c)+1).padStart(2,'0');$('cutName').value=c.name;$('cutHeight').value=c.height;$('cutGap').value=c.gap;$('cutWidth').value=c.width;$('note').value=c.note;for(const [id,key]of [['showBg','background'],['showSketch','sketch'],['showText','text']])$(id).checked=c.visible[key];$('bubbleList').replaceChildren();c.bubbles.forEach((b,i)=>{let el=document.createElement('button');el.textContent=`✕ 대사 ${i+1}: ${b.text.slice(0,18)}`;el.title='이 대사 삭제';el.onclick=()=>{if(c.layerSettings.text.locked){toast('대사 레이어의 잠금을 해제하세요.');return;}checkpoint();c.bubbles.splice(i,1);render();save();};$('bubbleList').append(el);});$('status').textContent=`${assetName(c.scene?.asset)} · ${c.scene?.people.length||0}명 · 다음 컷에도 이 공간이 이어집니다`;}
 function assetName(id){return {room:'스튜디오',castle:'성문','interaction-room':'상호작용 연습실','stair-room':'계단 연습실',empty:'빈 공간'}[id]||backgrounds.assets()[id]?.name||'배경 없음';}
-function addCut(){if(project.pages)return pagesUI.addDefault();editor?.flush();checkpoint();const previous=selectedCut()||project.cuts.at(-1);const c=blankCut(previous?.scene||project.defaultScene);if(previous){c.background=previous.background;c.guide=previous.guide;c.width=previous.width;c.height=previous.height;c.guideOpacity=previous.guideOpacity;c.layerSettings=clone(previous.layerSettings);c.paintLayers=clone(previous.paintLayers);c.layerGroups=clone(previous.layerGroups);c.activeLayer=previous.activeLayer;}numberNewLayers(project,c);seedFigure(c);c.name=`장면 ${project.cuts.length+1}`;const idx=previous?project.cuts.indexOf(previous)+1:0;project.cuts.splice(idx,0,c);selected=c.id;render();save();document.querySelector(`.panel-wrap[data-id="${c.id}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});}
+function addCut(){if(project.pages)return pagesUI.addDefault();editor?.flush();checkpoint();const previous=selectedCut()||project.cuts.at(-1);const c=blankCut(previous?.scene||project.defaultScene);if(previous){c.background=previous.background;c.guide=previous.guide;c.width=previous.width;c.height=previous.height;c.guideOpacity=previous.guideOpacity;c.layerSettings=clone(previous.layerSettings);c.paintLayers=clone(previous.paintLayers);c.layerGroups=clone(previous.layerGroups);c.activeLayer=previous.activeLayer;}c.guideVisible=project.cutGuidesDefault!==false;numberNewLayers(project,c);if(c.guideVisible)seedFigure(c);c.name=`장면 ${project.cuts.length+1}`;const idx=previous?project.cuts.indexOf(previous)+1:0;project.cuts.splice(idx,0,c);selected=c.id;render();save();document.querySelector(`.panel-wrap[data-id="${c.id}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});}
 function bindCanvas(c,cv){balloonUI.bind(c,cv);drawing.bind(c,cv);}
 function addBubble(c,position=[.1,.08]){if($('dialogue').value.trim())$('balloonText').value=$('dialogue').value;balloonUI.show();balloonUI.add(c,position);}
 function contentHeight(){if(project.pages)return project.pages.length*project.pageHeight;return Math.max(300,80+project.cuts.reduce((n,c)=>n+c.height+c.gap,0));}

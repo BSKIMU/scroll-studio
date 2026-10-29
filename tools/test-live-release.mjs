@@ -34,7 +34,9 @@ async function worker(){while(index<entries.length){
 await Promise.all(Array.from({length:4},worker));
 writeFileSync(resolve(output,'release.json'),JSON.stringify(manifest,null,2));
 console.log(`PASS: ${count} live HTTPS files (${(total/1048576).toFixed(1)} MiB) match commit ${commit}`);
-const result=spawnSync(process.execPath,['tools/test-hosted-motion.mjs'],{cwd:root,stdio:'inherit',windowsHide:true,env:{...process.env,SCROLL_VERIFIED_SITE:site.href,SCROLL_VERIFIED_DIST:output}});
-assert.equal(result.status,0,'Motion tests on downloaded release bytes');
+for(const test of ['test-hosted-motion','test-runtime-libraries']){
+ const result=spawnSync(process.execPath,[`tools/${test}.mjs`],{cwd:root,stdio:'inherit',windowsHide:true,env:{...process.env,SCROLL_VERIFIED_SITE:site.href,SCROLL_VERIFIED_DIST:output}});
+ assert.equal(result.status,0,`${test} on downloaded release bytes`);
+}
 writeFileSync(resolve(output,'verification.json'),JSON.stringify({site:site.href,commit,verifiedAt:new Date().toISOString(),files:count,bytes:total,motion:'passed',source:'HTTPS downloads; no local asset fallback'},null,2));
-console.log('PASS: live release integrity and downloaded male/female/Mixamo rigs, locomotion and 13 interaction clips');
+console.log('PASS: live release integrity, three rigs, locomotion, 362 library motions, 27 props and 500 hand poses');

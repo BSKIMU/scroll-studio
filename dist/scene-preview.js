@@ -1,6 +1,7 @@
-import {SceneShading} from './scene-shading.js?v=20261027-sky-times1';
+import {SceneShading} from './scene-shading.js?v=20261030-ssscolor1';
 import {DemandRenderer} from './demand-renderer.js?v=20261025-release1';
 import {SelectionOutline} from './selection-outline.js?v=20261027-studio4';
+import {paintWithOverlays} from './scene-overlays.js?v=20261030-release2';
 
 export class ScenePreview{
  constructor(editor){
@@ -17,8 +18,8 @@ export class ScenePreview{
  }
  setQuality(){const e=this.editor;e.renderer.setPixelRatio(this.light?1:Math.min(devicePixelRatio,1.5));if(e.cut)e.resize();this.request();}
  request(){this.loop.setActive(this.editor.isOpen&&!document.hidden);this.loop.request();}
- stop(){this.loop.setActive(false);this.lastFrame=null;this.outline.release();this.status.textContent='대기 중 · 자동 절전';}
- paint(){this.shading.paint();this.outline.paint();}
+ stop(){this.loop.setActive(false);this.lastFrame=null;this.outline.release();this.editor.tone?.release();this.status.textContent='대기 중 · 자동 절전';}
+ paint(){this.editor.props?.update();paintWithOverlays(this.editor,()=>{this.shading.paint();this.outline.paint();});}
  draw(time){
   const e=this.editor;if(!e.isOpen||e.loading||document.hidden)return false;
   const start=performance.now();e.renderer.info.autoReset=false;e.renderer.info.reset();

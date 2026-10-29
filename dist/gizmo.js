@@ -4,12 +4,12 @@ import {storageAxis} from './blender-transform.js?v=20261026-walk2';
 import {applyPersonTransform} from './person-transform.js?v=20261025-release1';
 import {precisionStep,transformSnapshot,copyTransform,thickenGizmo,nearbyGround} from './manipulation.js?v=20261026-walk2';
 import * as T from 'three';
-import {backgroundLocked} from './scene-background-lock.js?v=20261028-lock-position1';
+import {backgroundLocked} from './scene-background-lock.js?v=20261029-library1';
 import {TransformControls} from 'three/addons/controls/TransformControls.js';
 const $=id=>document.getElementById(id);
 import {jointBones,jointNames,limitJoint} from './joint-pose.js?v=20261025-release1';
 import {setupPoseControls} from './pose-controls.js?v=20261027-selection4';
-import {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject,pickSceneTarget} from './scene-object-transform.js?v=20261028-lock-position1';
+import {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject,pickSceneTarget} from './scene-object-transform.js?v=20261029-library1';
 import {relatedMeshes,collectionTarget,combineSelection,targetMeshes,selectionBounds,saveSelectionGroup,removeSelectionGroup} from './scene-selection.js?v=20261027-studio4';
 export class PersonGizmo{
  constructor(editor){
@@ -32,6 +32,7 @@ export class PersonGizmo{
   $('sceneDialog').addEventListener('keydown',e=>{
    if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.target.isContentEditable||!editor.isOpen||(editor.movement?.engaged||editor.fly?.active))return;
    const k=e.code?.startsWith('Key')?e.code.slice(3).toLowerCase():e.key.toLowerCase();
+   if(k==='delete'&&!e.repeat&&!e.isComposing&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.defaultPrevented&&editor.props?.removeSelected()){e.preventDefault();e.stopPropagation();return;}
    if((e.ctrlKey||e.metaKey)&&k==='g'&&this.objectTarget){e.preventDefault();e.stopPropagation();e.shiftKey?this.ungroupSelection():this.groupSelection();return;}
    if(this.keyboard.key(e)){e.stopPropagation();e.preventDefault();return;}
    if(e.ctrlKey||e.metaKey){this.snapping(e);return;}

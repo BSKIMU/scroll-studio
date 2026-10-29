@@ -1,12 +1,22 @@
 import {updatePhone} from './scene-phone.js?v=20261025-release1';
 import {jointBones,limitJoint} from './joint-pose.js?v=20261025-release1';
-import {createHandRig,applyHandPose,applyFigureTransform,automaticHands,clearIdleHands} from './hand-pose.js?v=20261027-pose-camera1';
+import {createHandRig,applyHandPose,applyFigureTransform,automaticHands,clearIdleHands} from './hand-pose.js?v=20261029-hands2';
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {clone} from 'three/addons/utils/SkeletonUtils.js';
 import {solveLimb} from './pose-math.js?v=20261025-release1';
-export const figureModels=Object.freeze({bodychan:'여성',bodykun:'남성',mixamo:'Mixamo'});
-export const figureHeights=Object.freeze({bodychan:165,bodykun:180,mixamo:175});
+export const figureModels={bodychan:'여성',bodykun:'남성',mixamo:'Mixamo'};
+export const figureHeights={bodychan:165,bodykun:180,mixamo:175};
+export const customFigures=new Map();
+let catalogPending;
+export function registerCharacter(entry){
+ if(!/^custom-[a-f0-9]{32}$/.test(entry?.id)||entry.url!==`/api/character-library/${entry.id.slice(7)}/model.glb`)throw Error('캐릭터 경로가 올바르지 않습니다.');
+ customFigures.set(entry.id,entry);figureModels[entry.id]=String(entry.name).slice(0,100);figureHeights[entry.id]=175;
+}
+export async function refreshCharacterCatalog(){
+ if(!catalogPending)catalogPending=fetch('/api/character-library/catalog').then(r=>{if(!r.ok)throw Error('local only');return r.json();}).then(data=>{for(const entry of data.entries||[])registerCharacter(entry);return data;}).catch(()=>({available:false,entries:[]})).finally(()=>{catalogPending=null;});
+ return catalogPending;
+}
 const templates=new Map(),pending=new Map();
 export const hasFigureModel=p=>Object.hasOwn(figureModels,p?.model);
 export const defaultPerson=(model='bodychan')=>({model,x:0,z:0,rotation:0,height:figureHeights[model],pose:'stand'});
@@ -18,12 +28,20 @@ export function setFigureModel(person,model){
  for(const key of ['motionPose','joints','targets','jointLocks','hands','fingers','handMode'])delete person[key];
  return true;
 }
-export async function loadMannequin(){
- await Promise.all(Object.keys(figureModels).map(async key=>{
+export async function loadFigureModel(key){
   if(templates.has(key))return;
-  if(!pending.has(key))pending.set(key,new GLTFLoader().loadAsync(new URL(`./assets/${key}.glb${key==='bodykun'?'?v=20261027-body-restore1':''}`,import.meta.url).href).then(g=>templates.set(key,g.scene)).finally(()=>pending.delete(key)));
+  const custom=customFigures.get(key),url=custom?custom.url:new URL(`./assets/${key}.glb${key==='bodykun'?'?v=20261027-body-restore1':''}`,import.meta.url).href;
+  if(!Object.hasOwn(figureModels,key))throw Error('로컬 캐릭터 파일을 찾지 못했습니다.');
+  if(!pending.has(key))pending.set(key,new GLTFLoader().loadAsync(url).then(g=>{
+   const names=new Set();g.scene.traverse(o=>{if(o.isBone)names.add(o.name.replace('mixamorig',''));});
+   if(custom&&!['Hips','Spine','Spine1','Spine2','Neck','Head',...['Left','Right'].flatMap(s=>['Arm','ForeArm','Hand','UpLeg','Leg','Foot'].map(n=>s+n))].every(n=>names.has(n)))throw Error('캐릭터의 필수 관절이 없습니다.');
+   templates.set(key,g.scene);
+  }).finally(()=>pending.delete(key)));
   await pending.get(key);
- }));
+}
+export async function loadMannequin(people=[]){
+ await refreshCharacterCatalog();
+ await Promise.all([...new Set(['bodychan','bodykun','mixamo',...people.map(p=>p.model).filter(key=>key?.startsWith('custom-'))])].map(loadFigureModel));
 }
 // Pose Lab retargets from the bind pose in world metres, independently of the displayed pose.
 export function movementModel(p){
@@ -37,7 +55,7 @@ export function mannequin(p,i){
  const template=templates.get(p.model);
  if(!template)return null;
  const g=new T.Group(),model=clone(template);g.add(model);g.userData.person=i;g.userData.landmarks={};
- model.traverse(o=>{if(o.isMesh){o.geometry=o.geometry.clone();o.material=o.material.clone();o.frustumCulled=false;}});
+ model.traverse(o=>{if(o.isMesh){o.geometry=o.geometry.clone();o.material=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();o.frustumCulled=false;}});
  g.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(g);model.scale.multiplyScalar(1.75/(bounds.max.y-bounds.min.y));g.updateMatrixWorld(true);const box=new T.Box3().setFromObject(g);model.position.y-=box.min.y;if(p.pose==='sit')model.position.y-=.4;
  const bones={};model.traverse(o=>{if(o.isBone)bones[o.name.replace('mixamorig','')]=o;});
  const fingers=createHandRig(bones);

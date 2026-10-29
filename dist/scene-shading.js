@@ -27,7 +27,7 @@ export class SceneShading{
     r.shadowMap.autoUpdate=false;r.domElement.style.filter='none';
     for(const root of [e.environment,e.figures])root.traverse(o=>{if(o.isMesh&&!o.userData.poseMarker){materials.push([o,o.material]);o.material=this.material;}if(o.userData.contiEdge){hidden.push([o,o.visible]);o.visible=false;}});
    }
-   r.render(e.scene,e.camera);
+   r.render(e.scene,e.camera);if(this.mode!=='solid')e.tone.paint();
   }finally{for(const [o,m]of materials)o.material=m;for(const [o,v]of hidden)o.visible=v;e.scene.background=background;if(e.skyDome)e.skyDome.visible=dome;r.shadowMap.autoUpdate=shadow;}
  }
 }

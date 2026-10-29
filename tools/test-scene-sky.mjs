@@ -43,7 +43,7 @@ const mesh=new T.Mesh(new T.BoxGeometry(),new T.MeshStandardMaterial()),marker=n
 const edge=new T.LineSegments();edge.userData.contiEdge=true;mesh.add(edge);
 const environment=new T.Group(),figures=new T.Group();environment.add(mesh);figures.add(marker);
 const background=new T.CubeTexture(),original=mesh.material,markerMaterial=marker.material,look={skyPreset:'cloud-day',sun:4};
-const e={scene:{background},camera:{},state:{look},environment,figures,advanced:{filter:()=> 'saturate(80%)'},renderer:{domElement:{style:{}},shadowMap:{autoUpdate:true}}};
+const e={scene:{background},camera:{},state:{look},environment,figures,tone:{paint(){}},advanced:{filter:()=> 'saturate(80%)'},renderer:{domElement:{style:{}},shadowMap:{autoUpdate:true}}};
 const shading=Object.assign(Object.create(SceneShading.prototype),{e,mode:'solid',material:new T.MeshMatcapMaterial()});
 e.renderer.render=()=>{assert.equal(mesh.material,shading.material);assert.equal(marker.material,markerMaterial);assert.equal(edge.visible,false);assert.equal(e.renderer.shadowMap.autoUpdate,false);throw Error('paint failed');};
 assert.throws(()=>shading.paint(),/paint failed/);assert.equal(mesh.material,original);assert.equal(edge.visible,true);assert.equal(e.scene.background,background);assert.equal(e.renderer.shadowMap.autoUpdate,true);assert.equal(look.skyPreset,'cloud-day');

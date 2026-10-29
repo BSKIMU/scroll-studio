@@ -1,6 +1,6 @@
 import * as T from 'three';
-import {environmentHeight} from './environment-ground.js?v=20261028-lock-position1';
-import {backgroundLocked} from './scene-background-lock.js?v=20261028-lock-position1';
+import {environmentHeight} from './environment-ground.js?v=20261029-library1';
+import {backgroundLocked} from './scene-background-lock.js?v=20261029-library1';
 
 export function applyEnvironmentPlacement(editor){
  const value=editor.state.environmentPlacement?.[editor.state.asset]||{},o=editor.environment;
@@ -8,13 +8,13 @@ export function applyEnvironmentPlacement(editor){
  o.rotation.fromArray(value.rotation||[0,0,0]);o.scale.fromArray(value.scale||[1,1,1]);o.updateMatrixWorld(true);
 }
 export function applyObjectGroups(editor){
- for(const item of [...(editor.doors?.items||[]),...(editor.stairs?.items||[])]){
+ for(const item of [...(editor.doors?.items||[]),...(editor.stairs?.items||[]),...(editor.props?.items||[])]){
   const v=editor.state.look?.objectGroups?.[item.data.id];if(!v)continue;
   item.root.position.fromArray(v.position);item.root.rotation.fromArray(v.rotation);item.root.scale.fromArray(v.scale);item.root.updateMatrixWorld(true);
  }
 }
 export function objectTarget(editor,object,point){
- let group;for(const item of [...(editor.doors?.items||[]),...(editor.stairs?.items||[])]){
+ let group;for(const item of [...(editor.doors?.items||[]),...(editor.stairs?.items||[]),...(editor.props?.items||[])]){
   for(let o=object;o&&o!==editor.environment;o=o.parent)if(o===item.root){group=item;break;}
   if(group)break;
  }

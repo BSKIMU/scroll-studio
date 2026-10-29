@@ -79,7 +79,10 @@ for(const mode of ['fly','walk']){
  const position=camera.position.clone();drag('mousemove',{clientX:540});
  assert(camera.quaternion.angleTo(q)>.01,'LMB mouse stream rotates even without pointer capture');near(camera.position,position);
  drag('mousemove',{clientX:999});const edgeYaw=fly.navigation.yaw;fly.tick(1100);fly.tick(1150);
- assert(fly.navigation.yaw<edgeYaw,'Holding at the viewport edge continues turning past the physical cursor limit');
+ assert.equal(fly.navigation.yaw,edgeYaw,'A stationary pointer at the edge must never keep spinning');
+ drag('mousemove',{clientX:979});const edgeDelta=fly.navigation.yaw-edgeYaw;
+ drag('mouseup');drag('mousedown',{clientX:500});const middleYaw=fly.navigation.yaw;
+ drag('mousemove',{clientX:480});assert.ok(Math.abs((fly.navigation.yaw-middleYaw)-edgeDelta)<1e-9,'Equal mouse travel has equal sensitivity at the centre and edge');
  drag('mousemove',{clientX:500});const centerYaw=fly.navigation.yaw;fly.tick(1200);
  assert.equal(fly.navigation.yaw,centerYaw,'Edge turn stops inside the viewport');
  drag('mouseup',{target:document});const released=camera.quaternion.clone();drag('mousemove',{clientX:200,buttons:0});
@@ -90,7 +93,7 @@ for(const mode of ['fly','walk']){
  fly.lookSurface.setPointerCapture=capture;drag('pointerdown');drag('mousedown');window.emit('blur');
  assert(!fly.active&&!fly.lookDrag&&fly.lookSurface.hidden&&!view.classList.contains('fly-looking'));
 }
-console.log('PASS: Fly/Walk mouse drag, capture failure, continuous edge turn, release/blur cleanup and keyboard ownership');
+console.log('PASS: Fly/Walk constant drag sensitivity, no edge spin, capture failure, release/blur cleanup and keyboard ownership');
 
 // Dispatch through the real drag handlers: Shift+RMB/MMB pans over gizmos,
 // preserving orientation, distance, and the selected object's transform.

@@ -1,0 +1,11 @@
+#sceneDialog .library-resizable{box-sizing:border-box;resize:none;overflow:hidden;display:flex;flex-direction:column;padding:10px 10px 20px;min-height:180px;min-width:160px}
+#sceneDialog .library-resizable[hidden]{display:none!important}
+#sceneDialog .library-resizable>header{flex:none;min-height:28px;height:28px;margin:0 0 6px;padding:0;background:transparent;border:0;display:flex;align-items:center;justify-content:space-between}
+#sceneDialog .library-resizable>header button{min-height:24px;height:24px;padding:0 6px;line-height:22px;font-size:13px}
+.library-resizable>.library-window-resize{position:absolute;left:2px;bottom:2px;z-index:5;width:21px;height:19px;padding:0;border:0;background:transparent;cursor:nesw-resize;touch-action:none}
+.library-window-resize:before,.library-window-resize:after{content:'';position:absolute;left:3px;bottom:6px;height:1px;background:#7298b1;transform:rotate(45deg)}
+.library-window-resize:before{width:14px}.library-window-resize:after{width:8px;bottom:3px}
+.library-resizable .library-window-resize:hover,.library-resizable .library-window-resize:focus-visible{background:#51768b55;outline:1px solid #84abc4;border-radius:3px}
+.library-scroll{overflow-y:auto;overflow-x:hidden;min-height:0;flex:1;overscroll-behavior:contain;scrollbar-gutter:stable}
+.library-window-edge{position:absolute;left:0;top:0;bottom:22px;width:6px;z-index:5;cursor:ew-resize;touch-action:none;border-left:2px solid #59758b}
+.library-window-edge:hover,.library-window-edge:focus-visible{background:#4ca9db66;outline:0}

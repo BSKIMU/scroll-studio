@@ -52,7 +52,7 @@ export class SceneFly{
    if(event.button===0||event.button===2){
     this.suppressClick=true;
     this.heightEditing=false;surface.focus({preventScroll:true});
-    if(event.button===0){this.lookDrag={x:event.clientX,y:event.clientY,edgeX:0,edgeY:0};view.classList.add('fly-looking');}
+    if(event.button===0){this.lookDrag={x:event.clientX,y:event.clientY};view.classList.add('fly-looking');}
     this.status();
    }
   },true);
@@ -61,8 +61,7 @@ export class SceneFly{
    if(!(event.buttons&1)){this.endLookDrag();return;}
    event.preventDefault();event.stopImmediatePropagation();
    this.navigation?.look(event.clientX-drag.x,event.clientY-drag.y);drag.x=event.clientX;drag.y=event.clientY;
-   const r=view.getBoundingClientRect(),edge=(p,lo,hi)=>p<lo+20?-1:p>hi-20?1:0;
-   drag.edgeX=edge(drag.x,r.left,r.left+r.width);drag.edgeY=edge(drag.y,r.top,r.top+r.height);editor.storeCamera();
+   editor.storeCamera();
   },true);
   document.addEventListener('mouseup',event=>{if(this.lookDrag&&event.button===0){event.preventDefault();event.stopImmediatePropagation();this.endLookDrag();}},true);
   view.addEventListener('pointercancel',()=>this.endLookDrag(),true);
@@ -84,7 +83,7 @@ export class SceneFly{
   e.figurePicker?.close();e.advanced?.skyPicker?.close();e.shot?.closePanel();this.mode=mode;this.navigation=mode==='fly'?new FlyNavigation(e.camera,e.controls.target):new WalkNavigation(e.camera,e.controls.target,e.state.cameraWalk?.eyeHeight??1.3);this.active=true;this.heightEditing=false;this.keys.clear();this.lastTime=null;this.sync();this.heightPanel.hidden=mode!=='walk';
   const selected=mode==='walk'?this.walkButton:this.button;
   this.hud.querySelector('b').textContent=mode==='walk'?'눈높이 카메라 · 지면 보행':'카메라 자유 이동';
-  this.hud.querySelector('span').innerHTML=mode==='walk'?'WASD 지면 이동 · Space 점프 · 좌클릭 드래그 · 가장자리에서 계속 회전<br>휠 속도 · Shift 누르기: 숙이기 · Space 점프 · Tab 눈높이 Z':'WASD 이동 · Q 아래 / E 위 · 좌클릭 드래그 · 가장자리에서 계속 회전<br>휠 속도 · Shift 빠르게 · Alt 천천히';
+  this.hud.querySelector('span').innerHTML=mode==='walk'?'WASD 지면 이동 · Space 점프 · 좌클릭 드래그 · 일정한 회전 감도<br>휠 속도 · Shift 누르기: 숙이기 · Space 점프 · Tab 눈높이 Z':'WASD 이동 · Q 아래 / E 위 · 좌클릭 드래그 · 일정한 회전 감도<br>휠 속도 · Shift 빠르게 · Alt 천천히';
   e.controls.enabled=false;e.gizmo.transform.enabled=false;e.gizmo.sync();this.hud.hidden=false;selected.classList.add('active');selected.setAttribute('aria-pressed','true');this.view.classList.add('fly-active');document.getElementById('sceneDialog').classList.add('fly-mode');
   this.lookSurface.hidden=false;this.surface.focus({preventScroll:true});this.status();e.invalidate();
   if(mode==='walk')e.storeCamera();
@@ -92,9 +91,7 @@ export class SceneFly{
  tick(time){
   if(!this.active||!this.navigation||this.heightEditing){this.lastTime=null;return;}
   const dt=this.lastTime===null?0:(time-this.lastTime)/1000;this.lastTime=time;
-  let changed=this.navigation.step(this.keys,dt);
-  const drag=this.lookDrag;
-  if(drag&&(drag.edgeX||drag.edgeY)){this.navigation.look(drag.edgeX*480*Math.min(dt,.05),drag.edgeY*480*Math.min(dt,.05));changed=true;}
+  const changed=this.navigation.step(this.keys,dt);
   if(changed){this.e.storeCamera();this.status();}
  }
  status(){

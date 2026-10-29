@@ -3529,7 +3529,10 @@ class BinaryParser {
 		while ( ! this.endOfContent( reader ) ) {
 
 			const node = this.parseNode( reader, version );
-			if ( node !== null ) allNodes.add( node.name, node );
+			// A top-level NULL record terminates the node list. FBX 7700
+			// exports can have longer footer padding than the size heuristic.
+			if ( node === null ) break;
+			allNodes.add( node.name, node );
 
 		}
 

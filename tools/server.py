@@ -1,6 +1,10 @@
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from pathlib import Path
 import subprocess,tempfile,os,json,sys,threading,datetime,uuid
+import pose_library_api
+import prop_library_api
+import hand_library_api
+import character_library_api
 ROOT=Path(__file__).resolve().parent.parent
 PORT=int(os.environ.get('SCROLL_PORT','8765'))
 BACKGROUND_PRESETS={'test-light.glb':{'id':'local-test-light','name':'test.blend · 경량 배경','meshes':33,'path':ROOT/'local'/'test-background-light.glb'}}
@@ -14,6 +18,10 @@ class Handler(SimpleHTTPRequestHandler):
         return self.headers.get('Host') in [f'127.0.0.1:{PORT}',f'localhost:{PORT}'] and self.headers.get('Origin') in [None,f'http://127.0.0.1:{PORT}',f'http://localhost:{PORT}']
     def do_GET(self):
         if not self.allowed(): return self.send_error(403)
+        if self.path.startswith('/api/character-library/'): return character_library_api.get(self,BLENDER)
+        if self.path.startswith('/api/pose-library/'): return pose_library_api.get(self)
+        if self.path.startswith('/api/prop-library/'): return prop_library_api.get(self)
+        if self.path.startswith('/api/hand-library/'): return hand_library_api.get(self)
         if self.path=='/api/interaction-clips.json':
             source=ROOT/'local'/'interaction-clips.json'
             if not source.is_file():return self.send_error(404)
@@ -36,6 +44,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200);self.send_header('Content-Type',content_type);self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-cache');self.end_headers();self.wfile.write(data)
     def do_POST(self):
         if not self.allowed(): return self.send_error(403)
+        if self.path.startswith('/api/character-library/'): return character_library_api.post(self,BLENDER)
+        if self.path.startswith('/api/pose-library/'): return pose_library_api.post(self)
         if self.path=='/api/project-backup':
             try: size=int(self.headers.get('Content-Length','0'))
             except ValueError:return self.send_error(400)
@@ -59,7 +69,8 @@ class Handler(SimpleHTTPRequestHandler):
         if size<12 or size>150*1024*1024:return self.fail(413,'150MB 이하의 Blender 파일을 선택하세요.')
         if not lock.acquire(blocking=False):return self.fail(409,'다른 모델을 변환하고 있습니다. 완료 후 다시 시도하세요.')
         try:
-            with tempfile.TemporaryDirectory(prefix='scroll-studio-') as tmp:
+            temp_root=ROOT/'local'/'tmp';temp_root.mkdir(parents=True,exist_ok=True)
+            with tempfile.TemporaryDirectory(prefix='scroll-studio-',dir=temp_root) as tmp:
                 source=Path(tmp)/'source.blend';output=Path(tmp)/'scene.glb'
                 self.connection.settimeout(120)
                 data=self.rfile.read(size)

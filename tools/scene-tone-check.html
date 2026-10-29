@@ -1,0 +1,51 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>3D 톤 GPU 검증</title>
+<style>body{background:#27313a;color:#eee;font:16px sans-serif}canvas{width:384px;height:256px;border:1px solid #718498}pre{white-space:pre-wrap}</style>
+<script type="importmap">{"imports":{"three":"/dist/vendor/three.module.js"}}</script>
+<h1>3D 톤 GPU 검증</h1><button id="run">검사 실행</button><pre id="result">대기</pre><div id="images"></div>
+<script type="module">
+import * as T from 'three';
+import {SceneTone,toneDefaults,toneValues} from '/dist/scene-tone.js';
+import {captureSceneLayers} from '/dist/scene-capture.js';
+import {paintWithOverlays} from '/dist/scene-overlays.js';
+const result=document.querySelector('#result'),images=document.querySelector('#images');
+const r=new T.WebGLRenderer({alpha:true,antialias:false,preserveDrawingBuffer:true});r.setSize(384,256);r.setClearColor(0,0);r.toneMapping=T.ACESFilmicToneMapping;
+const scene=new T.Scene(),camera=new T.OrthographicCamera(-3,3,2,-2,.1,100);camera.position.z=10;
+const environment=new T.Group(),figures=new T.Group();scene.add(environment,figures);
+function plane(group,x,y,z,w,h,color){const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color,toneMapped:false}));m.position.set(x,y,z);group.add(m);return m;}
+plane(environment,0,0,0,6,4,'#172b43');plane(environment,-1,0,2,1,3,'#818181');
+plane(figures,-1,0,1,2,2,'#ff8800');plane(figures,1,0,1,1,2,'#ffffff');
+const editor={renderer:r,scene,camera,environment,figures,state:{look:{}},grid:{visible:false},gizmo:{helper:new T.Group()}};const tone=editor.tone=new SceneTone(editor);
+const bytes=()=>{const gl=r.getContext(),p=new Uint8Array(384*256*4);gl.readPixels(0,0,384,256,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
+const pixel=(b,x,y)=>Array.from(b.slice((y*384+x)*4,(y*384+x)*4+4));
+const draw=()=>{paintWithOverlays(editor,()=>{r.render(scene,camera);tone.paint();});return bytes();};
+function snapshot(name){const p=document.createElement('p');p.textContent=name;const c=document.createElement('canvas');c.width=384;c.height=256;c.getContext('2d').drawImage(r.domElement,0,0);images.append(p,c);}
+document.querySelector('#run').onclick=()=>{const checks=[];images.replaceChildren();const check=(name,ok,detail='')=>{checks.push({name,ok,detail});if(!ok)throw Error(name+': '+detail);};
+try{
+ r.setSize(384,256);editor.state.look={};const base=draw();snapshot('원본');check('기본값 무처리',!tone.source);
+ editor.state.look={saturation:0};const gray=draw(),gp=pixel(gray,64,128);check('채도 0 흑백',Math.max(...gp.slice(0,3))-Math.min(...gp.slice(0,3))<=1,gp);
+ editor.state.look={gamma:2};const bright=draw();check('감마 암부 밝기',pixel(bright,20,128)[0]>pixel(base,20,128)[0]);
+ editor.state.look={contrast:150};const contrast=draw();check('대비 변경',pixel(contrast,20,128)[0]<pixel(base,20,128)[0]);
+ editor.state.look={};const matte=figures.children[0].material;matte.toneMapped=true;r.toneMappingExposure=.5;const dim=draw();r.toneMappingExposure=1.5;const exposed=draw();check('노출 밝기',pixel(exposed,64,128)[1]>pixel(dim,64,128)[1]);matte.toneMapped=false;r.toneMappingExposure=1;
+ editor.state.look={sss:true,sssStrength:.6,sssRadius:2};const glow=draw();snapshot('SSS풍 빛 번짐');check('빛 번짐',pixel(glow,216,128)[0]>pixel(base,216,128)[0]);check('하이라이트 색 보존',pixel(glow,64,128)[1]<250,pixel(glow,64,128));
+ editor.state.look={sss:true,sssStrength:1,sssRadius:2,sssColorStrength:0};const neutral=draw();
+ editor.state.look.sssColorStrength=1;const red=draw(),rp=pixel(red,216,128),np=pixel(neutral,216,128);snapshot('붉은 산란색 · 그림자 경계');
+ check('붉은 산란색',rp[0]-rp[1]>np[0]-np[1]+5,JSON.stringify({neutral:np,red:rp}));
+ check('빛 없는 부분 색 보존',pixel(red,20,20).every((v,i)=>Math.abs(v-pixel(base,20,20)[i])<=1));
+ editor.state.look.sssColor='#66aaff';const blue=draw();check('산란 색 변경',pixel(blue,216,128)[2]>rp[2]&&pixel(blue,216,128)[0]<rp[0]);
+ editor.state.look.sssColorStrength=0;const zeroTint=draw();check('산란 색 강도 0 원본 빛 유지',zeroTint.every((v,i)=>v===neutral[i]));
+ editor.state.look={sss:true,sssStrength:1,sssRadius:2};const defaultTint=draw();check('기존 SSS 설정에 기본 붉은기 적용',pixel(defaultTint,216,128)[1]<np[1]);
+ check('산란 설정 저장 왕복',toneValues(JSON.parse(JSON.stringify({...toneDefaults,sssColor:'#123456',sssColorStrength:.8}))).scatterColor==='#123456');
+ check('잘못된 산란색 기본값 복원',toneValues({sssColor:'invalid'}).scatterColor===toneDefaults.sssColor);
+ let guide;captureSceneLayers(editor,(kind)=>{if(kind==='guide')guide=bytes();});snapshot('투명 인물 · 배경 깊이 차폐');
+ check('전경 벽 뒤 인물 차폐',pixel(guide,128,128)[3]===0,pixel(guide,128,128));check('인물 외부 알파 0',pixel(guide,10,10)[3]===0,pixel(guide,10,10));check('보이는 인물 알파 유지',pixel(guide,256,128)[3]===255,pixel(guide,256,128));
+ check('렌더 상태 복원',r.autoClear&&environment.visible&&figures.visible&&r.getRenderTarget()===null);
+ r.setSize(600,400);draw();check('리사이즈',tone.source.image.width===600&&tone.a.width<=640);
+ r.setSize(384,256);editor.state.look={sss:false,sssColor:'#ff0000',sssColorStrength:1};const disabled=draw();check('SSS 해제 시 산란 색 영향 없음',disabled.every((v,i)=>v===base[i]));check('효과 해제 메모리 해제',!tone.source&&!tone.a&&!tone.b);
+ const marker=plane(figures,2,1,3,.25,.25,'#ff66aa');marker.userData.poseMarker=true;
+ const handle=plane(editor.gizmo.helper,2,-1,3,.25,.25,'#44aaff');scene.add(editor.gizmo.helper);
+ editor.state.look={};const controlsBase=draw();editor.state.look={sss:true,sssStrength:1,sssRadius:3,saturation:0,gamma:1.4,contrast:120};const controlsEffects=draw();snapshot('조작 표시 · 후보정 제외');
+ for(const [name,x,y] of [['관절',320,192],['축',320,64]])check(name+' 색상 보존',pixel(controlsBase,x,y).every((v,i)=>v===pixel(controlsEffects,x,y)[i]),pixel(controlsEffects,x,y));
+ marker.visible=false;handle.visible=false;const withoutControls=draw();check('조작 표시 빛 번짐 제외',pixel(controlsEffects,308,192).every((v,i)=>v===pixel(withoutControls,308,192)[i]));marker.visible=true;handle.visible=true;
+ result.textContent='PASS '+checks.length+'\n'+JSON.stringify(checks,null,2);result.dataset.status='pass';
+}catch(error){result.textContent='FAIL '+error.stack+'\n'+JSON.stringify(checks,null,2);result.dataset.status='fail';}};
+</script></html>

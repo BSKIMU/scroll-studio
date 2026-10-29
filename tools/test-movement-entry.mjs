@@ -6,6 +6,7 @@ import {registerHooks} from 'node:module';
 let resolveAssets;
 globalThis.motionAssets=new Promise(resolve=>resolveAssets=resolve);
 const mocks={
+ 'scene-pose-library.js':`export class ScenePoseLibrary{constructor(){this.live={cancel(){}};}contains(){return false;}update(){}}`,
  'pose-lab-motion.js':`export const loadPoseLab=()=>globalThis.motionAssets;export class PoseLabMotion{constructor(controller,figure,person,physics){this.figure=figure;this.person=person;figure.position.copy(physics.feet);Object.assign(person,{x:physics.feet.x,y:physics.feet.y,z:physics.feet.z});}update(dt,direction){this.figure.position.x+=direction.x*dt;this.figure.position.z+=direction.z*dt;Object.assign(this.person,{x:this.figure.position.x,z:this.figure.position.z});}freeze(){}requestJump(){}interact(){}}`,
  'scene-collision.js':`export const initCollision=async()=>{};export class SceneCollision{walkingStart(p){return globalThis.noStandingRoom?null:globalThis.spawnFeet?p.clone().fromArray(globalThis.spawnFeet):p;}setFeet(p){this.feet=p;}dispose(){}nearestSeat(){return null;}}`,
  'furniture-motion.js':`export const loadInteractionClips=async()=>null;`
