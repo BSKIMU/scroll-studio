@@ -1,8 +1,10 @@
 import {Color} from 'three';
+import {setShadowQuality} from './lighting-rig.js?v=20261030-movement1';
 
 // Keep the complete environment depth from the background pass. Clear only its
 // color before drawing figures, so foreground occlusion is independent of order.
 export function captureSceneLayers(editor, consume){
+ setShadowQuality(editor);
  editor.props?.update();
  const {renderer,scene,camera,environment,figures,grid,gizmo}=editor;
  const saved={background:scene.background,dome:editor.skyDome?.visible,clear:renderer.getClearColor(new Color()).clone(),alpha:renderer.getClearAlpha(),autoClear:renderer.autoClear,env:environment.visible,fig:figures.visible,grid:grid.visible,gizmo:gizmo.helper.visible};

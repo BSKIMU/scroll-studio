@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,next){return s==='three'?{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true}:next(s,c);}});
-const T=await import('three'),{analyzeHDRLighting,rotatedHDRDirection}=await import('../dist/hdri-lighting.js'),{applyLighting,updateLightFrame,lightingDefaults}=await import('../dist/lighting-rig.js');
+const T=await import('three'),{analyzeHDRLighting,rotatedHDRDirection}=await import('../dist/hdri-lighting.js'),{applyLighting,updateLightFrame,lightingDefaults,setShadowQuality}=await import('../dist/lighting-rig.js');
 function panorama(value){const width=128,height=64,data=new Uint16Array(width*height*4);for(let y=0;y<height;y++)for(let x=0;x<width;x++){const c=value(x,y);for(let k=0;k<3;k++)data[(y*width+x)*4+k]=T.DataUtils.toHalfFloat(c[k]);}return {data,width,height};}
 const sky=analyzeHDRLighting(panorama(()=>[1,1,1]));assert(Math.abs(sky.mean-1)<.001,'Uniform sky is integrated by solid angle, including poles');
 assert.equal(sky.lobes.length,3);assert(sky.lobes.every(l=>l.direction[1]>0&&l.intensity>0));
@@ -20,3 +20,18 @@ const before=e.fillLight.position.clone().sub(e.fillLight.target.position).norma
 applyLighting(e,{...settings,hdriNatural:false});assert.equal(e.sun.intensity,3);assert.equal(e.ambient.intensity,1);assert.equal(e.fillLight.castShadow,false);assert.equal(e.scene.environmentIntensity,.7);
 applyLighting(e,{...settings,hdriLight:0});assert([e.sun,e.fillLight,e.rimLight].every(l=>l.intensity===0));assert.equal(e.scene.environmentIntensity,0);
 console.log('PASS: spherical HDR energy, direction/color, brightness scaling, fixed camera-independent natural lights, occlusion budget and manual override');
+
+// Movement changes allocation size only, never light direction/energy/occlusion.
+applyLighting(e,settings);
+const lights=[e.sun,e.fillLight,e.rimLight];
+const lightState=()=>lights.map(l=>({color:l.color.toArray(),intensity:l.intensity,position:l.position.toArray(),target:l.target.position.toArray(),castShadow:l.castShadow,bias:l.shadow.bias,radius:l.shadow.radius}));
+const beforeQuality=lightState();let disposed=0;
+function allocate(){for(const l of lights)l.shadow.map={width:l.shadow.mapSize.x,height:l.shadow.mapSize.y,dispose(){disposed++;}};}
+allocate();setShadowQuality(e,true);
+assert.deepEqual(lights.map(l=>l.shadow.mapSize.x),[512,512,512]);assert.equal(disposed,3);
+allocate();for(let i=0;i<120;i++)setShadowQuality(e,true);
+assert.equal(disposed,3,'Stable movement must not reallocate shadow maps every frame');
+assert.deepEqual(lightState(),beforeQuality,'HDRI energy, color and wall/window occlusion remain unchanged');
+setShadowQuality(e);assert.deepEqual(lights.map(l=>l.shadow.mapSize.x),[2048,1024,1024]);assert.equal(disposed,6);
+allocate();setShadowQuality(e);assert.equal(disposed,6,'Repeated captures reuse full-quality shadow targets');
+console.log('PASS: interactive shadow budget, stable target reuse, full output restoration, unchanged lighting');

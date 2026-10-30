@@ -48,7 +48,7 @@ import {balloonDraw,setupBalloons} from './balloons.js?v=20261025-release1';
 import {preparePencilLayer,ensureLayers,activePaint,layerStrokes,layerVisible,setupLayers} from './layers.js?v=20261028-guide3';
 import {setupDrawing,paintStrokes} from './drawing.js?v=20261028-guide3';
 import './scroll-nav.js?v=20261025-release1';
-import {SceneEditor,defaultScene,objToGLB} from './scene.js?v=20261030-ssscolor1';
+import {SceneEditor,defaultScene,objToGLB} from './scene.js?v=20261030-movement1';
 import {writePsd,zipSync,strToU8} from './vendor/formats.js';
 const $=id=>document.getElementById(id),uid=()=>crypto.randomUUID(),clone=x=>structuredClone(x),clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const emptyScene=()=>({...defaultScene(),asset:'empty',people:[]});

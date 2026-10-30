@@ -1,4 +1,4 @@
-import {SceneTone} from './scene-tone.js?v=20261030-ssscolor1';
+import {SceneTone} from './scene-tone.js?v=20261030-movement1';
 import {SceneProps} from './scene-props.js?v=20261029-curated2';
 import {SceneShotCamera} from './scene-shot-camera.js?v=20261027-pose-camera1';
 import {applyEnvironmentPlacement} from './scene-object-transform.js?v=20261029-library1';
@@ -18,13 +18,13 @@ import {applyProjection,applyRenderProjection,projectionFor,viewportSize,applyVi
 import {environmentHeight,setupEnvironmentGround} from './environment-ground.js?v=20261029-library1';
 import {applyFigureTransform} from './hand-pose.js?v=20261029-hands2';
 import {setupHandControls} from './scene-hands.js?v=20261029-hands2';
-import {ScenePreview} from './scene-preview.js?v=20261030-ssscolor1';
+import {ScenePreview} from './scene-preview.js?v=20261030-movement1';
 import {guideRect} from './frame-geometry.js?v=20261025-release1';
-import {captureSceneLayers} from './scene-capture.js?v=20261030-ssscolor1';
+import {captureSceneLayers} from './scene-capture.js?v=20261030-movement1';
 import {loadMannequin,mannequin,defaultPerson,hasFigureModel,figureModels,applyMovementPose} from './mannequin.js?v=20261029-hands2';
 import {SceneMovement} from './scene-movement.js?v=20261029-curated2';
 import {SceneDoors,buildInteractionRoom} from './scene-doors.js?v=20261025-release1';
-import {SceneAdvanced} from './scene-advanced.js?v=20261030-ssscolor1';
+import {SceneAdvanced} from './scene-advanced.js?v=20261030-movement1';
 import {installCameraDrag} from './camera-drag.js?v=20261029-library1';
 import {scenePanels} from './scene-panels.js?v=20261028-guide3';
 import * as T from 'three';

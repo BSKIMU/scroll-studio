@@ -1,4 +1,4 @@
-import {toneDefaults} from './scene-tone.js?v=20261030-ssscolor1';
+import {toneDefaults} from './scene-tone.js?v=20261030-movement1';
 import {backgroundLocked} from './scene-background-lock.js?v=20261029-library1';
 import {setupSkyPicker} from './scene-sky-picker.js?v=20261027-aurora1';
 import {LineSegments2} from './vendor/addons/lines/LineSegments2.js';
@@ -9,7 +9,7 @@ import {applyRenderProjection} from './scene-projection.js?v=20261027-studio4';
 import * as T from 'three';
 import {SkyPresets,skyPresets,hdriLook,hdriAzimuth,legacySkyIds} from './sky-presets.js?v=20261027-natural1';
 import {extractLineArt} from './lineart.js?v=20261027-studio4';
-import {lightingDefaults,lightingPresets,applyLighting,updateLightFrame} from './lighting-rig.js?v=20261027-natural1';
+import {lightingDefaults,lightingPresets,applyLighting,updateLightFrame,setShadowQuality} from './lighting-rig.js?v=20261030-movement1';
 const defaults={...lightingDefaults,...toneDefaults,skyPreset:null,cloudCoverage:.55,cloudSeed:0,skyHorizon:-32,skyRotation:0,hdriGround:true,hdriGroundOpacity:.2,hdriNatural:true,hdriBrightness:1,hdriLight:1,glassOpacity:.18,white:false,flat:false,lines:false,lineColor:'#303d38',edgeAngle:35,lineWidth:1.5,exposure:1,contrast:100,saturation:100,tint:'#ffffff',sky:'#dfe5db',sun:3,ambient:1.1,lightColor:'#ffffff',ground:'#9299a4',azimuth:35,altitude:55,shadows:true,near:.01,roll:0,zoomSpeed:1,panSpeed:1,hidden:[],objects:{}};
 export class SceneAdvanced{
  constructor(editor){
@@ -80,7 +80,7 @@ field(light,'유리 불투명도','glassOpacity','range',0,1,.01);const presets=
  export(mode,width){
   const e=this.e;if(this.skies.pending)throw Error('하늘을 준비하고 있습니다. 완료 후 내보내세요.');if((mode==='selected'||mode==='excluded')&&this.selected<0)throw Error('레이어 탭에서 물체를 선택하세요.');
   if(mode==='lines'&&!this.settings().lines)throw Error('스타일 탭에서 모서리선 표시를 켜세요.');
-  e.flush();const savedCamera=e.camera.clone(),helper=e.shot?.helper,helperVisible=helper?.visible;if(helper)helper.visible=false;const height=Math.min(12000,Math.round(width*e.cut.height/(e.cut.width*e.cut.pageWidth/100))),ratio=e.renderer.getPixelRatio(),background=e.scene.background,dome=e.skyDome.visible,grid=e.grid.visible,gizmo=e.gizmo.helper.visible,env=e.environment.visible,fig=e.figures.visible,vis=this.meshes.map(o=>o.visible),writes=new Map();
+  e.flush();setShadowQuality(e);const savedCamera=e.camera.clone(),helper=e.shot?.helper,helperVisible=helper?.visible;if(helper)helper.visible=false;const height=Math.min(12000,Math.round(width*e.cut.height/(e.cut.width*e.cut.pageWidth/100))),ratio=e.renderer.getPixelRatio(),background=e.scene.background,dome=e.skyDome.visible,grid=e.grid.visible,gizmo=e.gizmo.helper.visible,env=e.environment.visible,fig=e.figures.visible,vis=this.meshes.map(o=>o.visible),writes=new Map();
   try{e.renderer.setPixelRatio(1);e.renderer.setSize(width,height);applyRenderProjection(e.camera,e.cut,e.cut.pageWidth,e.state);e.grid.visible=false;e.gizmo.helper.visible=false;e.environment.visible=true;e.figures.visible=!['background','selected','excluded','lines'].includes(mode);if(['selected','people','lines'].includes(mode)){e.skyDome.visible=false;e.scene.background=null;e.renderer.setClearColor(0,0);}if(mode==='people')e.environment.visible=false;
    this.meshes.forEach((o,i)=>{if(mode==='selected')o.visible=i===this.selected;if(mode==='excluded'&&i===this.selected)o.visible=false;if(mode==='lines')for(const m of [].concat(o.material)){writes.set(m,m.colorWrite);m.colorWrite=false;}});
    if(!e.state.shotCamera)this.cameraRoll();const markers=[];e.figures.traverse(o=>{if(o.userData.poseMarker){markers.push([o,o.visible]);o.visible=false;}});try{e.renderer.render(e.scene,e.camera);if(mode!=='lines')e.tone.paint();}finally{for(const [o,v]of markers)o.visible=v;}const a=document.createElement('a');const bytes=Uint8Array.from(atob(this.png(e.renderer.domElement).split(',')[1]),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));a.href=url;a.download=`scene-${mode}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);

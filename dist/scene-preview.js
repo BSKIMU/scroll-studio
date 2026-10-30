@@ -1,14 +1,15 @@
-import {SceneShading} from './scene-shading.js?v=20261030-ssscolor1';
+import {SceneShading} from './scene-shading.js?v=20261030-movement1';
 import {DemandRenderer} from './demand-renderer.js?v=20261025-release1';
 import {SelectionOutline} from './selection-outline.js?v=20261027-studio4';
 import {paintWithOverlays} from './scene-overlays.js?v=20261030-release2';
+import {setShadowQuality} from './lighting-rig.js?v=20261030-movement1';
 
 export class ScenePreview{
  constructor(editor){
   this.editor=editor;this.shading=new SceneShading(editor);this.outline=new SelectionOutline(editor);this.light=true;this.frames=0;this.timings=[];
   try{this.light=localStorage.getItem('scroll-light-preview')!=='off';}catch{}
   const panel=document.createElement('details');panel.className='preview-settings';
-  panel.innerHTML='<summary>미리보기 성능</summary><label class="check"><input id="lightPreview" type="checkbox">가벼운 화면</label><output id="previewStatus" role="status">대기 중 · 자동 절전</output><small>편집 화면만 가볍게 표시합니다. 컷 저장과 PNG 해상도는 유지됩니다.</small>';
+  panel.innerHTML='<summary>미리보기 성능</summary><label class="check"><input id="lightPreview" type="checkbox">가벼운 화면</label><output id="previewStatus" role="status">대기 중 · 자동 절전</output><small>이동 중 해상도·빛 번짐·그림자를 가볍게 계산합니다. 컷은 이동을 마치면 반영되고, 저장과 PNG는 원래 품질로 출력합니다.</small>';
   document.getElementById('sceneRenderMode').before(panel);this.status=panel.querySelector('output');
   const input=panel.querySelector('input');input.checked=this.light;input.onchange=()=>{this.light=input.checked;try{localStorage.setItem('scroll-light-preview',this.light?'on':'off');}catch{}this.setQuality();};
   this.loop=new DemandRenderer(time=>this.draw(time));
@@ -16,23 +17,36 @@ export class ScenePreview{
   document.addEventListener('visibilitychange',()=>{if(document.hidden){editor.flush();this.stop();}else this.request();});
   this.setQuality();
  }
- setQuality(){const e=this.editor;e.renderer.setPixelRatio(this.light?1:Math.min(devicePixelRatio,1.5));if(e.cut)e.resize();this.request();}
+ setRenderQuality(interactive=false){const r=this.editor.renderer,ratio=this.light?(interactive?.75:1):Math.min(devicePixelRatio,1.5);if(r.getPixelRatio()!==ratio)r.setPixelRatio(ratio);}
+ setQuality(){const e=this.editor;this.setRenderQuality();if(e.cut)e.resize();this.request();}
  request(){this.loop.setActive(this.editor.isOpen&&!document.hidden);this.loop.request();}
  stop(){this.loop.setActive(false);this.lastFrame=null;this.outline.release();this.editor.tone?.release();this.status.textContent='대기 중 · 자동 절전';}
- paint(){this.editor.props?.update();paintWithOverlays(this.editor,()=>{this.shading.paint();this.outline.paint();});}
+ paint(interactive=false,time=performance.now()){
+  const e=this.editor,light=this.light&&interactive,r=e.renderer;
+  this.setRenderQuality(light);setShadowQuality(e,light);e.props?.update();
+  // Reuse all three shadow maps between 10 Hz updates. Their world matrices
+  // stay paired with the cached maps; character/camera animation still runs
+  // on every display frame. Captures bypass this preview-only schedule.
+  const refresh=!light||time-(this.lastShadowTime??-Infinity)>=100||!e.sun.shadow.map,auto=r.shadowMap.autoUpdate;
+  if(refresh)this.lastShadowTime=light?time:null;
+  r.shadowMap.autoUpdate=refresh;
+  try{paintWithOverlays(e,()=>{this.shading.paint({interactive:light});this.outline.paint();});}
+  finally{r.shadowMap.autoUpdate=auto;}
+ }
  draw(time){
   const e=this.editor;if(!e.isOpen||e.loading||document.hidden)return false;
   const start=performance.now();e.renderer.info.autoReset=false;e.renderer.info.reset();
   const moving=e.fly?.active?false:e.controls.update();e.fly?.tick(time);e.advanced?.cameraRoll();e.movement?.tick(time);
   const motionMs=performance.now()-start;
+  const interactive=!!(moving||e.fly?.active||e.movement?.active||e.gizmo?.transform?.dragging||e.gizmo?.keyboard?.active);
   // Only the dock has a visible manuscript consumer. Keep dirty state while it
   // is covered; stop/restore/save flush the final pose at the original resolution.
   const manuscriptVisible=!document.body.classList.contains('scene-maximized')&&!document.fullscreenElement?.contains(e.renderer.domElement);
   const previewPending=manuscriptVisible&&e.previewDirty&&!e.advanced.skies.pending;
-  const capture=previewPending&&time-(this.lastPreview??-Infinity)>=Math.max(this.light?160:80,(this.captureMs||0)*3);
-  if(capture){const captureStart=performance.now();e.preview();this.captureMs=performance.now()-captureStart;this.lastPreview=time;}
+  const capture=previewPending&&!(this.light&&interactive)&&time-(this.lastPreview??-Infinity)>=Math.max(this.light?160:80,(this.captureMs||0)*3);
+  if(capture){const captureStart=performance.now();this.setRenderQuality();e.preview();this.captureMs=performance.now()-captureStart;this.lastPreview=time;}
   const paintStart=performance.now();
-  this.paint();this.frames++;
+  this.paint(interactive,time);this.frames++;
   const active=!!(moving||e.fly?.active||e.movement?.active||previewPending&&e.previewDirty);
   this.measure(time,{start,motionMs,paintMs:performance.now()-paintStart,capture,manuscriptVisible,active});
   e.renderer.info.autoReset=true;

@@ -46,7 +46,7 @@ export class SceneTone{
     gl_FragColor=vec4(c*p.a,p.a);}`);
   this.quad=new T.Mesh(new T.PlaneGeometry(2,2),this.grade);this.quad.frustumCulled=false;this.screen.add(this.quad);
  }
- paint(){
+ paint({interactive=false}={}){
   const s=toneValues(this.e.state?.look),r=this.e.renderer;
   if(!s.strength&&s.gamma===1&&s.contrast===1&&s.saturation===1){this.release();return;}
   const size=r.getDrawingBufferSize(new T.Vector2());
@@ -61,13 +61,13 @@ export class SceneTone{
   try{
    r.autoClear=false;r.setScissorTest(false);
    if(s.strength){
-    const scale=Math.min(.5,640/Math.max(size.x,size.y)),w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
+    const scale=Math.min(interactive?.25:.5,(interactive?320:640)/Math.max(size.x,size.y)),w=Math.max(1,Math.round(size.x*scale)),h=Math.max(1,Math.round(size.y*scale));
     if(!this.a){const options={depthBuffer:false,stencilBuffer:false,minFilter:T.LinearFilter,magFilter:T.LinearFilter};this.a=new T.WebGLRenderTarget(w,h,options);this.b=new T.WebGLRenderTarget(w,h,options);}
     else if(this.a.width!==w||this.a.height!==h){this.a.setSize(w,h);this.b.setSize(w,h);}
     this.extract.uniforms.source.value=this.source;this.extract.uniforms.threshold.value=s.threshold;
     this.pass(this.extract,this.a);
-    const radius=s.radius*Math.min(w,h)/180;
-    for(let i=0;i<2;i++){
+    const radius=s.radius*Math.min(w,h)/180*(interactive?Math.SQRT2:1);
+    for(let i=0;i<(interactive?1:2);i++){
      this.blur.uniforms.source.value=this.a.texture;this.blur.uniforms.direction.value.set(radius/w,0);this.pass(this.blur,this.b);
      this.blur.uniforms.source.value=this.b.texture;this.blur.uniforms.direction.value.set(0,radius/h);this.pass(this.blur,this.a);
     }

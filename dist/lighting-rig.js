@@ -2,6 +2,19 @@ import * as T from 'three';
 import {rotatedHDRDirection} from './hdri-lighting.js?v=20261027-natural1';
 
 export const lightingDefaults={ambientColor:'#e6efff',fill:.35,fillColor:'#b9d1ff',rim:.3,rimColor:'#ffe0bb',shadowSoftness:2,shadowFocus:12};
+// Movement needs all HDRI light directions (including window occlusion), but
+// not six million shadow texels per frame. Only transient previews use 512².
+// Three does not resize an existing shadow target when mapSize changes.
+export function setShadowQuality(e,interactive=false){
+ [e.sun,e.fillLight,e.rimLight].forEach((light,i)=>{
+  const shadow=light?.shadow;if(!shadow)return;
+  const size=interactive?512:i?1024:2048;
+  shadow.mapSize.set(size,size);
+  if(shadow.map&&(shadow.map.width!==size||shadow.map.height!==size)){
+   shadow.map.dispose();shadow.map=null;shadow.needsUpdate=true;
+  }
+ });
+}
 const base={hdriNatural:false,shadows:true,contrast:100,saturation:100,exposure:1,shadowFocus:12,shadowSoftness:2,...lightingDefaults};
 export const lightingPresets=[
  ['창가 자연광',{...base,sun:3.2,ambient:1.4,lightColor:'#fff0d9',ambientColor:'#e3eeff',ground:'#b0bac3',azimuth:-90,altitude:32,fill:.45,rim:.15,shadowSoftness:3,shadowFocus:5,exposure:1.1}],
@@ -45,6 +58,7 @@ export function applyLighting(e,s){
   e.fillLight.castShadow=e.rimLight.castShadow=false;e.scene.environmentIntensity=s.hdriLight??1;
  }
  e.renderer.toneMappingExposure=s.exposure;e.renderer.shadowMap.enabled=s.shadows;e.renderer.shadowMap.type=T.PCFShadowMap;
- lights.forEach((light,i)=>{light.shadow.mapSize.set(i?1024:2048,i?1024:2048);light.shadow.normalBias=.006;light.shadow.bias=-.00003;light.shadow.radius=natural?Math.max(2,s.shadowSoftness*2):s.shadowSoftness;});
+ setShadowQuality(e);
+ lights.forEach(light=>{light.shadow.normalBias=.006;light.shadow.bias=-.00003;light.shadow.radius=natural?Math.max(2,s.shadowSoftness*2):s.shadowSoftness;});
  updateLightFrame(e,s);
 }

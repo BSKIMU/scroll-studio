@@ -17,7 +17,7 @@ export class SceneShading{
   document.getElementById('sceneView').append(group);this.sync();
  }
  sync(){for(const b of this.buttons)b.setAttribute('aria-pressed',String(b.dataset.shading===this.mode));}
- paint(){
+ paint({interactive=false}={}){
   const e=this.e,r=e.renderer,background=e.scene.background,dome=e.skyDome?.visible,shadow=r.shadowMap.autoUpdate,materials=[],hidden=[];
   r.domElement.style.filter=this.mode==='solid'?'none':e.advanced.filter();
   try{
@@ -27,7 +27,7 @@ export class SceneShading{
     r.shadowMap.autoUpdate=false;r.domElement.style.filter='none';
     for(const root of [e.environment,e.figures])root.traverse(o=>{if(o.isMesh&&!o.userData.poseMarker){materials.push([o,o.material]);o.material=this.material;}if(o.userData.contiEdge){hidden.push([o,o.visible]);o.visible=false;}});
    }
-   r.render(e.scene,e.camera);if(this.mode!=='solid')e.tone.paint();
+   r.render(e.scene,e.camera);if(this.mode!=='solid')e.tone.paint({interactive});
   }finally{for(const [o,m]of materials)o.material=m;for(const [o,v]of hidden)o.visible=v;e.scene.background=background;if(e.skyDome)e.skyDome.visible=dome;r.shadowMap.autoUpdate=shadow;}
  }
 }
