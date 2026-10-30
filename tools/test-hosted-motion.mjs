@@ -86,18 +86,31 @@ for(site of process.env.SCROLL_VERIFIED_SITE?[process.env.SCROLL_VERIFIED_SITE]:
   assert.ok(person.x*direction.x+person.z*direction.z>1,`${key} must move the figure`);
   motion.freeze();
  }
- // Real browser frame times straddle the 120 Hz physics interval. Fixed 60 Hz
- // tests missed a near-zero remainder cast that lifted a resting figure 44 cm.
+ const distances=[];
+ for(const fps of [30,60,144]){
+  const person=defaultPerson(model),figure=mannequin(person,0),physics=new SceneCollision(new T.Group(),person);
+  const motion=new PoseLabMotion(controller,figure,person,physics);
+  for(let i=0;i<fps*2;i++)motion.update(1/fps,{x:0,z:1},movementDefaults,true);
+  distances.push(person.z);motion.freeze();physics.dispose();
+ }
+ assert(Math.max(...distances)-Math.min(...distances)<.005,`${model}: frame rate must not change travel distance`);
+ // Irregular display frames must retain one fixed 60 Hz physics cadence.
+ // Near-zero remainder casts previously lifted a resting figure 44 cm.
  const frames=[.0334,.0333,.05,.0418,.0416,1/144],still={x:0,z:0};
  const person=defaultPerson(model);let figure=mannequin(person,0);
  for(let session=0;session<3;session++){
   const resume=person.motionPose?.feet,feet=resume?figure.localToWorld(new T.Vector3(...resume)):new T.Vector3(person.x,person.y||0,person.z);
   const physics=new SceneCollision(new T.Group(),{...person,x:feet.x,y:feet.y,z:feet.z});
   const motion=new PoseLabMotion(controller,figure,person,physics);
+  let casts=0,elapsed=0;const move=physics.move.bind(physics);
+  physics.move=(delta,dt)=>{casts++;assert.equal(dt,1/60,'One fixed collision interval');return move(delta,dt);};
   for(let i=0;i<180;i++){
+   elapsed+=frames[i%frames.length];
    motion.update(frames[i%frames.length],still,movementDefaults,false);
    assert.ok(Math.abs(person.y)<.001,`Idle must stay grounded after resume ${session}: ${person.y}`);
   }
+  assert.equal(casts,Math.floor(elapsed*60+1e-8),'No duplicate or remainder collision casts');
+  physics.move=move;
   for(const key of ['KeyW','KeyA','KeyS','KeyD']){
    const before=figure.position.clone(),direction=movementDirection(new Set([key]),{x:0,z:-1});
    for(let i=0;i<60;i++){
@@ -117,6 +130,24 @@ for(site of process.env.SCROLL_VERIFIED_SITE?[process.env.SCROLL_VERIFIED_SITE]:
  }
  console.log(`PASS: ${model} WASD, running, stable height, jump/landing and 3 saved-pose resumes`);
  }
+ const wall=new T.Mesh(new T.BoxGeometry(4,3,.05));wall.position.set(0,1.5,-1);
+ const obstacle=new T.Group();obstacle.add(wall);
+ const collision=new SceneCollision(obstacle,{height:180,x:0,y:0,z:0});
+ for(let i=0;i<180;i++)collision.move(new T.Vector3(0,0,-3.6/60),1/60);
+ assert(collision.feet.z>-.9,'60 Hz running cannot cross a thin wall');
+ assert(collision.grounded&&Math.abs(collision.feet.y)<.001,'Wall contact remains grounded');
+ collision.dispose();
+ const steps=new T.Group();
+ for(let i=0;i<4;i++){
+  const step=new T.Mesh(new T.BoxGeometry(2,(i+1)*.15,.5));
+  step.position.set(0,(i+1)*.075,1+i*.5);steps.add(step);
+ }
+ const stairCollision=new SceneCollision(steps,{height:180,x:0,y:0,z:0});let peak=0;
+ for(let i=0;i<120;i++){stairCollision.move(new T.Vector3(0,0,1.3/60),1/60);peak=Math.max(peak,stairCollision.feet.y);}
+ assert(peak>.58&&peak<.64,`60 Hz walking climbs ordinary 15 cm steps: ${peak} at ${stairCollision.feet.toArray()}`);
+ for(let i=0;i<120;i++)stairCollision.move(new T.Vector3(0,0,-1.3/60),1/60);
+ assert(stairCollision.grounded&&Math.abs(stairCollision.feet.y)<.001,'Step descent returns to the floor');
+ stairCollision.dispose();
  for(const filename of ['walk-reference.fbx','jump-reference.glb','idle.json','stop.json','run.json','leap.json','leapMirror.json','interaction-clips.json'])assert.ok(requests.some(url=>url.endsWith(filename)),`Loader did not request ${filename}`);
  console.log(`PASS: ${site} bundled loaders, WASD, irregular frame times, jump/landing and repeated pose restore`);
 }

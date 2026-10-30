@@ -5,7 +5,7 @@ registerHooks({resolve(s,c,next){if(s==='three')return {url:new URL('../dist/ven
 const T=await import('three');
 const {relatedMeshes,collectionTarget,selectionBounds,saveSelectionGroup,removeSelectionGroup,combineSelection}=await import('../dist/scene-selection.js');
 const {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject}=await import('../dist/scene-object-transform.js');
-const e={environment:new T.Group(),state:{asset:'chair-room',look:{objects:{}}}};
+const e={environment:new T.Group(),state:{asset:'chair-room',backgroundLocked:false,look:{objects:{}}}};
 const source=new T.Group();source.userData.scrollSourceRoot=true;e.environment.add(source);source.rotation.y=.3;source.scale.setScalar(.4);
 const chair=new T.Group();chair.name='chair';source.add(chair);chair.position.set(2,0,1);
 const mesh=(p,parent)=>{const m=new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial());m.position.set(...p);parent.add(m);return m;};

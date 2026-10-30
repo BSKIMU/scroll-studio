@@ -63,9 +63,10 @@ export class InteractiveMovement{
   else p.state=wants?(run?'달리기':'걷기'):'정지';
  }
  update(seconds,direction,settings,run){
+  // Collision runs at 60 Hz; the visible pose still renders each display frame.
   // Rapier and gravity share a fixed step. Carry the frame remainder forward:
   // near-zero shape casts can otherwise push a resting capsule off the floor.
-  const step=1/120;this.accumulator+=Math.max(0,Math.min(seconds,.1));
+  const step=1/60;this.accumulator+=Math.max(0,Math.min(seconds,.1));
   while(this.accumulator+1e-10>=step){this.advance(step,direction,settings,run);this.accumulator=Math.max(0,this.accumulator-step);}
   if(this.physics){const p=this.pose;let lift=0;if(jumping(p.layer.name)){const frame=p.contactFrame(p.parts());lift=Math.max(0,Math.min(frame.rel[0].y,frame.rel[2].y)-p.footHeight);}p.groundY=this.physics.feet.y-lift;}
   this.pose.renderPose();

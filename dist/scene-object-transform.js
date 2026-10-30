@@ -1,6 +1,6 @@
 import * as T from 'three';
-import {environmentHeight} from './environment-ground.js?v=20261029-library1';
-import {backgroundLocked} from './scene-background-lock.js?v=20261029-library1';
+import {environmentHeight} from './environment-ground.js?v=20261030-physics60';
+import {backgroundLocked} from './scene-background-lock.js?v=20261030-physics60';
 
 export function applyEnvironmentPlacement(editor){
  const value=editor.state.environmentPlacement?.[editor.state.asset]||{},o=editor.environment;
@@ -64,8 +64,10 @@ export function restoreObject(editor,target,snapshot){
  if(snapshot.members){target.members.forEach((m,i)=>{const v=snapshot.members[i];m.position.fromArray(v.p);m.quaternion.fromArray(v.q);m.scale.fromArray(v.s);m.updateMatrixWorld(true);});const v=snapshot.frame;target.frame.position.fromArray(v.p);target.frame.quaternion.fromArray(v.q);target.frame.scale.fromArray(v.s);target.frame.updateMatrixWorld(true);}
 }
 export function pickSceneTarget(editor,ray){
- // Respect occlusion and hidden ancestors; helpers are handled by pose dragging.
- return ray.intersectObjects([editor.figures,editor.environment],true).find(hit=>{
+ // Locked scenery never enters raycasting. Filtering hits afterwards still
+ // tests every background triangle, making detailed imports expensive to click.
+ const roots=editor.state?.backgroundLocked===false?[editor.figures,editor.environment]:[editor.figures,...[...(editor.doors?.items||[]),...(editor.stairs?.items||[]),...(editor.props?.items||[])].map(item=>item.root)];
+ return ray.intersectObjects([...new Set(roots)],true).find(hit=>{
   if(!hit.object.isMesh||hit.object.userData.poseMarker||backgroundLocked(editor,hit.object))return false;
   for(let o=hit.object;o;o=o.parent)if(!o.visible)return false;
   return true;

@@ -1,11 +1,11 @@
 import {SceneTone} from './scene-tone.js?v=20261030-movement1';
 import {SceneProps} from './scene-props.js?v=20261029-curated2';
 import {SceneShotCamera} from './scene-shot-camera.js?v=20261027-pose-camera1';
-import {applyEnvironmentPlacement} from './scene-object-transform.js?v=20261029-library1';
+import {applyEnvironmentPlacement} from './scene-object-transform.js?v=20261030-physics60';
 import {SceneGrid} from './scene-grid.js?v=20261027-groundfade1';
 import {SkyDome} from './sky-dome.js?v=20261027-groundfade1';
 import {setupFigurePicker} from './scene-figure-picker.js?v=20261029-library1';
-import {SceneAutoRigger} from './scene-auto-rigger.js?v=20261029-curated2';
+import {SceneAutoRigger} from './scene-auto-rigger.js?v=20261030-physics60';
 import {setupSceneTopControls} from './scene-top-controls.js?v=20261026-walk2';
 import {SceneFly} from './scene-fly.js?v=20261029-controls2';
 import {setupFigureModels} from './scene-models.js?v=20261029-library1';
@@ -15,29 +15,29 @@ import {setupPhone,updatePhone} from './scene-phone.js?v=20261025-release1';
 import {SceneStairs} from './scene-stairs.js?v=20261025-release1';
 import {instantiateBackground,releaseObjects,geometryBytes} from './scene-resources.js?v=20261025-release1';
 import {applyProjection,applyRenderProjection,projectionFor,viewportSize,applyViewportProjection,withCutProjection} from './scene-projection.js?v=20261027-studio4';
-import {environmentHeight,setupEnvironmentGround} from './environment-ground.js?v=20261029-library1';
+import {environmentHeight,setupEnvironmentGround} from './environment-ground.js?v=20261030-physics60';
 import {applyFigureTransform} from './hand-pose.js?v=20261029-hands2';
 import {setupHandControls} from './scene-hands.js?v=20261029-hands2';
 import {ScenePreview} from './scene-preview.js?v=20261030-movement1';
 import {guideRect} from './frame-geometry.js?v=20261025-release1';
 import {captureSceneLayers} from './scene-capture.js?v=20261030-movement1';
 import {loadMannequin,mannequin,defaultPerson,hasFigureModel,figureModels,applyMovementPose} from './mannequin.js?v=20261029-hands2';
-import {SceneMovement} from './scene-movement.js?v=20261029-curated2';
+import {SceneMovement} from './scene-movement.js?v=20261030-physics60';
 import {SceneDoors,buildInteractionRoom} from './scene-doors.js?v=20261025-release1';
-import {SceneAdvanced} from './scene-advanced.js?v=20261030-movement1';
-import {installCameraDrag} from './camera-drag.js?v=20261029-library1';
+import {SceneAdvanced} from './scene-advanced.js?v=20261030-physics60';
+import {installCameraDrag} from './camera-drag.js?v=20261030-physics60';
 import {scenePanels} from './scene-panels.js?v=20261028-guide3';
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {prepareImportedBackground} from './imported-background.js?v=20261029-library1';
-import {setupSeatPresets} from './scene-seats.js?v=20261029-curated2';
+import {prepareImportedBackground} from './imported-background.js?v=20261030-physics60';
+import {setupSeatPresets} from './scene-seats.js?v=20261030-physics60';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {PersonGizmo} from './gizmo.js?v=20261029-delete1';
+import {PersonGizmo} from './gizmo.js?v=20261030-physics60';
 import {solveLimb} from './pose-math.js?v=20261025-release1';
 import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 const $=id=>document.getElementById(id);
-export const defaultScene=()=>({asset:'room',people:[defaultPerson()],camera:[4,3.1,6],target:[0,1,0],fov:45,grid:true,wire:false});
+export const defaultScene=()=>({asset:'room',backgroundLocked:true,people:[defaultPerson()],camera:[4,3.1,6],target:[0,1,0],fov:45,grid:true,wire:false});
 export class SceneEditor{
  constructor(assets,onApply,onImport,onPreview,resolveAsset=async()=>{}){
   this.resolveAsset=resolveAsset;this.onPreview=onPreview;this.assets=assets;this.onApply=onApply;this.onImport=onImport;this.scene=new T.Scene();this.skyDome=new SkyDome();this.scene.add(this.skyDome);this.scene.background=new T.Color('#dfe5db');
@@ -86,13 +86,13 @@ export class SceneEditor{
 
  updateOptions(){const s=$('scenePreset');s.replaceChildren();for(const [id,name] of [['school-corridor','학교 복도 · 창가'],['room','스튜디오'],['interaction-room','상호작용 연습실 · 문 / 의자 / 침대'],['stair-room','계단 연습실 · 손잡이'],['castle','성문 · 샘플'],['empty','빈 공간'],...Object.values(this.assets()).map(a=>[a.id,a.name])]){let o=new Option(name,id);s.add(o);}s.value=this.state.asset;}
  async selectAsset(id){
-  this.flush();const token=++this.openToken,previous=this.state.asset;this.loading=true;
+  this.flush();const token=++this.openToken,previous=this.state.asset,previousLock=this.state.backgroundLocked;this.loading=true;
   $('liveStatus').textContent='배경 불러오는 중…';
   try{
    await this.resolveAsset(id);if(token!==this.openToken)return;
-   this.state.asset=id;this.updateOptions();await this.buildEnvironment();if(token!==this.openToken)return;this.fit();
+   this.state.asset=id;this.state.backgroundLocked=true;this.updateOptions();await this.buildEnvironment();if(token!==this.openToken)return;this.fit();
   }catch(error){
-   if(token===this.openToken){this.state.asset=previous;this.updateOptions();await this.buildEnvironment();}
+   if(token===this.openToken){this.state.asset=previous;this.state.backgroundLocked=previousLock;this.updateOptions();await this.buildEnvironment();}
    throw error;
   }finally{if(token===this.openToken){this.loading=false;this.movement?.sceneReady();this.invalidate();}}
   this.queueLive();

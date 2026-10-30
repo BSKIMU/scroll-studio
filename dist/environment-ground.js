@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {setupBackgroundLock} from './scene-background-lock.js?v=20261029-library1';
+import {setupBackgroundLock} from './scene-background-lock.js?v=20261030-physics60';
 
 // Prefer a broad horizontal surface, not the lowest vertex of a backdrop/wall.
 // New imports opt into this detection; existing assets retain their saved alignment.

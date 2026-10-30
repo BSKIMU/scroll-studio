@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {pickSceneTarget} from './scene-object-transform.js?v=20261029-library1';
+import {pickSceneTarget} from './scene-object-transform.js?v=20261030-physics60';
 
 // Capture empty-space drags before the canvas orbit/transform handlers see them.
 export function installCameraDrag(editor){

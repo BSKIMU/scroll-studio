@@ -1,10 +1,10 @@
 import {followCamera,recoverFollow} from './camera-navigation.js?v=20261026-navigation2';
 import {RunInput} from './run-input.js?v=20261025-release1';
 import {loadInteractionClips} from './furniture-motion.js?v=20261025-release1';
-import {initCollision,SceneCollision} from './scene-collision.js?v=20261029-library1';
+import {initCollision,SceneCollision} from './scene-collision.js?v=20261030-physics60';
 import * as T from 'three';
 import {movementDirection,movementKeys,editableTarget,movementDefaults} from './movement-controller.js?v=20261026-navigation2';
-import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261029-curated2';
+import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261030-physics60';
 import {ScenePoseLibrary} from './scene-pose-library.js?v=20261029-preview3';
 const $=id=>document.getElementById(id),speeds=[['moveWalk','walk'],['moveRun','run']];
 

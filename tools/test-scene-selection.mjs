@@ -4,7 +4,7 @@ import {registerHooks} from 'node:module';
 registerHooks({resolve(s,c,next){if(s==='three')return{url:new URL('../dist/vendor/three.module.js',import.meta.url).href,shortCircuit:true};return next(s,c);}});
 const T=await import('three');
 const {objectTarget,objectProxy,applyObjectProxy,snapshotObject,restoreObject,applyEnvironmentPlacement,applyObjectGroups,pickSceneTarget}=await import('../dist/scene-object-transform.js');
-const e={scene:new T.Scene(),environment:new T.Group(),figures:new T.Group(),state:{asset:'room',look:{objects:{}}},doors:{items:[]},stairs:{items:[]}};
+const e={scene:new T.Scene(),environment:new T.Group(),figures:new T.Group(),state:{asset:'room',backgroundLocked:false,look:{objects:{}}},doors:{items:[]},stairs:{items:[]}};
 e.scene.add(e.environment,e.figures);
 const parent=new T.Group();parent.position.set(2,.4,-3);parent.rotation.y=.6;parent.scale.setScalar(.6);e.environment.add(parent);
 const box=new T.Mesh(new T.BoxGeometry(1,2,1),new T.MeshBasicMaterial());box.position.set(1,2,0);box.rotation.set(.2,.1,-.1);parent.add(box);
@@ -21,9 +21,14 @@ restoreObject(e,target,before);assert(box.position.equals(base.position));assert
 const env=objectTarget(e,e.environment,new T.Vector3(0,0,0));objectProxy(env,proxy);proxy.position.set(4,2,-1);proxy.rotation.y=.4;proxy.scale.setScalar(1.2);applyObjectProxy(e,env,proxy);const expectedEnv=e.environment.position.clone(),savedEnv=JSON.parse(JSON.stringify(e.state));e.environment.position.set(0,0,0);e.environment.rotation.set(0,0,0);e.environment.scale.setScalar(1);e.state=savedEnv;applyEnvironmentPlacement(e);assert(e.environment.position.distanceTo(expectedEnv)<1e-6);assert.equal(e.state.environmentPlacement.room.z,expectedEnv.y);
 const prop={data:{id:'door-1'},root:new T.Group()};prop.root.add(new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial()));e.environment.add(prop.root);e.doors.items=[prop];const propTarget=objectTarget(e,prop.root.children[0]);assert.equal(propTarget.kind,'prop');objectProxy(propTarget,proxy);proxy.position.x+=1;applyObjectProxy(e,propTarget,proxy);const propMatrix=prop.root.matrixWorld.clone();prop.root.position.set(0,0,0);applyObjectGroups(e);propMatrix.elements.forEach((x,i)=>assert(Math.abs(x-prop.root.matrixWorld.elements[i])<1e-6));
 // A wall in front wins over a person behind it. Hidden ancestry is excluded.
-const wall=new T.Mesh(new T.BoxGeometry(4,4,.1),new T.MeshBasicMaterial()),figure=new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial());figure.userData.person=0;figure.position.z=-2;e.figures.add(figure);const simple={environment:new T.Group(),figures:e.figures};simple.environment.add(wall);simple.environment.updateMatrixWorld(true);e.figures.updateMatrixWorld(true);const ray=new T.Raycaster(new T.Vector3(0,0,5),new T.Vector3(0,0,-1));assert.equal(pickSceneTarget(simple,ray).object,wall);simple.environment.visible=false;assert.equal(pickSceneTarget(simple,ray).object,figure);
+const wall=new T.Mesh(new T.BoxGeometry(4,4,.1),new T.MeshBasicMaterial()),figure=new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial());figure.userData.person=0;figure.position.z=-2;e.figures.add(figure);const simple={environment:new T.Group(),figures:e.figures,state:{backgroundLocked:false}};simple.environment.add(wall);simple.environment.updateMatrixWorld(true);e.figures.updateMatrixWorld(true);const ray=new T.Raycaster(new T.Vector3(0,0,5),new T.Vector3(0,0,-1));assert.equal(pickSceneTarget(simple,ray).object,wall);simple.environment.visible=false;assert.equal(pickSceneTarget(simple,ray).object,figure);
 // Locked scenery cannot intercept clicks or transform; added props still can.
-simple.environment.visible=true;simple.state={backgroundLocked:true};
+simple.environment.visible=true;simple.state={};
+let wallRaycasts=0;const originalRaycast=wall.raycast;wall.raycast=function(...args){wallRaycasts++;return originalRaycast.apply(this,args);};
+assert.equal(pickSceneTarget(simple,ray).object,figure,'Background is locked when old files have no setting');
+assert.equal(wallRaycasts,0,'Locked mesh triangles are not raycast');
+simple.state.backgroundLocked=false;assert.equal(pickSceneTarget(simple,ray).object,wall);assert.equal(wallRaycasts,1,'Explicit unlock preserves mesh editing');
+simple.state.backgroundLocked=true;
 assert.equal(pickSceneTarget(simple,ray).object,figure);
 const added={root:new T.Group()};added.root.add(new T.Mesh(new T.BoxGeometry(),new T.MeshBasicMaterial()));added.root.position.z=1;simple.environment.add(added.root);simple.doors={items:[added]};simple.environment.updateMatrixWorld(true);
 assert.equal(pickSceneTarget(simple,ray).object,added.root.children[0]);

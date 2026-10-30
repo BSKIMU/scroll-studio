@@ -1,8 +1,8 @@
 import * as T from 'three';
 import R from './vendor/rapier.mjs';
 import {closedMeshVolume} from './mesh-volume.js?v=20261026-navigation3';
-import {assignedSeat} from './imported-background.js?v=20261029-library1';
-import {findGroundSurface} from './environment-ground.js?v=20261029-library1';
+import {assignedSeat} from './imported-background.js?v=20261030-physics60';
+import {findGroundSurface} from './environment-ground.js?v=20261030-physics60';
 let initialized;
 export const initCollision=()=>initialized??=R.init();
 const inherited=(o,key)=>{for(;o;o=o.parent)if(o.userData[key])return o;return null;};
@@ -72,7 +72,7 @@ export class SceneCollision{
  visibleContact(point,door){const from=this.feet;from.y+=Math.min(this.height*.7,1.25);const delta=point.clone().sub(from),length=delta.length();const leaf=this.dynamicDoors.find(d=>d.door===door)?.collider;const hit=this.world.castRay(new R.Ray(from,delta.normalize()),length,false,undefined,undefined,this.body,undefined,c=>c!==leaf);return !hit||hit.timeOfImpact>length-.12;}
  floor(p,top){const hit=this.world.castRayAndGetNormal(new R.Ray({x:p.x,y:top,z:p.z},{x:0,y:-1,z:0}),100,true,undefined,undefined,this.body);return hit?top-hit.timeOfImpact:0;}
  jump(){if(!this.grounded)return false;this.velocityY=5.8;this.grounded=false;return true;}
- move(delta,dt){this.velocityY=Math.max(-18,this.velocityY-18*dt);const request={x:delta.x,y:this.velocityY*dt,z:delta.z};this.controller.computeColliderMovement(this.body,request);const d=this.controller.computedMovement(),p=this.body.translation();this.body.setTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});this.grounded=this.controller.computedGrounded();if(this.grounded&&this.velocityY<0||this.velocityY>0&&d.y<request.y-.001)this.velocityY=0;this.world.step();return this.feet;}
+ move(delta,dt){this.world.timestep=dt;this.velocityY=Math.max(-18,this.velocityY-18*dt);const request={x:delta.x,y:this.velocityY*dt,z:delta.z};this.controller.computeColliderMovement(this.body,request);const d=this.controller.computedMovement(),p=this.body.translation();this.body.setTranslation({x:p.x+d.x,y:p.y+d.y,z:p.z+d.z});this.grounded=this.controller.computedGrounded();if(this.grounded&&this.velocityY<0||this.velocityY>0&&d.y<request.y-.001)this.velocityY=0;this.world.step();return this.feet;}
  // Large support surfaces are found geometrically, including uneven blankets.
  findBeds(){this.beds=[];for(const p of this.platforms){if(inherited(p.mesh,'scrollSeat')||inherited(p.mesh,'scrollNoSeat'))continue;const size=p.box.getSize(new T.Vector3());if(Math.min(size.x,size.z)<.55||Math.max(size.x,size.z)<1.4||Math.max(size.x,size.z)>3.5||size.y>1.5)continue;
   const center=p.box.getCenter(new T.Vector3()),pos=p.mesh.geometry.attributes.position,points=[];let xx=0,zz=0,xz=0;

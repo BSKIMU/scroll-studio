@@ -9,7 +9,7 @@ import {applyHandPose,automaticHands,relaxedGrip,clearIdleHands} from './hand-po
 import {WalkController} from './pose-lab/locomotion.js?v=20261027-navigation5';
 import {PoseRig} from './pose-lab/rig.js?v=20261025-release1';
 import {movementModel,updateFigureLandmarks} from './mannequin.js?v=20261029-hands2';
-import {InteractiveMovement} from './interactive-movement.js?v=20261025-release1';
+import {InteractiveMovement} from './interactive-movement.js?v=20261030-physics60';
 import {useCalibratedGunPose} from './curated-guns.js?v=20261029-curated2';
 let pending;
 export function loadPoseLab(){pending??=WalkController.create().catch(error=>{pending=null;throw error;});return pending;}

@@ -1,6 +1,6 @@
 import * as T from 'three';
-import {assignedSeat} from './imported-background.js?v=20261029-library1';
-import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261029-curated2';
+import {assignedSeat} from './imported-background.js?v=20261030-physics60';
+import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261030-physics60';
 import {loadInteractionClips,FurnitureMotion} from './furniture-motion.js?v=20261025-release1';
 import {SeatedPose} from './seated-pose.js?v=20261025-release1';
 
