@@ -2,7 +2,7 @@ import * as T from 'three';
 import {localLibraryService} from './library-assets.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {registerCharacter,loadFigureModel,defaultPerson,mannequin} from './mannequin.js?v=20261029-hands2';
+import {registerCharacter,loadFigureModel,defaultPerson,mannequin} from './mannequin.js?v=20261031-joint-handles';
 import {loadPoseLab,PoseLabMotion} from './pose-lab-motion.js?v=20261030-physics60';
 
 const markerInfo=[['chin','턱','#46d2cd'],['leftWrist','왼손목','#a9d65c'],['rightWrist','오른손목','#a9d65c'],['leftElbow','왼팔꿈치','#efd669'],['rightElbow','오른팔꿈치','#efd669'],['leftKnee','왼무릎','#edb365'],['rightKnee','오른무릎','#edb365'],['groin','사타구니','#f28eae']];

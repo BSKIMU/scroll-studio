@@ -16,12 +16,12 @@ export class EditorHistory{
  clear(){this.past=[];this.future=[];}
  capture(project,selected){return {project:copyDocument(project),selected};}
  checkpoint(project,selected){this.past.push(this.capture(project,selected));if(this.past.length>this.limit)this.past.shift();this.future=[];}
- travel(from,to,project,selected){
-  while(from.length){const next=from.pop();if(sameDocument(next.project,project))continue;to.push(this.capture(project,selected));return next;}
+ travel(from,to,project,selected,reconcile=value=>value){
+  while(from.length){const next=from.pop();next.project=reconcile(next.project,project);if(sameDocument(next.project,project))continue;to.push(this.capture(project,selected));return next;}
   return null;
  }
- undo(project,selected){return this.travel(this.past,this.future,project,selected);}
- redo(project,selected){return this.travel(this.future,this.past,project,selected);}
+ undo(project,selected,reconcile){return this.travel(this.past,this.future,project,selected,reconcile);}
+ redo(project,selected,reconcile){return this.travel(this.future,this.past,project,selected,reconcile);}
 }
 export function typingTarget(target){return !!(target?.isContentEditable||target?.closest?.('textarea,input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color]):not([type=button]):not([type=submit])'));}
 export function editorShortcut(e){

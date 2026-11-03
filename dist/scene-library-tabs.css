@@ -1,0 +1,16 @@
+#sceneLibraryTabs{position:absolute;right:48px;top:48px;width:310px;height:640px;z-index:24;background:rgba(34,44,56,.96);border:1px solid #6b859a;border-radius:7px;color:#deebf5}
+#sceneLibraryTabs>header nav{display:flex;gap:3px;min-width:0;overflow-x:auto;flex:1}
+#sceneLibraryTabs [role=tab]{white-space:nowrap;background:#2b3d4c;border:1px solid #58758b;border-radius:3px;color:inherit}
+#sceneLibraryTabs [role=tab][aria-selected=true]{background:#238cc2;border-color:#65c1ee}
+#sceneLibraryTabs .scene-library-pages{position:relative;display:flex;flex:1;min-height:0;min-width:0}
+#sceneLibraryTabs .scene-library-page{position:relative;inset:auto;width:100%;height:100%;max-width:none;max-height:none;min-width:0;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;padding:0;border:0;background:transparent;border-radius:0;backdrop-filter:none}
+#sceneLibraryTabs [hidden]{display:none!important}
+#sceneLibraryTabs .sky-picker-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#sceneLibraryTabs .sky-picker .figure-picker-grid{grid-template-columns:repeat(auto-fit,minmax(105px,1fr))}
+#sceneLibraryTabs .camera-preset-scroll{overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.camera-preset-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;margin-bottom:5px}
+.camera-preset-grid button{min-width:0;padding:2px;border:1px solid #60778b;background:#283846;border-radius:3px;cursor:pointer;aspect-ratio:1/1.15;overflow:hidden}
+.camera-preset-grid svg{display:block;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.camera-preset-grid button:hover,.camera-preset-grid button[aria-pressed=true]{background:#275e7b;border-color:#80cff8}
+.camera-preset-grid button:focus-visible{outline:2px solid #b3e5ff;outline-offset:-2px}
+#openCameraPresets{display:block;width:100%;padding:9px;margin:8px 0;text-align:left;background:#294a61;border:1px solid #5488a4;border-radius:4px;color:#e0effb}

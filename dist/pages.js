@@ -15,7 +15,7 @@ import {eyeIcon} from './eye-icon.js?v=20261025-release1';
 import {resizeCutBounds,guideRect} from './frame-geometry.js?v=20261025-release1';
 import {drawOutsideBalloons,splitBalloons} from './balloon-render.js?v=20261025-release1';
 import {splitFrame} from './frame-split.js?v=20261025-release1';
-import {seedFigure} from './mannequin.js?v=20261029-hands2';
+import {seedFigure} from './mannequin.js?v=20261031-joint-handles';
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const frameOrder=(a,b)=>(a.pageBase?(a.onTop?1:-1):0)-(b.pageBase?(b.onTop?1:-1):0);

@@ -29,7 +29,7 @@ export function setupSceneWorkspace({ensureOpen,flush,resize,toast}){
   if(token!==pending)return;flush();maximized=true;sync();
  }
  toggle.onclick=()=>maximized?restore():maximize();
- nav.querySelector('#canvasWorkspace').onclick=restore;nav.querySelector('#sceneWorkspace').onclick=maximize;
+ nav.querySelector('#canvasWorkspace').onclick=restore;nav.querySelector('#sceneWorkspace').onclick=()=>{if(!dock.hidden){restore();document.getElementById('closeScene')?.click();}else maximize();};
  handle.ondblclick=()=>maximized?restore():maximize();
  dock.addEventListener('pointerenter',()=>hover=true);dock.addEventListener('pointerleave',()=>hover=false);
  function end(cancel=false){

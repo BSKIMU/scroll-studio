@@ -1,5 +1,6 @@
 import {updatePhone} from './scene-phone.js?v=20261025-release1';
-import {jointBones,limitJoint} from './joint-pose.js?v=20261025-release1';
+import {jointBones,limitJoint} from './joint-pose.js?v=20261031-stable';
+import {followRaisedArms} from './shoulder-follow.js?v=20261031-shoulder1';
 import {createHandRig,applyHandPose,applyFigureTransform,automaticHands,clearIdleHands} from './hand-pose.js?v=20261029-hands2';
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -59,7 +60,7 @@ export function mannequin(p,i){
  g.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(g);model.scale.multiplyScalar(1.75/(bounds.max.y-bounds.min.y));g.updateMatrixWorld(true);const box=new T.Box3().setFromObject(g);model.position.y-=box.min.y;if(p.pose==='sit')model.position.y-=.4;
  const bones={};model.traverse(o=>{if(o.isBone)bones[o.name.replace('mixamorig','')]=o;});
  const fingers=createHandRig(bones);
- for(const [key,name]of Object.entries({leftShoulder:'LeftArm',rightShoulder:'RightArm',leftHip:'LeftUpLeg',rightHip:'RightUpLeg',leftElbow:'LeftForeArm',rightElbow:'RightForeArm',leftKnee:'LeftLeg',rightKnee:'RightLeg',head:'Head',chest:'Spine2',pelvis:'Hips'})){const hit=new T.Mesh(new T.SphereGeometry(.07,10,8),new T.MeshBasicMaterial({color:0x9e8bdf,transparent:true,opacity:.65,depthWrite:false,depthTest:false}));hit.userData.part=key;hit.userData.poseMarker=true;g.add(hit);g.userData.landmarks[key]=[0,0,0];}
+ for(const [key,name]of Object.entries({leftShoulder:'LeftArm',rightShoulder:'RightArm',leftHip:'LeftUpLeg',rightHip:'RightUpLeg',leftElbow:'LeftForeArm',rightElbow:'RightForeArm',leftKnee:'LeftLeg',rightKnee:'RightLeg',head:'Head',chest:'Spine2',abdomen:'Spine',pelvis:'Hips'})){const hit=new T.Mesh(new T.SphereGeometry(.024,16,12),new T.MeshBasicMaterial({color:0x9e8bdf,transparent:true,opacity:.65,depthWrite:false,depthTest:false}));hit.userData.part=key;hit.userData.poseMarker=true;g.add(hit);g.userData.landmarks[key]=[0,0,0];}
  const pos=b=>{g.updateMatrixWorld(true);return b.getWorldPosition(new T.Vector3());};
  function aim(b,end,target){const start=pos(b),dir=pos(end).sub(start).normalize(),to=new T.Vector3(...target).sub(start).normalize(),world=b.getWorldQuaternion(new T.Quaternion()),parent=b.parent.getWorldQuaternion(new T.Quaternion());b.quaternion.copy(parent.invert().multiply(new T.Quaternion().setFromUnitVectors(dir,to).multiply(world)));g.updateMatrixWorld(true);}
  for(const [side,sign] of [['Left',1],['Right',-1]]){
@@ -71,7 +72,7 @@ export function mannequin(p,i){
   if(p.pose==='sit'){a=pos(leg);aim(leg,knee,[a.x,a.y-.04,a.z+.45]);a=pos(knee);aim(knee,foot,[a.x,a.y-.45,a.z]);}
   for(const [key,b0,b1,b2] of [[side.toLowerCase()+'Hand',arm,fore,hand],[side.toLowerCase()+'Foot',leg,knee,foot]]){
    g.userData.landmarks[key]=pos(b2).toArray();
-   const hit=new T.Mesh(new T.SphereGeometry(.065,8,6),new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));hit.position.fromArray(g.userData.landmarks[key]);hit.userData.part=key;hit.userData.poseMarker=true;hit.material.color.set(0x9e8bdf);hit.material.opacity=.65;hit.material.depthTest=false;g.add(hit);
+   const hit=new T.Mesh(new T.SphereGeometry(.022,16,12),new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));hit.position.fromArray(g.userData.landmarks[key]);hit.userData.part=key;hit.userData.poseMarker=true;hit.material.color.set(0x9e8bdf);hit.material.opacity=.65;hit.material.depthTest=false;g.add(hit);
   }
  }
  g.userData.baseModel=p.model;g.userData.basePose=p.pose;g.userData.motionRig={bones,model,fingers,jointFrames:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,b.parent.getWorldQuaternion(new T.Quaternion())])),transforms:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,{p:b.position.clone(),s:b.scale.clone()}])),modelBase:{p:model.position.clone(),q:model.quaternion.clone(),s:model.scale.clone()},base:Object.fromEntries(Object.entries(bones).map(([name,b])=>[name,b.quaternion.clone()]))};
@@ -104,8 +105,9 @@ export function applyMovementPose(g,p){
    rotate(side+'ForeArm',pose.airborne?-.5:-.25*strength);
   }
  }
- for(const [key,q]of Object.entries(p.joints||{})){const name=jointBones[key];if(bones[name]&&Array.isArray(q)&&q.length===4&&q.every(Number.isFinite))bones[name].quaternion.fromArray(q).normalize();}
+ for(const [key,q]of Object.entries(p.joints||{})){const name=jointBones[key];if(bones[name]&&Array.isArray(q)&&q.length===4&&q.every(Number.isFinite)){bones[name].quaternion.fromArray(q).normalize();bones[name].quaternion.copy(limitJoint(rig,key,bones[name].quaternion,p.jointLimits!==false));}}
  g.updateMatrixWorld(true);
+ followRaisedArms(g,p);
  // Manual hand/foot targets stay authoritative after freezing a movement pose.
  const world=b=>b.getWorldPosition(new T.Vector3());
  const aim=(bone,end,target)=>{const origin=world(bone),from=world(end).sub(origin).normalize(),to=new T.Vector3(...target).sub(origin).normalize();const q=bone.getWorldQuaternion(new T.Quaternion()),parent=bone.parent.getWorldQuaternion(new T.Quaternion());bone.quaternion.copy(parent.invert().multiply(new T.Quaternion().setFromUnitVectors(from,to).multiply(q)));g.updateMatrixWorld(true);};
@@ -120,7 +122,7 @@ export function applyMovementPose(g,p){
 }
 export function updateFigureLandmarks(g){
  const bones=g.userData.motionRig?.bones;if(!bones)return;g.updateMatrixWorld(true);
- for(const [key,name]of [['leftHand','LeftHand'],['rightHand','RightHand'],['leftFoot','LeftFoot'],['rightFoot','RightFoot'],['leftShoulder','LeftArm'],['rightShoulder','RightArm'],['leftHip','LeftUpLeg'],['rightHip','RightUpLeg'],['leftElbow','LeftForeArm'],['rightElbow','RightForeArm'],['leftKnee','LeftLeg'],['rightKnee','RightLeg'],['head','Head'],['chest','Spine2'],['pelvis','Hips']]){
+ for(const [key,name]of [['leftHand','LeftHand'],['rightHand','RightHand'],['leftFoot','LeftFoot'],['rightFoot','RightFoot'],['leftShoulder','LeftArm'],['rightShoulder','RightArm'],['leftHip','LeftUpLeg'],['rightHip','RightUpLeg'],['leftElbow','LeftForeArm'],['rightElbow','RightForeArm'],['leftKnee','LeftLeg'],['rightKnee','RightLeg'],['head','Head'],['chest','Spine2'],['abdomen','Spine'],['pelvis','Hips']]){
   if(!bones[name])continue;
   const local=g.worldToLocal(bones[name].getWorldPosition(new T.Vector3()));g.userData.landmarks[key]=local.toArray();
   const hit=g.children.find(o=>o.userData.part===key);if(hit)hit.position.copy(local);

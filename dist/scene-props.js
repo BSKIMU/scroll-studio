@@ -1,7 +1,7 @@
 import {normalizeMeleeProp,alignShieldForearm} from './melee-props.js?v=20261029-grip3';
 import {libraryCatalog} from './library-assets.js';
 import {pickerProps,useGunReadyPose} from './curated-guns.js?v=20261029-curated2';
-import {updateFigureLandmarks} from './mannequin.js?v=20261029-hands2';
+import {updateFigureLandmarks} from './mannequin.js?v=20261031-joint-handles';
 import {propLabel} from './prop-labels.js?v=20261029-grip3';
 import {selectedProps,remapRemovedMeshes} from './scene-prop-delete.js?v=20261029-delete1';
 import {gunCategories} from './equipment-motion.js?v=20261029-grip3';
@@ -10,7 +10,7 @@ import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {instantiateBackground,releaseObjects} from './scene-resources.js?v=20261025-release1';
 import {gripFrame,placeHeldProp,motionEquipment,equipmentForMotion,applyEquipmentGrip} from './prop-grip.js?v=20261029-curated2';
-import {libraryWindow} from './library-window.js?v=20261029-grip3';
+import {sceneLibraryTabs} from './scene-library-tabs.js';
 import {equipProp,moveHeldProp,reconnectLegacyProps,normalizeFirearmHands} from './prop-equipment.js?v=20261029-grip3';
 const names={Sword:'검',Shield:'방패',Axe:'도끼',Rifle:'소총',Pistol:'권총',SMG:'기관단총',Shotgun:'산탄총',Sniper:'저격총',LMG:'기관총'};
 const make=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
@@ -54,15 +54,15 @@ export class SceneProps{
   const header=make('header');header.append(make('b','소품 라이브러리'),btn('닫기',()=>this.close()));pop.append(header);
   this.search=make('input');this.search.type='search';this.search.placeholder='소품 이름 검색';this.search.setAttribute('aria-label','소품 검색');this.filter=make('select');this.filter.setAttribute('aria-label','소품 종류');this.filter.add(new Option('모든 소품',''));for(const [id,name]of Object.entries(names))this.filter.add(new Option(name,id));pop.append(this.search,this.filter);
   this.message=make('p');this.message.setAttribute('role','status');pop.append(this.message);this.grid=make('div');this.grid.className='prop-library-grid';pop.append(this.grid);this.search.oninput=this.filter.onchange=()=>this.cards();
-  const scroll=make('div');scroll.className='library-scroll';scroll.append(...[...pop.children].filter(n=>n!==header));pop.append(scroll);this.window=libraryWindow(pop,'소품');
+  const scroll=make('div');scroll.className='library-scroll';scroll.append(...[...pop.children].filter(n=>n!==header));pop.append(scroll);this.libraryTab=sceneLibraryTabs(editor).register('props','소품',pop,this.launch);
   this.choice=make('div');this.choice.className='prop-choice';this.choice.hidden=true;this.choice.setAttribute('role','dialog');this.choice.setAttribute('aria-label','소품 적용 방법');pop.append(this.choice);
   pop.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();if(!this.choice.hidden)this.closeChoice();else this.close();}});
   const css=make('link');css.rel='stylesheet';css.href=new URL('./prop-library.css?v=20261029-grip3',import.meta.url).href;document.head.append(css);this.catalog().catch(()=>{this.count.textContent='목록 확인';});
  }
  async catalog(){if(this.entries.length)return this.entries;if(!this.catalogPending)this.catalogPending=(async()=>{this.entries=(await libraryCatalog('prop')).entries;this.count.textContent=`${pickerProps(this.entries).length}개`;this.filter.replaceChildren(new Option('모든 소품',''));for(const category of new Set(pickerProps(this.entries).map(e=>e.category)))this.filter.add(new Option(names[category]||category,category));return this.entries;})().finally(()=>{this.catalogPending=null;});return this.catalogPending;}
  async source(id){await this.catalog();const entry=this.entries.find(e=>e.id===id);if(!entry)throw Error('소품 파일을 찾지 못했습니다.');if(!this.cache.has(id))this.cache.set(id,new GLTFLoader().loadAsync(entry.url).then(g=>g.scene).catch(e=>{this.cache.delete(id);throw e;}));return this.cache.get(id);}
- async open(){this.e.fly?.finish(true);this.e.movement.library.close({focus:false});this.popup.hidden=false;this.window.fit();this.launch.setAttribute('aria-expanded','true');this.message.textContent='소품 불러오는 중…';this.search.focus();try{await this.catalog();if(this.popup.hidden)return;this.cards();}catch(e){this.message.textContent=e.message;}}
- close({focus=true}={}){const visible=!this.popup.hidden;this.window.finish();this.closeChoice(false);this.popup.hidden=true;this.launch.setAttribute('aria-expanded','false');if(focus&&visible)this.launch.focus({preventScroll:true});}
+ async open(){this.e.fly?.finish(true);this.e.movement.library.close({focus:false});this.libraryTab.open();this.message.textContent='소품 불러오는 중…';this.search.focus();try{await this.catalog();if(!this.libraryTab.isOpen())return;this.cards();}catch(e){this.message.textContent=e.message;}}
+ close({focus=true}={}){this.closeChoice(false);this.libraryTab.close({focus});}
  cards(){this.closeChoice(false);this.grid.replaceChildren();const none=btn('',()=>this.clearHands()),symbol=make('span','∅');none.className='prop-card prop-none';none.setAttribute('aria-label','없음 · 양손 소품 해제');symbol.setAttribute('aria-hidden','true');none.append(symbol,make('b','없음'));this.grid.append(none);const available=pickerProps(this.entries),matches=available.filter(e=>(!this.filter.value||e.category===this.filter.value)&&[propLabel(e),e.name,e.category,names[e.category],['Rifle','Pistol','SMG','Shotgun','Sniper','LMG'].includes(e.category)?'총':''].join(' ').toLowerCase().includes(this.search.value.trim().toLowerCase()));this.message.textContent=`${matches.length} / ${available.length}개 · 총기 5종 · 소품을 눌러 적용`;if(!matches.length){const empty=make('p','조건에 맞는 소품이 없습니다. 검색어나 종류를 바꿔보세요.');empty.className='library-empty';this.grid.append(empty);}for(const entry of matches){const card=btn('',()=>this.choose(entry,card)),image=make('img');card.className='prop-card';card.setAttribute('aria-label',propLabel(entry)+' 소품 선택');card.title=propLabel(entry)+' · '+(names[entry.category]||entry.category);image.src=entry.thumbnail;image.alt='';image.loading='lazy';card.append(image,make('b',propLabel(entry)));this.grid.append(card);}}
  choose(entry,trigger){
   if(gunCategories.has(entry.category)){this.closeChoice(false);this.equip(entry,'right');return;}

@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {movementModel} from './mannequin.js?v=20261029-hands2';
+import {movementModel} from './mannequin.js?v=20261031-joint-handles';
 import {applyHandPose,automaticHands} from './hand-pose.js?v=20261029-hands2';
 import {gunProfiles} from './prop-grip-profiles.js?v=20261029-grip3';
 import {curatedGuns,calibratedGunMotion} from './curated-guns.js?v=20261029-curated2';

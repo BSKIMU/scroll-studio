@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {libraryClip} from './library-assets.js';
-import {movementModel} from './mannequin.js?v=20261029-hands2';
+import {movementModel} from './mannequin.js?v=20261031-joint-handles';
 import {sampleMotion,validateMotion} from './pose-library-motion.js?v=20261029-anchor1';
 import {solveLimb} from './pose-math.js?v=20261025-release1';
 import {gunProfiles} from './prop-grip-profiles.js?v=20261029-grip3';

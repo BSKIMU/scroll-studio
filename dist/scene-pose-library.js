@@ -11,7 +11,7 @@ import {SceneLiveCombo} from './scene-live-combo.js?v=20261029-anchor1';
 import {SceneMotionBricks} from './scene-motionbricks.js?v=20261029-equipment4';
 import {libraryWindow} from './library-window.js?v=20261029-hands2';
 import {PoseRig} from './pose-lab/rig.js';
-import {movementModel} from './mannequin.js?v=20261029-hands2';
+import {movementModel} from './mannequin.js?v=20261031-joint-handles';
 
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
 const button=(text,fn)=>{const b=el('button',text);b.type='button';b.onclick=fn;return b;};

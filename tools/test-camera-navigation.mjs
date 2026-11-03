@@ -70,27 +70,27 @@ for(const mode of ['fly','walk']){
  assert(!fly.lookSurface.hidden);
  const p=camera.position.clone(),q=camera.quaternion.clone();
  const drag=(name,values={})=>(name==='mousedown'||name==='pointerdown'?view:document).emit(name,{target:fly.lookSurface,button:0,buttons:1,pointerId:3,clientX:500,clientY:300,...values});
- drag('mousemove',{clientX:540});assert(camera.quaternion.equals(q),'Hover never rotates');
+ drag('pointermove',{clientX:540});assert(camera.quaternion.equals(q),'Hover never rotates');
  key('KeyW');fly.tick(1000);fly.tick(1050);document.emit('keyup',{code:'KeyW'});
  assert(camera.position.distanceTo(p)>.01,'WASD works without holding the mouse');
  const capture=fly.lookSurface.setPointerCapture;fly.lookSurface.setPointerCapture=()=>{throw Error('Embedded capture unavailable');};
- const down=drag('pointerdown');assert(!down.prevented,'Do not cancel the compatibility mousedown');
- drag('mousedown');assert(view.classList.contains('fly-looking'));
- const position=camera.position.clone();drag('mousemove',{clientX:540});
+ const down=drag('pointerdown');assert(down.prevented,'Pointer stream owns navigation without compatibility mouse events');
+ assert(view.classList.contains('fly-looking'));
+ const position=camera.position.clone();drag('pointermove',{clientX:540});
  assert(camera.quaternion.angleTo(q)>.01,'LMB mouse stream rotates even without pointer capture');near(camera.position,position);
- drag('mousemove',{clientX:999});const edgeYaw=fly.navigation.yaw;fly.tick(1100);fly.tick(1150);
+ drag('pointermove',{clientX:999});const edgeYaw=fly.navigation.yaw;fly.tick(1100);fly.tick(1150);
  assert.equal(fly.navigation.yaw,edgeYaw,'A stationary pointer at the edge must never keep spinning');
- drag('mousemove',{clientX:979});const edgeDelta=fly.navigation.yaw-edgeYaw;
- drag('mouseup');drag('mousedown',{clientX:500});const middleYaw=fly.navigation.yaw;
- drag('mousemove',{clientX:480});assert.ok(Math.abs((fly.navigation.yaw-middleYaw)-edgeDelta)<1e-9,'Equal mouse travel has equal sensitivity at the centre and edge');
- drag('mousemove',{clientX:500});const centerYaw=fly.navigation.yaw;fly.tick(1200);
+ drag('pointermove',{clientX:979});const edgeDelta=fly.navigation.yaw-edgeYaw;
+ drag('pointerup');drag('pointerdown',{clientX:500});const middleYaw=fly.navigation.yaw;
+ drag('pointermove',{clientX:480});assert.ok(Math.abs((fly.navigation.yaw-middleYaw)-edgeDelta)<1e-9,'Equal mouse travel has equal sensitivity at the centre and edge');
+ drag('pointermove',{clientX:500});const centerYaw=fly.navigation.yaw;fly.tick(1200);
  assert.equal(fly.navigation.yaw,centerYaw,'Edge turn stops inside the viewport');
- drag('mouseup',{target:document});const released=camera.quaternion.clone();drag('mousemove',{clientX:200,buttons:0});
+ drag('pointerup',{target:document});const released=camera.quaternion.clone();drag('pointermove',{clientX:200,buttons:0});
  assert(camera.quaternion.equals(released)&&!view.classList.contains('fly-looking'));
  assert(fly.active,'LMB release does not cancel navigation');
- drag('mousedown');drag('mousemove',{buttons:0});assert(!fly.lookDrag,'Missed release cannot leave look stuck');
- if(mode==='walk'){drag('mousedown');key('Tab');assert(fly.active&&fly.heightEditing&&!fly.lookDrag);fly.heightInput.onkeydown({code:'Enter',preventDefault(){}});assert(!fly.heightEditing);}
- fly.lookSurface.setPointerCapture=capture;drag('pointerdown');drag('mousedown');window.emit('blur');
+ drag('pointerdown');drag('pointermove',{buttons:0});assert(!fly.lookDrag,'Missed release cannot leave look stuck');
+ if(mode==='walk'){drag('pointerdown');key('Tab');assert(fly.active&&fly.heightEditing&&!fly.lookDrag);fly.heightInput.onkeydown({code:'Enter',preventDefault(){}});assert(!fly.heightEditing);}
+ fly.lookSurface.setPointerCapture=capture;drag('pointerdown');window.emit('blur');
  assert(!fly.active&&!fly.lookDrag&&fly.lookSurface.hidden&&!view.classList.contains('fly-looking'));
 }
 console.log('PASS: Fly/Walk constant drag sensitivity, no edge spin, capture failure, release/blur cleanup and keyboard ownership');

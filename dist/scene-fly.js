@@ -39,32 +39,24 @@ export class SceneFly{
   },true);
   document.addEventListener('keyup',event=>{this.keys.delete(event.code);if(this.active&&cameraKeys.has(event.code)){event.preventDefault();event.stopImmediatePropagation();}},true);
   view.addEventListener('pointerdown',event=>{
-   if(!this.active||![surface,view,lookSurface].includes(event.target))return;
-   // Keep the compatibility mouse stream: cancelling pointerdown suppresses
-   // mousedown in embedded browsers. The look layer owns object/orbit input.
-   event.stopImmediatePropagation();
-   if(event.button===0){try{lookSurface.setPointerCapture(event.pointerId);}catch{}this.lookPointer=event.pointerId;}
-  },true);
-  view.addEventListener('mousedown',event=>{
    this.suppressClick=false;
-   if(!this.active||![surface,view,lookSurface].includes(event.target))return;
-   event.preventDefault();event.stopImmediatePropagation();
-   if(event.button===0||event.button===2){
-    this.suppressClick=true;
-    this.heightEditing=false;surface.focus({preventScroll:true});
-    if(event.button===0){this.lookDrag={x:event.clientX,y:event.clientY};view.classList.add('fly-looking');}
-    this.status();
-   }
+   if(!this.active||![surface,view,lookSurface].includes(event.target)||event.button!==0)return;
+   event.preventDefault();event.stopImmediatePropagation();this.suppressClick=true;
+   this.heightEditing=false;surface.focus({preventScroll:true});
+   this.lookPointer=event.pointerId;this.lookDrag={x:event.clientX,y:event.clientY};view.classList.add('fly-looking');
+   try{lookSurface.setPointerCapture(event.pointerId);}catch{}
+   this.status();
   },true);
-  document.addEventListener('mousemove',event=>{
-   const drag=this.lookDrag;if(!this.active||this.heightEditing||!drag)return;
+  document.addEventListener('pointermove',event=>{
+   const drag=this.lookDrag;if(!this.active||this.heightEditing||!drag||event.pointerId!==this.lookPointer)return;
    if(!(event.buttons&1)){this.endLookDrag();return;}
    event.preventDefault();event.stopImmediatePropagation();
    this.navigation?.look(event.clientX-drag.x,event.clientY-drag.y);drag.x=event.clientX;drag.y=event.clientY;
    editor.storeCamera();
   },true);
-  document.addEventListener('mouseup',event=>{if(this.lookDrag&&event.button===0){event.preventDefault();event.stopImmediatePropagation();this.endLookDrag();}},true);
-  view.addEventListener('pointercancel',()=>this.endLookDrag(),true);
+  document.addEventListener('pointerup',event=>{if(this.lookDrag&&event.pointerId===this.lookPointer){event.preventDefault();event.stopImmediatePropagation();this.endLookDrag();}},true);
+  document.addEventListener('pointercancel',event=>{if(event.pointerId===this.lookPointer)this.endLookDrag();},true);
+  lookSurface.addEventListener('lostpointercapture',event=>{if(event.pointerId===this.lookPointer)this.endLookDrag();});
   view.addEventListener('click',event=>{if(this.suppressClick){this.suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}},true);
   view.addEventListener('contextmenu',event=>{if(this.active||this.suppressClick)event.preventDefault();});
   view.addEventListener('wheel',event=>{if(!this.active||editableTarget(event.target))return;event.preventDefault();event.stopImmediatePropagation();this.navigation?.wheel(event.deltaY);this.status();},{capture:true,passive:false});
@@ -80,7 +72,7 @@ export class SceneFly{
   if(this.active)this.finish(true);
   e.flush();const damping=e.controls.enableDamping;e.controls.enableDamping=false;e.controls.update();e.controls.enableDamping=damping;
   this.before={position:e.camera.position.clone(),target:e.controls.target.clone(),enabled:e.controls.enabled,damping};
-  e.figurePicker?.close();e.advanced?.skyPicker?.close();e.shot?.closePanel();this.mode=mode;this.navigation=mode==='fly'?new FlyNavigation(e.camera,e.controls.target):new WalkNavigation(e.camera,e.controls.target,e.state.cameraWalk?.eyeHeight??1.3);this.active=true;this.heightEditing=false;this.keys.clear();this.lastTime=null;this.sync();this.heightPanel.hidden=mode!=='walk';
+  e.libraryTabs?.closeAll();e.figurePicker?.close();e.advanced?.skyPicker?.close();e.shot?.closePanel();this.mode=mode;this.navigation=mode==='fly'?new FlyNavigation(e.camera,e.controls.target):new WalkNavigation(e.camera,e.controls.target,e.state.cameraWalk?.eyeHeight??1.3);this.active=true;this.heightEditing=false;this.keys.clear();this.lastTime=null;this.sync();this.heightPanel.hidden=mode!=='walk';
   const selected=mode==='walk'?this.walkButton:this.button;
   this.hud.querySelector('b').textContent=mode==='walk'?'눈높이 카메라 · 지면 보행':'카메라 자유 이동';
   this.hud.querySelector('span').innerHTML=mode==='walk'?'WASD 지면 이동 · Space 점프 · 좌클릭 드래그 · 일정한 회전 감도<br>휠 속도 · Shift 누르기: 숙이기 · Space 점프 · Tab 눈높이 Z':'WASD 이동 · Q 아래 / E 위 · 좌클릭 드래그 · 일정한 회전 감도<br>휠 속도 · Shift 빠르게 · Alt 천천히';

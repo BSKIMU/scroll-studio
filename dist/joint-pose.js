@@ -1,6 +1,6 @@
 import * as T from 'three';
-export const jointBones={leftShoulder:'LeftArm',rightShoulder:'RightArm',leftHip:'LeftUpLeg',rightHip:'RightUpLeg',leftElbow:'LeftForeArm',rightElbow:'RightForeArm',leftKnee:'LeftLeg',rightKnee:'RightLeg',head:'Head',chest:'Spine2',pelvis:'Hips',leftPalm:'LeftHand',rightPalm:'RightHand',leftAnkle:'LeftFoot',rightAnkle:'RightFoot'};
-export const jointNames={leftShoulder:'왼어깨',rightShoulder:'오른어깨',leftHip:'왼고관절',rightHip:'오른고관절',leftElbow:'왼팔꿈치',rightElbow:'오른팔꿈치',leftKnee:'왼무릎',rightKnee:'오른무릎',head:'머리',chest:'가슴',pelvis:'골반',leftPalm:'왼손바닥',rightPalm:'오른손바닥',leftAnkle:'왼발목',rightAnkle:'오른발목'};
+export const jointBones={leftShoulder:'LeftArm',rightShoulder:'RightArm',leftHip:'LeftUpLeg',rightHip:'RightUpLeg',leftElbow:'LeftForeArm',rightElbow:'RightForeArm',leftKnee:'LeftLeg',rightKnee:'RightLeg',head:'Head',chest:'Spine2',abdomen:'Spine',pelvis:'Hips',leftPalm:'LeftHand',rightPalm:'RightHand',leftAnkle:'LeftFoot',rightAnkle:'RightFoot'};
+export const jointNames={leftShoulder:'왼어깨',rightShoulder:'오른어깨',leftHip:'왼고관절',rightHip:'오른고관절',leftElbow:'왼팔꿈치',rightElbow:'오른팔꿈치',leftKnee:'왼무릎',rightKnee:'오른무릎',head:'머리',chest:'가슴',abdomen:'복부',pelvis:'골반',leftPalm:'왼손바닥',rightPalm:'오른손바닥',leftAnkle:'왼발목',rightAnkle:'오른발목'};
 // Angles relative to the relaxed neutral pose, expressed in figure axes.
 // Hinge flexion remains one-sided; shoulder/hip rotation permits a wider cone.
 export function jointRange(part){
@@ -10,7 +10,7 @@ export function jointRange(part){
  if(part.includes('Hip'))return [[-125,35],[-45,45],[-50,50]];
  if(part.includes('Palm'))return [[-80,75],[-85,85],[-30,30]];
  if(part.includes('Ankle'))return [[-45,30],[-20,20],[-25,25]];
- return ({head:[[-45,60],[-80,80],[-40,40]],chest:[[-40,35],[-50,50],[-35,35]],pelvis:[[-40,40],[-60,60],[-35,35]]})[part]||[[-180,180],[-180,180],[-180,180]];
+ return ({abdomen:[[-20,20],[-25,25],[-15,15]],head:[[-45,60],[-80,80],[-40,40]],chest:[[-40,35],[-50,50],[-35,35]],pelvis:[[-40,40],[-60,60],[-35,35]]})[part]||[[-180,180],[-180,180],[-180,180]];
 }
 export function jointAngles(rig,part,q){
  const name=jointBones[part],base=rig.base[name],frame=rig.jointFrames[name];

@@ -8,7 +8,10 @@ globalThis.document={hidden:false,body:{classList:{contains:()=>maximized}},get 
 const info={autoReset:true,reset(){},render:{calls:155,triangles:961028},memory:{geometries:70,textures:44}};
 const editor={isOpen:true,renderer:{info,domElement:{}},controls:{update:()=>false},advanced:{skies:{pending:false},cameraRoll(){}},state:{look:{skyPreset:'hdri-sunset'}},movement:{active:true,tick(){ticks++;editor.previewDirty=true;}},previewDirty:true,preview(){assert.equal(lastCaptureInteractive,false);captures++;editor.previewDirty=false;}};
 const loop=Object.assign(Object.create(ScenePreview.prototype),{editor,light:true,frames:0,timings:[],status:{dataset:{}},shading:{mode:'sky'},setRenderQuality(interactive=false){lastCaptureInteractive=interactive;},paint(interactive){lastPaintInteractive=interactive;paints++;}});
+let countWrites=0;
+loop.status.dataset=new Proxy({},{set(target,key,value){if(key==='renderCount')countWrites++;target[key]=value;return true;}});
 for(let i=0;i<120;i++)assert(loop.draw(i*1000/60));
+assert(countWrites<=10,'Diagnostics must not mutate DOM at display cadence');
 assert.equal(ticks,120,'WASD animation is updated at display cadence, not throttled to 30 Hz');
 assert.equal(lastPaintInteractive,true);assert.equal(paints,120);assert.equal(captures,0,'Covered manuscript consumes no render passes');
 assert(editor.previewDirty,'Deferred preview remains dirty for restore/flush');

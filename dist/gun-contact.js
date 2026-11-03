@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {movementModel} from './mannequin.js?v=20261029-hands2';
+import {movementModel} from './mannequin.js?v=20261031-joint-handles';
 const V=()=>new T.Vector3(),Q=()=>new T.Quaternion(),profiles=new Map(),samples=new WeakMap();
 const torsoNames=new Set(['Hips','Spine','Spine1','Spine2']);
 // Fit small collision proxies once to each body's actual torso vertices. Their

@@ -8,7 +8,7 @@ import {SeatedPose} from './seated-pose.js?v=20261025-release1';
 import {applyHandPose,automaticHands,relaxedGrip,clearIdleHands} from './hand-pose.js?v=20261029-hands2';
 import {WalkController} from './pose-lab/locomotion.js?v=20261027-navigation5';
 import {PoseRig} from './pose-lab/rig.js?v=20261025-release1';
-import {movementModel,updateFigureLandmarks} from './mannequin.js?v=20261029-hands2';
+import {movementModel,updateFigureLandmarks} from './mannequin.js?v=20261031-joint-handles';
 import {InteractiveMovement} from './interactive-movement.js?v=20261030-physics60';
 import {useCalibratedGunPose} from './curated-guns.js?v=20261029-curated2';
 let pending;

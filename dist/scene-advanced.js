@@ -1,6 +1,6 @@
 import {toneDefaults} from './scene-tone.js?v=20261030-movement1';
 import {backgroundLocked} from './scene-background-lock.js?v=20261030-physics60';
-import {setupSkyPicker} from './scene-sky-picker.js?v=20261027-aurora1';
+import {setupSkyPicker} from './scene-sky-picker.js?v=20261031-tabs1';
 import {LineSegments2} from './vendor/addons/lines/LineSegments2.js';
 import {LineSegmentsGeometry} from './vendor/addons/lines/LineSegmentsGeometry.js';
 import {LineMaterial} from './vendor/addons/lines/LineMaterial.js';

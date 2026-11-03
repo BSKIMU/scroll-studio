@@ -1,4 +1,4 @@
-import {figureModels,defaultPerson,customFigures,refreshCharacterCatalog,loadFigureModel} from './mannequin.js?v=20261029-hands2';
+import {figureModels,defaultPerson,customFigures,refreshCharacterCatalog,loadFigureModel} from './mannequin.js?v=20261031-joint-handles';
 
 export function setupFigurePicker(editor){
  const trigger=document.getElementById('addPerson'),view=document.getElementById('sceneView'),panel=document.createElement('section');
@@ -8,7 +8,7 @@ export function setupFigurePicker(editor){
  function populate(){grid.replaceChildren();for(const [key,name]of Object.entries(figureModels)){
   const card=document.createElement('button'),img=document.createElement('img'),label=document.createElement('b'),hint=document.createElement('small');
   card.className='figure-card';card.setAttribute('aria-label',name+' 인물 추가');img.src=new URL(`./assets/portraits/${customFigures.has(key)?'mixamo':key}.png`,import.meta.url).href;img.alt=customFigures.has(key)?'사용자 캐릭터 표시 아이콘':'';img.loading='lazy';label.textContent=name;hint.textContent=customFigures.has(key)?'내 캐릭터 · 로컬':key==='mixamo'?'동작 · 175 cm':key==='bodykun'?'180 cm':'165 cm';card.append(img,label,hint);grid.append(card);
-  card.onclick=async()=>{if(!editor.isOpen||editor.loading)return;editor.movement.stop();card.disabled=true;const state=editor.state;try{await loadFigureModel(key);if(editor.state!==state||!editor.isOpen)return;const person=defaultPerson(key),current=editor.state.people[editor.index];Object.assign(person,{x:(current?.x??0)+.7,y:current?.y??0,z:current?.z??0});editor.state.people.push(person);editor.index=editor.state.people.length-1;hide();editor.updatePeople();editor.flush();}catch(error){note.textContent=error.message;}finally{card.disabled=false;}};
+  card.onclick=async()=>{if(!editor.isOpen||editor.loading)return;editor.movement.stop();card.disabled=true;const state=editor.state;try{await loadFigureModel(key);if(editor.state!==state||!editor.isOpen)return;const person=defaultPerson(key),current=editor.state.people[editor.index];Object.assign(person,{x:(current?.x??0)+.7,y:current?.y??0,z:current?.z??0});editor.state.people.push(person);editor.index=editor.state.people.length-1;hide();editor.updatePeople();editor.gizmo.selectPerson(editor.index);editor.flush();}catch(error){note.textContent=error.message;}finally{card.disabled=false;}};
  }}populate();
  const note=document.createElement('p');note.textContent='인물을 선택하면 현재 장면에 추가합니다.';panel.append(note);view.append(panel);
  function hide(focus=true){if(panel.hidden)return;panel.hidden=true;trigger.setAttribute('aria-expanded','false');if(focus)trigger.focus({preventScroll:true});}

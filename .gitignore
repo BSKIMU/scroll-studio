@@ -69,9 +69,11 @@ __pycache__/
 !/tools/test-motionbricks.py
 !/tools/clutch_bridge.py
 !/tools/setup-clutch-local.py
+!/tools/setup-mano-local.py
 !/tools/build-hand-library.py
 !/tools/hand_library_api.py
 !/tools/test-hand-library.mjs
+!/tools/test-hand-contact-fit.mjs
 !/tools/test-prop-delete.mjs
 !/tools/test-library-support.mjs
 !/tools/character_library_api.py

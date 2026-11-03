@@ -27,7 +27,7 @@ export function localBackgroundPresets(getProject,onAdded,toDataURL){
     if(bytes.byteLength<12||header.getUint32(0,true)!==0x46546c67||header.getUint32(4,true)!==2||header.getUint32(8,true)!==bytes.byteLength)throw Error('올바른 GLB 배경이 아닙니다.');
     const data=await toDataURL(new Blob([bytes],{type:'model/gltf-binary'}));
     if(project!==getProject())throw Error('프로젝트가 바뀌어 배경 불러오기를 중단했습니다.');
-    project.assets[id]={id,name:preset.name,data,sourceType:'glb',presetVersion:preset.version||1,meshes:preset.meshes,scale:preset.scale||undefined,attribution:preset.attribution||null};
+    project.assets[id]={id,name:preset.name,data,sourceType:'glb',byteLength:bytes.byteLength,presetVersion:preset.version||1,meshes:preset.meshes,scale:preset.scale||undefined,attribution:preset.attribution||null};
     onAdded();
    })().finally(()=>requests.delete(id)));
    return requests.get(id);

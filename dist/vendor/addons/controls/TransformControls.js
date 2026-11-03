@@ -372,6 +372,8 @@ class TransformControls extends Controls {
 		this.domElement.addEventListener( 'pointerdown', this._onPointerDown );
 		this.domElement.addEventListener( 'pointermove', this._onPointerHover );
 		this.domElement.addEventListener( 'pointerup', this._onPointerUp );
+		this.domElement.addEventListener( 'pointercancel', this._onPointerUp );
+		this.domElement.addEventListener( 'lostpointercapture', this._onPointerUp );
 
 		this.domElement.style.touchAction = 'none'; // disable touch scroll
 
@@ -383,6 +385,9 @@ class TransformControls extends Controls {
 		this.domElement.removeEventListener( 'pointermove', this._onPointerHover );
 		this.domElement.removeEventListener( 'pointermove', this._onPointerMove );
 		this.domElement.removeEventListener( 'pointerup', this._onPointerUp );
+		this.domElement.removeEventListener( 'pointercancel', this._onPointerUp );
+		this.domElement.removeEventListener( 'lostpointercapture', this._onPointerUp );
+		this._dragPointerId = undefined;
 
 		this.domElement.style.touchAction = 'auto';
 
@@ -965,40 +970,38 @@ function onPointerHover( event ) {
 
 }
 
+// A transform owns one pointer until release. Pen pressure/barrel transitions
+// may report button 0 on pointermove; the transform solver expects -1 there.
 function onPointerDown( event ) {
 
-	if ( ! this.enabled ) return;
-
-	if ( ! document.pointerLockElement ) {
-
-		this.domElement.setPointerCapture( event.pointerId );
-
-	}
-
-	this.domElement.addEventListener( 'pointermove', this._onPointerMove );
-
-	this.pointerHover( this._getPointer( event ) );
-	this.pointerDown( this._getPointer( event ) );
+ if ( ! this.enabled || this._dragPointerId !== undefined || event.button !== 0 ) return;
+ this.pointerHover( this._getPointer( event ) );
+ this.pointerDown( this._getPointer( event ) );
+ if ( ! this.dragging ) return;
+ this._dragPointerId = event.pointerId;
+ if ( ! document.pointerLockElement ) this.domElement.setPointerCapture( event.pointerId );
+ this.domElement.addEventListener( 'pointermove', this._onPointerMove );
 
 }
 
 function onPointerMove( event ) {
 
-	if ( ! this.enabled ) return;
-
-	this.pointerMove( this._getPointer( event ) );
+ if ( ! this.enabled || event.pointerId !== this._dragPointerId ) return;
+ const pointer = this._getPointer( event );
+ pointer.button = - 1;
+ this.pointerMove( pointer );
 
 }
 
 function onPointerUp( event ) {
 
-	if ( ! this.enabled ) return;
-
-	this.domElement.releasePointerCapture( event.pointerId );
-
-	this.domElement.removeEventListener( 'pointermove', this._onPointerMove );
-
-	this.pointerUp( this._getPointer( event ) );
+ if ( event.pointerId !== this._dragPointerId ) return;
+ this._dragPointerId = undefined;
+ this.domElement.removeEventListener( 'pointermove', this._onPointerMove );
+ const pointer = this._getPointer( event );
+ pointer.button = 0;
+ this.pointerUp( pointer );
+ if ( this.domElement.hasPointerCapture( event.pointerId ) ) this.domElement.releasePointerCapture( event.pointerId );
 
 }
 

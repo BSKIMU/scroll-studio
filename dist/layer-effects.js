@@ -24,11 +24,11 @@ export function adjustPixels(data,settings){
   else if(type==='threshold')out=out.map(()=>v>Number(settings.threshold??128)?255:0);
   else if(type==='posterize'){const n=Math.max(2,Number(settings.steps??4))-1;out=out.map(x=>Math.round(x/255*n)*255/n);}
   else if(type==='brightness'){const c=clamp(Number(settings.contrast??0),-100,100),f=(259*(c*2.55+255))/(255*(259-c*2.55));out=out.map(x=>f*(x-128)+128+amount*2.55);}
-  else if(type==='levels'){const lo=Number(settings.black??0),hi=Math.max(lo+1,Number(settings.white??255)),gamma=Math.max(.1,Number(settings.gamma??1));out=out.map(x=>255*Math.pow(clamp((x-lo)/(hi-lo),0,1),1/gamma));}
-  else if(type==='curves'){const points=[[0,settings.low??0],[64,settings.quarter??64],[128,settings.mid??128],[192,settings.threeQuarter??192],[255,settings.high??255]];out=out.map((x,k)=>{if(settings.channel&&settings.channel!=='rgb'&&k!=={red:0,green:1,blue:2}[settings.channel])return x;let i=1;while(i<4&&x>points[i][0])i++;const [a,b]=[points[i-1],points[i]];return a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]);});}
-  else if(type==='balance')out=[r+Number(settings.red??0),g+Number(settings.green??0),bl+Number(settings.blue??0)];
+  else if(type==='levels'){const lo=Number(settings.black??0),hi=Math.max(lo+1,Number(settings.white??255)),gamma=Math.max(.1,Number(settings.gamma??1));out=out.map((x,k)=>settings.channel&&settings.channel!=='rgb'&&k!=={red:0,green:1,blue:2}[settings.channel]?x:Number(settings.outputBlack??0)+(Number(settings.outputWhite??255)-Number(settings.outputBlack??0))*Math.pow(clamp((x-lo)/(hi-lo),0,1),1/gamma));}
+  else if(type==='curves'){const points=settings.points||[[0,settings.low??0],[64,settings.quarter??64],[128,settings.mid??128],[192,settings.threeQuarter??192],[255,settings.high??255]];out=out.map((x,k)=>{if(settings.channel&&settings.channel!=='rgb'&&k!=={red:0,green:1,blue:2}[settings.channel])return x;let i=1;while(i<points.length-1&&x>points[i][0])i++;const [a,b]=[points[i-1],points[i]];return a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]);});}
+  else if(type==='balance'){const t=v/255,w=settings.range==='shadows'?(1-t)**2:settings.range==='highlights'?t*t:settings.range==='midtones'?4*t*(1-t):1;out=[r+Number(settings.red??0)*w,g+Number(settings.green??0)*w,bl+Number(settings.blue??0)*w];if(settings.preserveLuminosity){const delta=v-lum(...out);out=out.map(x=>x+delta);}}
   else if(type==='hsl'){let [h,s,l]=hsl(r,g,bl);h=(h+Number(settings.hue??0)/360+1)%1;s=clamp(s+Number(settings.saturation??0)/100,0,1);l=clamp(l+Number(settings.lightness??0)/100,0,1);out=fromHsl(h,s,l);}
-  else if(type==='gradient')out=a.map((x,k)=>x+(b[k]-x)*v/255);
+  else if(type==='gradient'){const stops=settings.stops;if(stops?.length>1){const t=v/255;let j=1;while(j<stops.length-1&&t>stops[j].position)j++;const lo=stops[j-1],hi=stops[j],u=clamp((t-lo.position)/Math.max(.0001,hi.position-lo.position),0,1),c=rgb(lo.color),d=rgb(hi.color);out=c.map((x,k)=>x+(d[k]-x)*u);}else out=a.map((x,k)=>x+(b[k]-x)*v/255);}
   for(let k=0;k<3;k++)data[i+k]=clamp(out[k]);
  }return data;
 }

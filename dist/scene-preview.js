@@ -58,10 +58,10 @@ export class ScenePreview{
   if(this.lastFrame!==null)this.intervals.push(time-this.lastFrame);
   this.lastFrame=active?time:null;
   this.timings.push(frameMs);if(this.timings.length>120)this.timings.shift();if(this.intervals.length>120)this.intervals.shift();
-  this.status.dataset.renderCount=String(this.frames);
   // Publish diagnostics at 5 Hz, not by sorting and rewriting DOM every frame.
   if(active&&!capture&&time-(this.lastMetrics??-Infinity)<200)return;
   this.lastMetrics=time;
+  this.status.dataset.renderCount=String(this.frames);
   const samples=[...this.timings].sort((a,b)=>a-b),intervals=[...this.intervals].sort((a,b)=>a-b),round=n=>Math.round(n*100)/100;
   const fps=intervals.length?1000*intervals.length/intervals.reduce((a,b)=>a+b,0):0;
   this.status.textContent=active?`${this.light?'가벼운 화면':'일반 화면'} · ${Math.round(fps)} fps`:'대기 중 · 자동 절전';

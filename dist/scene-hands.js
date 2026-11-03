@@ -1,5 +1,5 @@
 import {automaticHands,relaxedGrip} from './hand-pose.js?v=20261029-hands2';
-import {hasFigureModel} from './mannequin.js?v=20261029-hands2';
+import {hasFigureModel} from './mannequin.js?v=20261031-joint-handles';
 export function setupHandControls(editor){
  const panel=document.createElement('details');panel.className='hand-pose';panel.open=true;
  panel.innerHTML='<summary>손 모양</summary><div class="hand-presets"><button data-grip="0">편 손</button><button data-grip="35">가볍게 쥠</button><button data-grip="100">주먹</button></div>';

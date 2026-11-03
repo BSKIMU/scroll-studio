@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {PoseRig} from './pose-lab/rig.js';
-import {loadMannequin,movementModel,defaultPerson} from './mannequin.js?v=20261029-hands2';
+import {loadMannequin,movementModel,defaultPerson} from './mannequin.js?v=20261031-joint-handles';
 import {MotionRetargeter,compileCombo,sampleCombo} from './pose-library-motion.js?v=20261029-anchor1';
 
 // One small render target for all cards. No per-card RAF, canvases or live rigs.

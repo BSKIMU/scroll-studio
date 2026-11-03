@@ -1,3 +1,4 @@
+import {setupCameraPresets} from './scene-camera-presets.js';
 import {SceneTone} from './scene-tone.js?v=20261030-movement1';
 import {SceneProps} from './scene-props.js?v=20261029-curated2';
 import {SceneShotCamera} from './scene-shot-camera.js?v=20261027-pose-camera1';
@@ -18,14 +19,15 @@ import {applyProjection,applyRenderProjection,projectionFor,viewportSize,applyVi
 import {environmentHeight,setupEnvironmentGround} from './environment-ground.js?v=20261030-physics60';
 import {applyFigureTransform} from './hand-pose.js?v=20261029-hands2';
 import {setupHandControls} from './scene-hands.js?v=20261029-hands2';
+import {SceneHandFit} from './scene-hand-fit.js?v=20261031-skin-contact';
 import {ScenePreview} from './scene-preview.js?v=20261030-movement1';
 import {guideRect} from './frame-geometry.js?v=20261025-release1';
 import {captureSceneLayers} from './scene-capture.js?v=20261030-movement1';
-import {loadMannequin,mannequin,defaultPerson,hasFigureModel,figureModels,applyMovementPose} from './mannequin.js?v=20261029-hands2';
+import {loadMannequin,mannequin,defaultPerson,hasFigureModel,figureModels,applyMovementPose} from './mannequin.js?v=20261031-joint-handles';
 import {SceneMovement} from './scene-movement.js?v=20261030-physics60';
 import {SceneDoors,buildInteractionRoom} from './scene-doors.js?v=20261025-release1';
-import {SceneAdvanced} from './scene-advanced.js?v=20261030-physics60';
-import {installCameraDrag} from './camera-drag.js?v=20261030-physics60';
+import {SceneAdvanced} from './scene-advanced.js?v=20261031-tabs1';
+import {installCameraDrag} from './camera-drag.js?v=20261031-selection';
 import {scenePanels} from './scene-panels.js?v=20261028-guide3';
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
@@ -33,7 +35,7 @@ import {prepareImportedBackground} from './imported-background.js?v=20261030-phy
 import {setupSeatPresets} from './scene-seats.js?v=20261030-physics60';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {PersonGizmo} from './gizmo.js?v=20261030-physics60';
+import {PersonGizmo} from './gizmo.js?v=20261031-stable';
 import {solveLimb} from './pose-math.js?v=20261025-release1';
 import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
 const $=id=>document.getElementById(id);
@@ -60,7 +62,7 @@ export class SceneEditor{
   $('scenePreset').onchange=e=>this.selectAsset(e.target.value).catch(err=>{$('liveStatus').textContent='배경 로드 실패: '+err.message;});
   document.querySelectorAll('[data-camera]').forEach(b=>b.onclick=()=>{const type=b.dataset.camera;this.camera.position.set(0,type==='low'?.4:type==='high'?5:1.65,5);this.controls.target.set(0,1,0);this.storeCamera();});
   $('fitModel').onclick=()=>this.fit();$('captureScene').onclick=()=>this.apply();$('modelImport').onclick=()=>this.onImport();
-  this.loading=false;this.pending=false;this.openToken=0;this.gizmo=new PersonGizmo(this);scenePanels(this);installCameraDrag(this);this.advanced=new SceneAdvanced(this);this.tone=new SceneTone(this);this.doors=new SceneDoors(this);this.stairs=new SceneStairs(this);this.movement=new SceneMovement(this);this.hands=setupHandControls(this);this.models=setupFigureModels(this);this.figurePicker=setupFigurePicker(this);this.ground=setupEnvironmentGround(this);this.seats=setupSeatPresets(this);this.previewLoop=new ScenePreview(this);this.fly=new SceneFly(this);this.lens=setupLens(this);this.shot=new SceneShotCamera(this);setupPhone(this);setupSceneTopControls(this);this.props=new SceneProps(this);this.autoRigger=new SceneAutoRigger(this);
+  this.loading=false;this.pending=false;this.openToken=0;this.gizmo=new PersonGizmo(this);scenePanels(this);installCameraDrag(this);this.advanced=new SceneAdvanced(this);this.tone=new SceneTone(this);this.doors=new SceneDoors(this);this.stairs=new SceneStairs(this);this.movement=new SceneMovement(this);this.hands=setupHandControls(this);this.models=setupFigureModels(this);this.figurePicker=setupFigurePicker(this);this.ground=setupEnvironmentGround(this);this.seats=setupSeatPresets(this);this.previewLoop=new ScenePreview(this);this.fly=new SceneFly(this);this.lens=setupLens(this);this.shot=new SceneShotCamera(this);setupPhone(this);setupSceneTopControls(this);this.props=new SceneProps(this);this.autoRigger=new SceneAutoRigger(this);this.handFit=new SceneHandFit(this);this.cameraPresets=setupCameraPresets(this);
  }
  storeCamera(){if(!this.state)return;this.state.camera=this.camera.position.toArray();this.state.target=this.controls.target.toArray();this.state.fov=this.camera.fov;this.shot?.track();this.lens?.sync();this.advanced?.lightFrame();this.queueLive();}
  queueLive({initial=false}={}){this.invalidate();if(!this.isOpen||this.loading||this.capturing||this.transient)return;this.initialCapture=initial;this.pending=true;this.previewDirty=true;$('liveStatus').textContent='● 실시간 미리보기';clearTimeout(this.liveTimer);if(this.fly?.active||this.movement?.active||this.gizmo.keyboard?.active||this.gizmo.transform.dragging)return;this.liveTimer=setTimeout(()=>{this.liveTimer=null;if(this.pending)this.apply({live:true});},400);}
@@ -81,8 +83,8 @@ export class SceneEditor{
    return images;
   }finally{this.camera.copy(camera);this.renderer.setPixelRatio(ratio);this.renderer.setSize(size.x,size.y,false);this.capturing=false;this.previewLoop.paint();}
  }
- close(){this.figurePicker.close();this.movement?.library.close({focus:false});this.props?.close({focus:false});this.flush();this.shot.reset();this.advanced.skyPicker.close();this.isOpen=false;this.skyDome.setTexture(null);this.scene.environment=null;this.advanced.skies.dispose();this.previewLoop?.stop();++this.openToken;++this.rebuildToken;}
- async open(cut,{transient=false}={}){this.figurePicker.close();this.movement?.library.close({focus:false});this.props?.close({focus:false});this.flush();this.shot.reset();this.advanced.skyPicker.close();this.transient=transient;const token=++this.openToken;this.loading=true;this.controls.enableDamping=false;this.controls.update();this.controls.enableDamping=true;this.cut=cut;this.state=structuredClone(cut.scene||defaultScene());this.index=0;this.gizmo.objectTarget=null;this.movement?.reset();this.isOpen=true;this.camera.position.fromArray(this.state.camera);this.controls.target.fromArray(this.state.target);this.camera.fov=this.state.fov;this.camera.updateProjectionMatrix();this.grid.visible=this.state.grid;this.updateOptions();try{await Promise.all([this.buildEnvironment(),loadMannequin(this.state.people)]);if(token!==this.openToken)return;await this.advanced.skies.ready;if(token!==this.openToken)return;this.updatePeople();this.gizmo.setMode('translate');this.gizmo.setAxis(null);this.controls.update();this.resize();this.shot?.sync();this.lens?.sync();$('fov').value=this.state.fov;$('fovValue').textContent=this.state.fov+'°';$('gridToggle').checked=this.state.grid;$('wireToggle').checked=this.state.wire;}finally{if(token===this.openToken){this.loading=false;this.movement?.sceneReady();this.invalidate();}}if(this.state.look?.skyPreset||!cut.background||(this.state.people.length&&!cut.guide))this.queueLive({initial:true});else{this.pending=false;this.previewDirty=false;}}
+ close(){this.libraryTabs?.closeAll();this.figurePicker.close();this.movement?.library.close({focus:false});this.props?.close({focus:false});this.flush();this.shot.reset();this.advanced.skyPicker.close();this.isOpen=false;this.skyDome.setTexture(null);this.scene.environment=null;this.advanced.skies.dispose();this.previewLoop?.stop();++this.openToken;++this.rebuildToken;this.advanced.reset();this.gizmo.objectTarget=null;this.clear(this.environment);for(const entry of this.cache.values())releaseObjects(entry.scene,{source:true});this.cache.clear();this.geometryBytes=0;}
+ async open(cut,{transient=false}={}){this.libraryTabs?.closeAll();this.figurePicker.close();this.movement?.library.close({focus:false});this.props?.close({focus:false});this.flush();this.shot.reset();this.advanced.skyPicker.close();this.transient=transient;const token=++this.openToken;this.loading=true;this.controls.enableDamping=false;this.controls.update();this.controls.enableDamping=true;this.cut=cut;this.state=structuredClone(cut.scene||defaultScene());this.index=0;this.gizmo.personSelected=false;this.gizmo.objectTarget=null;this.movement?.reset();this.isOpen=true;this.camera.position.fromArray(this.state.camera);this.controls.target.fromArray(this.state.target);this.camera.fov=this.state.fov;this.camera.updateProjectionMatrix();this.grid.visible=this.state.grid;this.updateOptions();try{await Promise.all([this.buildEnvironment(),loadMannequin(this.state.people)]);if(token!==this.openToken)return;await this.advanced.skies.ready;if(token!==this.openToken)return;this.updatePeople();this.gizmo.setMode('translate');this.gizmo.setAxis(null);this.controls.update();this.resize();this.shot?.sync();this.lens?.sync();$('fov').value=this.state.fov;$('fovValue').textContent=this.state.fov+'°';$('gridToggle').checked=this.state.grid;$('wireToggle').checked=this.state.wire;}finally{if(token===this.openToken){this.loading=false;this.movement?.sceneReady();this.invalidate();}}if(this.state.look?.skyPreset||!cut.background||(this.state.people.length&&!cut.guide))this.queueLive({initial:true});else{this.pending=false;this.previewDirty=false;}}
 
  updateOptions(){const s=$('scenePreset');s.replaceChildren();for(const [id,name] of [['school-corridor','학교 복도 · 창가'],['room','스튜디오'],['interaction-room','상호작용 연습실 · 문 / 의자 / 침대'],['stair-room','계단 연습실 · 손잡이'],['castle','성문 · 샘플'],['empty','빈 공간'],...Object.values(this.assets()).map(a=>[a.id,a.name])]){let o=new Option(name,id);s.add(o);}s.value=this.state.asset;}
  async selectAsset(id){
@@ -117,7 +119,7 @@ export class SceneEditor{
    if(cached?.data===asset.data)source=cached.scene;
    else{
     for(const entry of this.cache.values())releaseObjects(entry.scene,{source:true});this.cache.clear();
-    const buf=await (await fetch(asset.data)).arrayBuffer();
+    const response=await fetch(asset.data);if(!response.ok)throw Error('배경 파일을 불러오지 못했습니다.');const buf=await response.arrayBuffer();if(token!==this.rebuildToken)return;
     const decoder=new DRACOLoader().setDecoderPath(new URL('./vendor/draco/',import.meta.url).href).setWorkerLimit(2);let gltf;
     try{gltf=await new GLTFLoader().setDRACOLoader(decoder).parseAsync(buf,'');}finally{decoder.dispose();}
     if(token!==this.rebuildToken){releaseObjects(gltf.scene,{source:true});return;}

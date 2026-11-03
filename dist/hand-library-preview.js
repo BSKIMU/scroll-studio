@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {loadMannequin,movementModel,defaultPerson} from './mannequin.js?v=20261029-hands2';
+import {loadMannequin,movementModel,defaultPerson} from './mannequin.js?v=20261031-joint-handles';
 import {createHandRig,applyHandPose} from './hand-pose.js?v=20261029-hands2';
 
 // A single hand-only render target produces cached still images on demand.

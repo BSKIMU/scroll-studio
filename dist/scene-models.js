@@ -1,4 +1,4 @@
-import {figureModels,hasFigureModel,setFigureModel,loadFigureModel} from './mannequin.js?v=20261029-hands2';
+import {figureModels,hasFigureModel,setFigureModel,loadFigureModel} from './mannequin.js?v=20261031-joint-handles';
 
 export function setupFigureModels(editor){
  const label=document.createElement('label'),select=document.createElement('select');

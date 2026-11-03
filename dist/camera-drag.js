@@ -22,6 +22,7 @@ export function installCameraDrag(editor){
    if(pickSceneTarget(editor,ray)||ray.intersectObjects(editor.figures.children,true).some(h=>h.object.userData.poseMarker&&h.object.visible))return;
   }
   e.preventDefault();e.stopImmediatePropagation();surface.focus({preventScroll:true});
+  if(!pan&&!editor.movement?.engaged)editor.gizmo.deselect();
   // Consume any prior orbit inertia once, then use exact per-pixel movement.
   const damping=controls.enableDamping;controls.enableDamping=false;controls.update();
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,total:0,damping,enabled:controls.enabled,pan};

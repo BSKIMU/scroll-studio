@@ -30,3 +30,39 @@ body.studio-ui #layerPanel .layer-actions{display:grid;grid-template-columns:min
 .layer-compact-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:3px}.layer-compact-actions button{font-size:10px;padding:4px 2px;min-height:24px;white-space:nowrap}
 body #layerPanel #layerMenuButton,body #layerPanel #layerSearch,body #layerPanel #layerFilter{min-height:24px;height:24px;padding:3px 5px;margin:3px 0;font-size:10px}
 #framePicker{display:grid;gap:3px;margin:5px 0}#framePicker button{position:relative;min-height:36px;padding:0;border-radius:1px;background:#40464d;border:1px solid #545d68;text-align:right}#framePicker button[aria-selected=true]{background:#496273;border-color:#59b5ed}#framePicker svg{width:100%;height:34px;display:block;fill:none;stroke:#f0f3f5;stroke-width:3}#framePicker span{position:absolute;bottom:1px;right:3px;font-size:10px;line-height:12px;background:#40464dbb}#framePicker button[aria-selected=true] span{background:#496273bb}
+
+/* Selection launcher follows the selected area without taking canvas space. */
+#artTransformBar{position:fixed;top:auto;z-index:21000001;border:1px solid #6a7b88;border-radius:4px;box-shadow:0 2px 8px #0005;padding:4px 6px}
+#artSelectionStatus{flex-basis:100%;min-width:0;font-size:10px;color:#bac8d0}
+#artSelectionOverlay .selection-underlay{fill:none;stroke:white;stroke-width:1;vector-effect:non-scaling-stroke}
+#artSelectionOverlay .selection-boundary{fill:none;stroke:#ef4242;stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;animation:none}
+@keyframes selection-march{to{stroke-dashoffset:-8}}
+@media(prefers-reduced-motion:reduce){#artSelectionOverlay .selection-boundary{animation:none}}
+
+#artSelectionOverlay .lasso-trace{fill:none;stroke:#ef4242;stroke-width:1;stroke-dasharray:none;shape-rendering:crispEdges;vector-effect:non-scaling-stroke}
+#paper.lasso-selecting .panel-wrap>canvas{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cg fill='none' stroke='white' stroke-width='3'%3E%3Cellipse cx='11' cy='10' rx='8' ry='6'/%3E%3Cpath d='M6 15c-5 9 11 9 7 2M20 20h7m-3.5-3.5v7'/%3E%3C/g%3E%3Cg fill='none' stroke='%23222222' stroke-width='1.2'%3E%3Cellipse cx='11' cy='10' rx='8' ry='6'/%3E%3Cpath d='M6 15c-5 9 11 9 7 2M20 20h7m-3.5-3.5v7'/%3E%3C/g%3E%3C/svg%3E") 23 20,crosshair}
+
+.lasso-stamp-controls[hidden]{display:none}.lasso-stamp-controls{display:grid;gap:6px}.lasso-stamp-controls canvas{width:90px;height:70px;object-fit:contain;background:repeating-conic-gradient(#53616c 0% 25%,#3c4852 0% 50%) 0/12px 12px}.lasso-stamp-preview{position:absolute;pointer-events:none;z-index:20;opacity:.7;transform-origin:center;outline:1px dashed #ef4242}
+
+#lassoOptions .selection-shapes{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+#lassoOptions .selection-shapes button{flex:1;min-height:30px;padding:5px;font-size:12px}
+#lassoOptions .selection-shapes button[aria-pressed=true]{background:#24526d;border-color:#74c9f5;color:#fff}
+#lassoOptions button:focus-visible,#lassoOptions summary:focus-visible{outline:2px solid #8bd4ff;outline-offset:2px}
+#lassoOptions .selection-advanced{margin:8px 0}
+#lassoOptions .selection-advanced summary{cursor:pointer;padding:5px 0;font-size:12px}
+#lassoOptions label[hidden]{display:none}
+#lassoOptions small{display:block;font-size:11px;line-height:1.55;color:#d2e0e9}
+#artTransformBar .selection-transform-note{flex-basis:100%;font-size:11px;line-height:1.5;color:#d2e0e9}
+#paper.lasso-selecting.rectangle-selecting .panel-wrap>canvas{cursor:crosshair}
+
+#lassoOptions .selection-shapes{display:flex;flex-direction:column;gap:4px}#lassoOptions .selection-shapes button{width:100%;min-height:30px;text-align:left;white-space:nowrap}
+
+#layerPanel .layer-split-body{display:flex;flex-direction:column;overflow:hidden;min-height:180px;height:100%}
+.layer-settings-scroll{flex:0 1 250px;min-height:60px;overflow:auto}
+.layer-list-scroll{flex:1 1 180px;min-height:100px;overflow:auto}
+.layer-list-divider{flex:0 0 9px;cursor:ns-resize;touch-action:none;background:linear-gradient(#607c90,#607c90) center/32px 2px no-repeat}
+.layer-list-divider:hover,.layer-list-divider:focus{background-color:#354d60}
+#toolPalette .tool-color-swatches{display:grid;gap:4px;padding:5px 3px}
+#toolPalette .tool-color-swatches button{width:24px;height:24px;min-height:24px;padding:0;border:2px solid #a6b9cb;border-radius:3px}
+#toolPalette .tool-color-swatches button[aria-pressed=true]{outline:2px solid #41b7ef;outline-offset:1px}
+#toolPalette [data-color-mode=transparent]{background:repeating-conic-gradient(#aaa 0% 25%,#eee 0% 50%) 0/8px 8px}

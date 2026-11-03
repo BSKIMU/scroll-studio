@@ -9,7 +9,7 @@ export function setupFrameTransform(api){
   const b=document.createElement('button');b.type='button';b.dataset.handle=dir;b.className='frame-resize-handle';b.style.left=x+'%';b.style.top=y+'%';b.style.cursor=dir+'-resize';b.setAttribute('aria-label',label+' 컷 크기 조절');b.title=label+' 조절점: 크기 · Shift: 비율 유지';box.append(b);
  }
  const panel=document.createElement('div');panel.id='frameTransformActions';panel.hidden=true;panel.innerHTML='<b>컷 이동 · 회전 · 크기</b><output id="frameTransformSize"></output><small>테두리: 이동 · 꼭짓점 바깥: 회전<br>사각 조절점: 크기 · 3D 비율 유지<br>더블클릭 / Enter: 적용 · Esc: 취소</small><div class="two"><button id="frameTransformApply" class="primary">적용 ↵</button><button id="frameTransformCancel">취소 Esc</button></div>';
- const start=document.createElement('button');start.id='frameTransformStart';start.className='full';start.textContent='⤢ 컷 이동 · 회전 · 크기 · Ctrl+T';$('frameScene').before(start,panel);start.onclick=begin;
+ const start=document.createElement('button');start.id='frameTransformStart';start.className='full';start.textContent='⤢ 컷 이동 · 회전 · 크기 · Ctrl+Alt+T';$('frameScene').before(start,panel);start.onclick=begin;
  const valid=c=>c&&!c.pageBase&&c.pageId&&api.getProject().pages;
  const limits=()=>({width:api.getProject().width,height:api.getProject().pageHeight});
  function position(b){const z=api.getZoom();Object.assign(box.style,{left:(b.cx-b.w/2)*z+'px',top:(b.cy-b.h/2)*z+'px',width:b.w*z+'px',height:b.h*z+'px',transform:`rotate(${b.angle}deg)`});}
@@ -45,7 +45,7 @@ export function setupFrameTransform(api){
  box.addEventListener('pointercancel',cancelDrag);box.addEventListener('lostpointercapture',cancelDrag);
  document.addEventListener('keydown',e=>{
   if(e.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]'))return;
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='t'&&valid(api.getSelected())){e.preventDefault();e.stopImmediatePropagation();begin();return;}
+  if((e.ctrlKey||e.metaKey)&&e.altKey&&e.key.toLowerCase()==='t'&&valid(api.getSelected())){e.preventDefault();e.stopImmediatePropagation();begin();return;}
   if(!session)return;
   if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();e.key==='Escape'?cancel():apply();return;}
   if((e.ctrlKey||e.metaKey)&&(e.code==='KeyZ'||e.key.toLowerCase()==='z')){const changed=session.changed;cancel();if(changed&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();}return;}
