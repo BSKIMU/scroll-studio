@@ -1,3 +1,4 @@
+import {setupToolPaletteDock} from './tool-palette-dock.js';
 export function setupEditorAccessibility({setTool}){
  const $=id=>document.getElementById(id),rows=$('layerRows'),body=rows?.parentElement;
  if(body){const settings=document.createElement('div'),list=document.createElement('div'),bar=document.createElement('div');settings.className='layer-settings-scroll';list.className='layer-list-scroll';bar.className='layer-list-divider';bar.tabIndex=0;bar.setAttribute('role','separator');bar.setAttribute('aria-label','레이어 목록 높이 조절');bar.setAttribute('aria-orientation','horizontal');
@@ -6,7 +7,7 @@ export function setupEditorAccessibility({setTool}){
  bar.onpointerdown=e=>{start=[e.clientY,settings.clientHeight];bar.setPointerCapture(e.pointerId);e.preventDefault();};bar.onpointermove=e=>{if(start)resize(start[1]+e.clientY-start[0]);};bar.onpointerup=bar.onpointercancel=()=>start=null;bar.onkeydown=e=>{if(['ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();resize(settings.clientHeight+(e.key==='ArrowUp'?-20:20));}};
  }
  const palette=$('toolPalette'),color=$('penColor');if(!palette||!color)return;
- const wand=document.createElement('button');wand.type='button';wand.title='마법봉 · 자동 선택';wand.setAttribute('aria-label',wand.title);wand.textContent='✧';wand.onclick=()=>{setTool('lasso');$('lassoMode').value='select';$('lassoPath').value='wand';$('lassoPath').dispatchEvent(new Event('change'));};palette.append(wand);
+ const wand=document.createElement('button');wand.type='button';wand.title='마법봉 · 자동 선택';wand.setAttribute('aria-label',wand.title);wand.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m4 20 12-12 3 3L7 23zM13 11l3 3M5 3v6M2 6h6M19 1v5M16.5 3.5h5M21 17v4M19 19h4"/></svg>';wand.onclick=()=>{setTool('lasso');$('lassoMode').value='select';$('lassoPath').value='wand';$('lassoPath').dispatchEvent(new Event('change'));};palette.append(wand);setupToolPaletteDock(palette);
  const colors=document.createElement('div');colors.className='tool-color-swatches';let foreground=color.value,background='#ffffff',selected='foreground';
  for(const [mode,label]of [['foreground','전경색'],['background','배경색'],['transparent','투명색']]){const b=document.createElement('button');b.type='button';b.title=label;b.setAttribute('aria-label',label);b.dataset.colorMode=mode;b.onclick=()=>choose(mode);colors.append(b);}palette.append(colors);
  function sync(){for(const b of colors.children){b.style.backgroundColor=b.dataset.colorMode==='foreground'?foreground:b.dataset.colorMode==='background'?background:'';b.setAttribute('aria-pressed',String(b.dataset.colorMode===selected));}}

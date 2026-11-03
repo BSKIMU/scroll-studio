@@ -106,3 +106,15 @@ body.studio-ui.focus-mode .workspace{padding-left:0;grid-template-columns:minmax
 .studio-ui input::placeholder{color:#b1beca;opacity:1}
 .studio-ui button:focus-visible,.studio-ui select:focus-visible{outline:2px solid #8dd7ff;outline-offset:2px}
 .studio-ui #fitSelectedCut{font-size:12px;min-height:28px;white-space:nowrap}
+/* Transform actions stay near the selection; live settings belong to the tool dock. */
+#artTransformBar{width:max-content!important;max-width:calc(100vw - 24px)!important;display:flex;gap:4px;padding:5px!important;align-items:center}
+#artTransformBar[hidden]{display:none!important}#artTransformBar #artSelectionStatus{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#artTransformBar button{width:30px;height:30px;padding:0;font-size:19px}#artTransformBar button[hidden]{display:none}
+#artTransformProperties{background:var(--panel);border:1px solid var(--line);padding:8px;flex-shrink:0}
+#artTransformProperties[hidden]{display:none}#artTransformProperties h3{font-size:12px;margin:0 0 8px}#artTransformProperties p{font-size:11px;color:var(--muted)}
+#artTransformProperties .transform-fields{display:grid;grid-template-columns:1fr;gap:6px}#artTransformProperties label{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:11px}#artTransformProperties input[type=number]{width:70px;min-width:0}#artTransformProperties select{min-width:0;max-width:130px}#artTransformProperties small{font-size:10px;color:var(--muted)}
+body.studio-ui .workspace[data-tool-dock=right]{padding-left:0;padding-right:var(--tool-rail)}body.studio-ui .workspace[data-tool-dock=float]{padding-left:0}
+.studio-ui .workspace[data-tool-dock=right] #toolPalette{left:auto;right:0;border-left:1px solid var(--line)}
+.studio-ui .workspace[data-tool-dock=float] #toolPalette{left:var(--rail-x);top:var(--rail-y);right:auto;bottom:auto;max-height:calc(100% - var(--rail-y));border:1px solid var(--line);border-radius:5px;box-shadow:0 5px 18px #0006;z-index:150}
+.studio-ui #toolPalette .tool-palette-grip{cursor:grab;touch-action:none;height:22px;min-height:22px;color:var(--muted)}.studio-ui #toolPalette .tool-palette-grip:active{cursor:grabbing}
+.tool-dock-hint{position:absolute;top:0;bottom:0;width:40px;background:#2499dd44;border:1px solid #56baff;z-index:140;pointer-events:none}.tool-dock-hint[data-side=left]{left:0}.tool-dock-hint[data-side=right]{right:0}

@@ -11,12 +11,14 @@ export function setupSceneWorkspace({ensureOpen,flush,resize,toast}){
  const nav=document.createElement('nav');nav.className='editor-workspaces';nav.setAttribute('aria-label','작업 공간');
  nav.innerHTML='<button type="button" id="canvasWorkspace" aria-pressed="true">캔버스</button><button type="button" id="sceneWorkspace" aria-pressed="false">3D 작업</button>';
  document.querySelector('.command-bar').append(nav);
+ const fullButton=nav.querySelector('#sceneWorkspace'),splitButton=document.getElementById('dockToggle');
+ if(splitButton){splitButton.replaceWith(fullButton);nav.append(splitButton);splitButton.title='3D 창 · 캔버스와 나란히';}
  const toggle=document.createElement('button');toggle.id='maximizeScene';head.querySelector('.dock-actions').prepend(toggle);
  const overlay=document.createElement('div');overlay.id='sceneDockDrop';overlay.hidden=true;document.body.append(overlay);
  let maximized=false,drag=null,pending=0,hover=false;
  function sync(){
   document.body.classList.toggle('scene-maximized',maximized);
-  nav.querySelector('#sceneWorkspace').setAttribute('aria-pressed',String(maximized));nav.querySelector('#canvasWorkspace').setAttribute('aria-pressed',String(!maximized));
+  fullButton.setAttribute('aria-pressed',String(maximized));nav.querySelector('#canvasWorkspace').setAttribute('aria-pressed',String(!maximized));
   const label=maximized?'오른쪽에 복원':'최대화';toggle.title=label+' · Ctrl + Space';toggle.setAttribute('aria-label',label);toggle.setAttribute('aria-pressed',String(maximized));
   toggle.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+(maximized?'<path d="M8 8V4h12v12h-4"/><rect x="4" y="8" width="12" height="12" rx="1"/>':'<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 8h16"/>')+'</svg>';
   dock.style.setProperty('--scene-max-top',workspace.getBoundingClientRect().top+'px');
@@ -29,7 +31,8 @@ export function setupSceneWorkspace({ensureOpen,flush,resize,toast}){
   if(token!==pending)return;flush();maximized=true;sync();
  }
  toggle.onclick=()=>maximized?restore():maximize();
- nav.querySelector('#canvasWorkspace').onclick=restore;nav.querySelector('#sceneWorkspace').onclick=()=>{if(!dock.hidden){restore();document.getElementById('closeScene')?.click();}else maximize();};
+ nav.querySelector('#canvasWorkspace').onclick=restore;fullButton.onclick=()=>maximized?restore():maximize();
+ if(splitButton)splitButton.addEventListener('click',async e=>{e.preventDefault();e.stopImmediatePropagation();if(maximized){restore();}else if(!dock.hidden){document.getElementById('closeScene')?.click();}else await ensureOpen();},true);
  handle.ondblclick=()=>maximized?restore():maximize();
  dock.addEventListener('pointerenter',()=>hover=true);dock.addEventListener('pointerleave',()=>hover=false);
  function end(cancel=false){
