@@ -1,3 +1,4 @@
+import {paintFocusLines} from './focus-lines.js';
 export const makeSurface=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c;};
 const decoded=new Map(),pending=new Map(),transient=new Map();let bytes=0;
 export function cachedBitmap(src){if(transient.has(src))return transient.get(src);const im=decoded.get(src);if(im){decoded.delete(src);decoded.set(src,im);}return im;}
@@ -37,7 +38,7 @@ export function applyAdjustment(ctx,settings,mask=null,opacity=1){
  for(let y=0;y<h;y+=256){const n=Math.min(256,h-y),im=ctx.getImageData(0,y,w,n),old=new Uint8ClampedArray(im.data),m=mask?.getContext('2d').getImageData(0,y,w,n).data;adjustPixels(im.data,settings);for(let i=0;i<im.data.length;i+=4){const alpha=opacity*(m?m[i+3]/255:1);for(let k=0;k<3;k++)im.data[i+k]=old[i+k]+(im.data[i+k]-old[i+k])*alpha;}ctx.putImageData(im,0,y);}
 }
 export function paintGenerated(ctx,l,w,h){
- const g=l.generated;if(!g)return;
+ const g=l.generated;if(!g)return;if(g.kind==='focus')paintFocusLines(ctx,g,w,h,l.nativeWidth||w);
  if(g.kind==='solid'){ctx.fillStyle=g.color||'#ffffff';ctx.fillRect(0,0,w,h);}
  if(g.kind==='gradient'){const angle=Number(g.angle??90)*Math.PI/180,dx=Math.cos(angle)*w/2,dy=Math.sin(angle)*h/2;const gradient=g.radial?ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)/2):ctx.createLinearGradient(w/2-dx,h/2-dy,w/2+dx,h/2+dy);gradient.addColorStop(0,g.colorA||'#000000');gradient.addColorStop(1,g.transparent?'#ffffff00':g.colorB||'#ffffff');ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);}
  if(g.kind==='tone'){const spacing=Math.max(1,Number(g.spacing??12)*w/(l.nativeWidth||w)),density=clamp(Number(g.density??35),0,100)/100,tile=makeSurface(Math.ceil(spacing),Math.ceil(spacing)),tc=tile.getContext('2d'),size=tile.width;tc.fillStyle=g.color||'#000000';if(density>=1)tc.fillRect(0,0,size,size);else for(let y=-size/2;y<size*2;y+=size)for(let x=-size/2;x<size*2;x+=size){if(g.shape==='line')tc.fillRect(x-size/2,y-size*density/2,size,size*density);else if(g.shape==='square'){const q=Math.sqrt(density)*size;tc.fillRect(x-q/2,y-q/2,q,q);}else if(g.shape==='diamond'){const q=Math.sqrt(density/2)*size;tc.beginPath();tc.moveTo(x,y-q);tc.lineTo(x+q,y);tc.lineTo(x,y+q);tc.lineTo(x-q,y);tc.closePath();tc.fill();}else if(g.shape==='cross'){const q=size*(1-Math.sqrt(1-density));tc.fillRect(x-size/2,y-q/2,size,q);tc.fillRect(x-q/2,y-size/2,q,size);}else{tc.beginPath();tc.arc(x,y,Math.sqrt(density/Math.PI)*size,0,Math.PI*2);tc.fill();}}

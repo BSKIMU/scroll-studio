@@ -20,10 +20,10 @@ editor.movement.active=false;assert.equal(loop.draw(2000),false,'Hidden dirty cu
 assert.equal(lastPaintInteractive,false,'Idle preview restores full shadow quality');maximized=false;assert.equal(loop.draw(2200),false);assert.equal(lastCaptureInteractive,false);assert.equal(captures,1,'Returning to dock paints pending manuscript');
 editor.movement.active=true;
 for(let i=0;i<120;i++)loop.draw(2400+i*1000/60);
-assert.equal(captures,1,'Light-mode motion must not duplicate the scene for manuscript capture');
+const movingCaptures=captures;assert(movingCaptures>1&&movingCaptures<20,'Visible manuscript tracks motion at a bounded rate');
 assert(editor.previewDirty,'Deferred capture stays dirty');
-editor.movement.active=false;loop.draw(4450);assert.equal(captures,2,'Stopping refreshes the manuscript');
-editor.movement.active=true;loop.light=false;loop.draw(4590);assert.equal(captures,3,'Full-quality preference retains live manuscript capture');assert.equal(lastCaptureInteractive,false);loop.light=true;const before=captures;fullscreen=true;
+editor.movement.active=false;loop.draw(4450);assert.equal(captures,movingCaptures+1,'Stopping refreshes the manuscript');
+editor.movement.active=true;loop.light=false;loop.draw(4590);assert.equal(captures,movingCaptures+2,'Full-quality preference retains live manuscript capture');assert.equal(lastCaptureInteractive,false);loop.light=true;const before=captures;fullscreen=true;
 for(let i=0;i<120;i++)loop.draw(4500+i*1000/60);
 assert.equal(captures,before,'Fullscreen also covers the manuscript');
 fullscreen=false;editor.advanced.skies.pending=true;loop.draw(6600);assert.equal(captures,before,'Do not capture a half-loaded sky');

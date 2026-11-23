@@ -8,7 +8,7 @@ export function setupBrushDetails({pane,presets,builtins,preview,persist,presets
  let defaults={},drafts={},basics={};try{basics=JSON.parse(localStorage.getItem('scroll-brush-basics')||'{}');for(const p of presets)if(basics[p.name])Object.assign(p,basics[p.name]);}catch{}try{defaults=JSON.parse(localStorage.getItem('scroll-brush-defaults')||'{}');}catch{}
  const key=()=>presets[+select.value]?.name||'브러시';const read=()=>drafts[key()]??defaults[key()]??presets[+select.value]?.brushSettings??null;
  const groups=[
- ['필압 · 크기',[['minSize','최소 크기 %',0,100],['pressureCurve','필압 곡선',.2,4,.05],['tiltSize','기울기에 따른 크기 %',0,100],['velocitySize','빠른 획 크기 감소 %',0,100]]],
+ ['필압 · 크기',[['pressureSmoothing','필압 안정화 %',0,90],['minSize','최소 크기 %',0,100],['pressureCurve','필압 곡선',.2,4,.05],['tiltSize','기울기에 따른 크기 %',0,100],['velocitySize','빠른 획 크기 감소 %',0,100]]],
  ['잉크',[['opacityPressure','필압으로 불투명도','check'],['density','팁 밀도 %',1,100],['blend','브러시 합성',{ 'source-over':'표준',multiply:'곱하기',screen:'스크린',overlay:'오버레이',darken:'비교(어두움)',lighten:'비교(밝음)','color-dodge':'색상 닷지','color-burn':'색상 번','hard-light':'하드 라이트','soft-light':'소프트 라이트',difference:'차이',exclusion:'제외',hue:'색조',saturation:'채도',color:'컬러',luminosity:'휘도',lighter:'더하기'}]]],
  ['브러시 끝',[['tip','팁 모양',{round:'원형',square:'사각 팁',diamond:'마름모 팁',image:'불러온 이미지 팁'}],['roundness','두께 %',2,100],['angle','각도 °',-180,180],['followDirection','선 방향으로 회전','check']]],
  ['스트로크',[['spacing','팁 간격 %',1,300],['continuousSpray','누르고 있을 때 연속 분사','check'],['sprayRate','연속 분사 / 초',1,60],['taperStart','시작 가늘게 %',0,100],['taperEnd','끝 가늘게 %',0,100]]],

@@ -44,7 +44,7 @@ for(const model of ['bodychan','bodykun','mixamo']){
   const hand=figure.userData.motionRig.bones.RightHand,point=prop.getWorldPosition(new T.Vector3()),wrist=hand.getWorldPosition(new T.Vector3());
   assert.ok(point.distanceTo(wrist)<.13,model+' live grip '+t+' '+point.distanceTo(wrist));
  }
- const finger=figure.userData.motionRig.bones.RightHandIndex1;finger.quaternion.identity();person.handMode='manual';applyEquipmentGrip(figure,person);assert.ok(finger.quaternion.angleTo(new T.Quaternion())<1e-7,'manual finger pose wins');motion.freeze();
+ const finger=figure.userData.motionRig.bones.RightHandIndex1;finger.quaternion.identity();person.handMode='manual';applyEquipmentGrip(figure,person);assert.ok(finger.quaternion.angleTo(new T.Quaternion())>.01,'attached equipment closes its grip even when the saved free-hand pose is manual');const gear=person.equipment;person.equipment={};finger.quaternion.identity();applyEquipmentGrip(figure,person);assert.ok(finger.quaternion.angleTo(new T.Quaternion())<1e-7,'detached hand keeps its manual pose');person.equipment=gear;motion.freeze();
 }
 for(const model of ['bodychan','bodykun','mixamo'])for(const side of ['left','right']){
  const person=defaultPerson(model),figure=mannequin(person,0),prop=new T.Group();figure.add(prop);

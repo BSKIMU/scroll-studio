@@ -14,13 +14,18 @@ export class SceneShading{
    const button=document.createElement('button');button.title=name+' · 편집 화면';button.setAttribute('aria-label',name);button.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${icons[mode]}</svg>`;button.dataset.shading=mode;
    button.onclick=()=>{editor.fly?.finish(true);this.mode=mode;if(mode==='sky'&&!editor.state?.look?.skyPreset){const sky=document.getElementById('skyPreset');sky.value='hdri-day';sky.onchange();}try{localStorage.setItem('scroll-viewport-shading',mode);}catch{}this.sync();editor.invalidate();};group.append(button);this.buttons.push(button);
   }
-  document.getElementById('sceneView').append(group);this.sync();
+  document.querySelector('.viewport-actions').append(group);this.sync();
  }
  sync(){for(const b of this.buttons)b.setAttribute('aria-pressed',String(b.dataset.shading===this.mode));}
  paint({interactive=false}={}){
   const e=this.e,r=e.renderer,background=e.scene.background,dome=e.skyDome?.visible,shadow=r.shadowMap.autoUpdate,materials=[],hidden=[];
   r.domElement.style.filter=this.mode==='solid'?'none':e.advanced.filter();
   try{
+   if(document.body.classList.contains('inline-cut-mode')){
+    const grid=e.grid.visible;e.grid.visible=false;if(e.skyDome&&!e.state?.look?.skyPreset)e.skyDome.visible=false;
+    try{r.domElement.style.filter=e.advanced.filter();r.render(e.scene,e.camera);e.tone.paint({interactive});}finally{e.grid.visible=grid;}
+    return;
+   }
    if(this.mode!=='sky'||!e.state?.look?.skyPreset)e.scene.background=gray;
    if(e.skyDome&&this.mode!=='sky')e.skyDome.visible=false;
    if(this.mode==='solid'){

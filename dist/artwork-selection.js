@@ -1,3 +1,5 @@
+import {setupFocusLinesTool} from './focus-lines-tool.js';
+import {invertSelectionMask,expandSelectionMask,selectionIcon} from './selection-actions.js';
 import {connectedMask} from './selection-connected.js';
 import {setupLassoStamp} from './lasso-stamp.js?v=20261102-startup';
 import {nearestLassoEdge} from './lasso-edge.js';
@@ -17,15 +19,28 @@ export function setupArtworkSelection(api){
  const bar=document.createElement('div');bar.id='artTransformBar';bar.hidden=true;bar.innerHTML='<span id="artSelectionStatus" role="status"></span><button id="artBeginTransform">변형 Ctrl+Alt+T</button><div class="transform-fields" hidden><label>방식 <select id="artTransformMode"><option value="scale">확대·축소·회전</option><option value="free">자유 변형</option></select></label><label>X <input id="artDX" type="number" value="0" step="1"></label><label>Y <input id="artDY" type="number" value="0" step="1"></label><label>가로 % <input id="artSX" type="number" value="100" step="1"></label><label>세로 % <input id="artSY" type="number" value="100" step="1"></label><label><input id="artAspect" type="checkbox" checked>비율</label><label>회전 ° <input id="artAngle" type="number" value="0" step="1"></label><button id="artFlipX" title="좌우 반전">↔</button><button id="artFlipY" title="상하 반전">↕</button><button id="artApply">확정 Enter</button><button id="artCancel">취소 Esc</button></div><button id="artDelete">선택 삭제</button><button id="artClear">선택 해제</button>';document.body.append(bar);
  const fields=bar.querySelector('.transform-fields'),properties=document.createElement('section');properties.id='artTransformProperties';properties.hidden=true;properties.innerHTML='<h3>도구 속성 · 변형</h3><p>안쪽: 이동 · 바깥쪽: 회전<br>모서리: 크기 · Enter: 확정 · Esc: 취소</p>';properties.append(fields);fields.hidden=false;
  $('drawingTools').append(properties);
- const icons={artBeginTransform:['⤢','변형 · Ctrl+Alt+T'],artFlipX:['↔','좌우 반전'],artFlipY:['↕','상하 반전'],artApply:['✓','변형 확정 · Enter'],artCancel:['×','변형 취소 · Esc'],artDelete:['⌫','선택 삭제'],artClear:['⊘','선택 해제']};
- for(const [id,[icon,label]] of Object.entries(icons)){const b=$(id);b.textContent=icon;b.title=label;b.setAttribute('aria-label',label);bar.append(b);}
- function transformUI(active){properties.hidden=!active;for(const id of ['artFlipX','artFlipY','artApply','artCancel'])$(id).hidden=!active;$('artBeginTransform').hidden=active;$('artDelete').hidden=active;$('artClear').hidden=active;}
+ const actions=[['artClear','clear','선택범위 해제 · Ctrl+D'],['artInvert','invert','선택범위 반전'],['artExpand','expand','선택범위 확장'],['artCutPaste','cut','잘라내기 + 새 레이어에 붙여넣기'],['artBeginTransform','transform','확대·축소·회전·반전 · Ctrl+Alt+T'],['artFill','fill','선택범위 채우기'],['artApply','apply','변형 확정 · Enter'],['artCancel','cancel','변형 취소 · Esc']];
+ $('artDelete').hidden=true;
+ // Flips belong to the tool properties; the floating transform bar has only Apply / Cancel.
+ fields.append($('artFlipX'),$('artFlipY'));
+ for(const [id,icon,label] of actions){const b=$(id)||document.createElement('button');b.id=id;b.type='button';b.innerHTML=selectionIcon(icon);b.title=label;b.setAttribute('aria-label',label);bar.append(b);}
+ const expansion=document.createElement('div');expansion.id='artExpandOptions';expansion.hidden=true;expansion.innerHTML='<label>확장 폭'+' <input id="artExpandPixels" type="number" min="1" max="100" value="5"> px</label><button id="artExpandApply">확장</button>';bar.append(expansion);
+ function transformUI(active){properties.hidden=!active;expansion.hidden=true;for(const [id] of actions)$(id).hidden=['artApply','artCancel'].includes(id)?!active:active;}
  transformUI(false);
  const options=document.createElement('div');options.id='lassoOptions';options.innerHTML='<label>선택 방법<select id="lassoPath"><option value="rectangle">직사각형 선택</option><option value="free" selected>자유 올가미</option><option value="polygon">꺾은선 올가미</option><option value="magnetic">자석 올가미</option></select></label><label>선택 범위<select id="lassoCombine"><option value="replace">새 선택</option><option value="add">선택 추가</option><option value="subtract">선택 빼기</option><option value="intersect">교차 영역</option></select></label><label>대상<select id="lassoTarget"><option value="current">현재 레이어만</option><option value="auto">빈 곳은 다른 레이어 자동 선택</option></select></label><label>가장자리 흐림 <input id="lassoFeather" type="number" min="0" max="40" value="0">px</label><label><input id="lassoAntialias" type="checkbox" checked>가장자리 매끄럽게</label><label><input id="lassoClipPaint" type="checkbox">선택 영역 안에만 칠하기</label><label>자석 감지 폭 <input id="lassoMagnet" type="range" min="1" max="24" value="10"></label><small>Shift: 추가 · Alt: 빼기 · Shift+Alt: 교차<br>꺾은선: 클릭으로 점 추가 · Backspace로 점 취소<br>더블클릭 / Enter / 시작점 클릭으로 닫기.<br>Esc: 그리기 취소 · Ctrl+D: 선택 해제.<br>선택 후 Ctrl+Alt+T · 모서리: 크기 · 위쪽 원: 회전.</small>';$('selectionActions').before(options);
  const mode=document.createElement('label');mode.innerHTML='올가미 기능<select id=lassoMode><option value=select>영역 선택</option><option value=fill>둘러싸서 채우기</option><option value=stamp>올가미 스탬프</option></select>';options.prepend(mode);
  $('lassoAntialias').checked=false;
  const shapes=document.createElement('div');shapes.className='selection-shapes';shapes.setAttribute('role','group');shapes.setAttribute('aria-label','선택 모양');
- for(const [value,label] of [['rectangle','▭ 직사각형'],['free','♧ 올가미'],['circle','○ 원형'],['ellipse','⬭ 타원'],['polygon','⌁ 꺾은선'],['shrink','▣ 슈링크'],['wand','✧ 자동 선택']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.shape=value;button.onclick=()=>{$('lassoPath').value=value;$('lassoPath').dispatchEvent(new Event('change'));};shapes.append(button);}
+ const shapeIcons=[
+  ['rectangle','직사각형','M3 5h18v14H3z'],
+  ['free','올가미','M6 17C0 13 4 3 13 4c11 0 9 14-1 15-7 1-8-4-4-5 4-1 4 7-2 8'],
+  ['circle','원형','M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z'],
+  ['ellipse','타원','M2 12a10 6 0 1 0 20 0 10 6 0 1 0-20 0z'],
+  ['polygon','꺾은선','M3 18 7 6l6 7 7-9-2 16z'],
+  ['shrink','슈링크','M3 8V3h5m8 0h5v5m0 8v5h-5m-8 0H3v-5m4-8h9v8H7z'],
+  ['wand','자동 선택','m3 19 11-11 3 3L6 22zm12-16v3m5 0-2 2m2 5h3M7 3v4m-2-2h4']
+ ];
+ for(const [value,label,path] of shapeIcons){const button=document.createElement('button');button.type='button';button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';button.append(label);button.dataset.shape=value;button.onclick=()=>{$('lassoPath').value=value;$('lassoPath').dispatchEvent(new Event('change'));};shapes.append(button);}
  mode.after(shapes);for(const b of shapes.children){if(![...$('lassoPath').options].some(o=>o.value===b.dataset.shape))$('lassoPath').add(new Option(b.textContent,b.dataset.shape));}$('lassoPath').closest('label').hidden=true;
  const advanced=document.createElement('details');advanced.className='selection-advanced';advanced.innerHTML='<summary>가장자리 설정</summary>';
  for(const id of ['lassoFeather','lassoAntialias','lassoMagnet'])advanced.append($(id).closest('label'));
@@ -58,7 +73,6 @@ export function setupArtworkSelection(api){
   if(!path&&s.edgePath)svg.append(node('path',{d:s.edgePath,class:'selection-boundary'}));for(const p of (path?paths:[]))if(p.length)svg.append(node('path',{d:p.map((v,i)=>(i?'L':'M')+v[0]*w+','+v[1]*h).join(' '),class:'lasso-trace'}));
   for(const edge of [...svg.querySelectorAll('.selection-boundary')]){const under=edge.cloneNode();under.setAttribute('class','selection-underlay');edge.before(under);}
   if(!session)return;svg.replaceChildren();const {box:b,t}=session,at=(x,y)=>affinePoint(quadPoint(session.quad,x,y),b,t),corners=[[0,0],[1,0],[1,1],[0,1]].map(p=>at(...p));svg.append(node('polygon',{points:corners.map(p=>p.join(',')).join(' '),class:'transform-edge','data-handle':'move'}));const unit=w/s.cv.clientWidth;
-  for(const p of corners)svg.append(node('circle',{cx:p[0],cy:p[1],r:22*unit,fill:'transparent','pointer-events':'all','data-handle':'rotate',style:'cursor:grab'}));
  for(const [x,y,key]of [[0,0,'nw'],[.5,0,'n'],[1,0,'ne'],[1,.5,'e'],[1,1,'se'],[.5,1,'s'],[0,1,'sw'],[0,.5,'w']]){const p=at(x,y);svg.append(node('rect',{x:p[0]-10*unit,y:p[1]-10*unit,width:20*unit,height:20*unit,fill:'transparent','pointer-events':'all','data-handle':key,style:`cursor:${key}-resize`}));svg.append(node('rect',{x:p[0]-4*unit,y:p[1]-4*unit,width:8*unit,height:8*unit,class:'transform-handle','data-handle':key,style:`cursor:${key}-resize`}));}
   const top=at(.5,0),a=t.angle*Math.PI/180,rot=[top[0]+Math.sin(a)*28*unit,top[1]-Math.cos(a)*28*unit];svg.append(node('line',{x1:top[0],y1:top[1],x2:rot[0],y2:rot[1],class:'pivot-mark'}),node('circle',{cx:rot[0],cy:rot[1],r:14*unit,class:'transform-handle rotation-handle','data-handle':'rotate'}));const center=at(.5,.5);svg.append(node('path',{d:`M${center[0]-6*unit} ${center[1]}h${12*unit} M${center[0]} ${center[1]-6*unit}v${12*unit}`,class:'pivot-mark'}));
  }
@@ -83,11 +97,35 @@ export function setupArtworkSelection(api){
  async function apply(remove=false){if(!session){await begin();if(!session)return;}const s=session;if(remove){s.selected.getContext('2d').clearRect(0,0,s.selected.width,s.selected.height);s.dirty=true;}if(!s.dirty){clear();return;}const result=makeSurface(s.raw.width,s.raw.height);compose(s,result);const bitmap=result.toDataURL('image/png');api.checkpoint();Object.assign(s.l,flattened(s,bitmap));for(const k of ['transform','mask','clipTo','outline','outlineWidth','expression','colorEffect','lineExtract','displayColor','file','generated','adjustment','alphaMask'])delete s.l[k];s.c.strokes=s.c.strokes.filter(st=>(st.layerId||'rough')!==s.l.id);rememberBitmap(bitmap,result);clear();await api.drawCut(s.c,s.cv);api.save();api.changed(s.c);api.toast(remove?'선택 영역 삭제 · Ctrl+Z로 복원':'변형 적용 · Ctrl+Z로 복원');}
  function syncFields(){if(!session)return;for(const [id,key,f]of [['artDX','dx',1],['artDY','dy',1],['artSX','sx',100],['artSY','sy',100],['artAngle','angle',1]])$(id).value=String(Math.round(session.t[key]*f*100)/100);}
  for(const [id,key,f]of [['artDX','dx',1],['artDY','dy',1],['artSX','sx',100],['artSY','sy',100],['artAngle','angle',1]])$(id).oninput=()=>{if(!session)return;const v=+$(id).value/f;if(!Number.isFinite(v))return;session.t[key]=v;if((key==='sx'||key==='sy')&&$('artAspect').checked)session.t[key==='sx'?'sy':'sx']=v;preview();};
+ function refreshMask(){if(!selection)return;delete selection.maskURL;selection.box=alphaBounds(selection.mask);selection.edgePath=maskOutline(selection.mask,...nativeSize(selection.c));if(!selection.box){clear();return;}outline();}
+ $('artInvert').onclick=()=>{if(!selection||session)return;invertSelectionMask(selection.mask);refreshMask();};
+ $('artExpand').onclick=()=>{expansion.hidden=!expansion.hidden;positionBar();};
+ $('artExpandApply').onclick=()=>{if(!selection||session)return;const [w,h]=nativeSize(selection.c),n=Math.max(1,Math.min(100,+$('artExpandPixels').value||5));expandSelectionMask(selection.mask,Math.max(1,n*selection.mask.width/w),Math.max(1,n*selection.mask.height/h));expansion.hidden=true;refreshMask();};
+ let actionBusy=false;
+ async function selectionPixels(kind){
+  if(actionBusy||!selection||session)return;const s=selection,l=s.layer;if(!valid(s.c,l))return api.toast('잠금 해제된 그리기 레이어를 선택하세요.');
+  if(kind==='cut'&&s.c.paintLayers.length>=30)return api.toast('레이어가 가득 찼습니다.');
+  actionBusy=true;const ticket=epoch;let source,part;
+  try{source=await capture(s.c,l);if(ticket!==epoch||selection!==s||session)return;
+   part=makeSurface(source.width,source.height);const ctx=part.getContext('2d');
+   if(kind==='fill'){ctx.fillStyle=api.getColor?.()||$('penColor')?.value||'#000000';ctx.fillRect(0,0,part.width,part.height);}else ctx.drawImage(source,0,0);
+   ctx.globalCompositeOperation='destination-in';ctx.drawImage(s.mask,0,0,part.width,part.height);ctx.globalCompositeOperation='source-over';
+   if(kind==='fill'){source.getContext('2d').drawImage(part,0,0);await commitRaster(s.c,l,s.cv,source);source=null;}
+   else{if(!alphaBounds(part))return api.toast('선택 영역 안에 그림이 없습니다.');const rc=source.getContext('2d');rc.globalCompositeOperation='destination-out';rc.drawImage(s.mask,0,0,source.width,source.height);rc.globalCompositeOperation='source-over';
+    const oldBitmap=source.toDataURL('image/png'),newBitmap=part.toDataURL('image/png'),copy=flattened({l},newBitmap);copy.id=crypto.randomUUID();copy.name=l.name+' · 선택';copy.locked=false;
+    api.checkpoint();const flat=flattened({l},oldBitmap);for(const key of Object.keys(l))if(!(key in flat))delete l[key];Object.assign(l,flat);s.c.strokes=s.c.strokes.filter(st=>(st.layerId||'rough')!==l.id);s.c.paintLayers.splice(s.c.paintLayers.indexOf(l)+1,0,copy);s.c.activeLayer=copy.id;s.layer=copy;rememberBitmap(oldBitmap,source);rememberBitmap(newBitmap,part);source=part=null;await api.drawCut(s.c,s.cv);api.save();api.changed(s.c);await begin();
+   }
+  }catch(error){api.toast(error.message);}finally{if(source)source.width=1;if(part)part.width=1;actionBusy=false;}
+ }
+ $('artFill').onclick=()=>selectionPixels('fill');$('artCutPaste').onclick=()=>selectionPixels('cut');
  $('artBeginTransform').onclick=begin;$('artApply').onclick=()=>apply();$('artCancel').onclick=cancel;$('artClear').onclick=clear;$('artDelete').onclick=()=>apply(true);$('artFlipX').onclick=()=>{session.t.sx*=-1;preview();};$('artFlipY').onclick=()=>{session.t.sy*=-1;preview();};$('eraseSelection').onclick=()=>apply(true);$('clearSelection').onclick=clear;
  const surface=$('pasteboard');
+ function transformPoint(e){
+  const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());return [p.x,p.y];
+ }
  function transformHandle(e){
   const explicit=e.target.dataset?.handle;if(explicit)return explicit;
-  const [w,h]=nativeSize(session.c),p=point(session.cv,e).map((v,i)=>v*(i?h:w)),q=session.quad.map(v=>affinePoint(v,session.box,session.t));
+  const p=transformPoint(e),q=session.quad.map(v=>affinePoint(v,session.box,session.t));
   let inside=false;for(let i=0,j=q.length-1;i<q.length;j=i++){if((q[i][1]>p[1])!==(q[j][1]>p[1])&&p[0]<(q[j][0]-q[i][0])*(p[1]-q[i][1])/(q[j][1]-q[i][1])+q[i][0])inside=!inside;}
   return inside?'move':'rotate';
  }
@@ -95,11 +133,12 @@ export function setupArtworkSelection(api){
  surface.addEventListener('pointerdown',e=>{
   if(!session||e.button!==0||e.target.closest('button,input,select,textarea'))return;
   e.preventDefault();e.stopImmediatePropagation();
-  const p=point(session.cv,e),[w,h]=nativeSize(session.c);
-  drag={handle:transformHandle(e),p:[p[0]*w,p[1]*h],t:{...session.t},quad:session.quad.map(p=>[...p]),pointer:e.pointerId};surface.setPointerCapture(e.pointerId);
+  const p=transformPoint(e);
+  const handle=transformHandle(e);drag={handle,freeCorner:e.altKey&&['nw','ne','se','sw'].includes(handle),p,t:{...session.t},quad:session.quad.map(p=>[...p]),pointer:e.pointerId};surface.setPointerCapture(e.pointerId);
  },true);
  surface.addEventListener('pointermove',e=>{if(!session){surface.style.cursor='';return;}if(!e.target.closest('button,input,select')){const handle=transformHandle(e);surface.style.cursor=handle==='rotate'?rotateCursor:handle==='move'?'move':({n:'ns',s:'ns',e:'ew',w:'ew',ne:'nesw',sw:'nesw',nw:'nwse',se:'nwse'}[handle]+'-resize');}},true);
- surface.addEventListener('pointermove',e=>{if(!drag||!session)return;const s=session,[w,h]=nativeSize(s.c),p=point(s.cv,e).map((v,i)=>v*(i?h:w)),d=drag,b=s.box,t={...d.t},cx=b.x+b.w/2+t.dx,cy=b.y+b.h/2+t.dy,dx=p[0]-d.p[0],dy=p[1]-d.p[1],a=t.angle*Math.PI/180;if(d.handle==='move'){t.dx+=dx;t.dy+=dy;}else if(d.handle==='rotate'){t.angle+=(Math.atan2(p[1]-cy,p[0]-cx)-Math.atan2(d.p[1]-cy,d.p[0]-cx))*180/Math.PI;if(e.shiftKey)t.angle=Math.round(t.angle/15)*15;}else if($('artTransformMode').value==='free'){const lx=(dx*Math.cos(a)+dy*Math.sin(a))/t.sx,ly=(-dx*Math.sin(a)+dy*Math.cos(a))/t.sy,indices={nw:[0],n:[0,1],ne:[1],e:[1,2],se:[2],s:[2,3],sw:[3],w:[3,0]}[d.handle];const q=d.quad.map(p=>[...p]);for(const i of indices){q[i][0]+=lx;q[i][1]+=ly;}const cross=q.map((v,i)=>{const n=q[(i+1)%4],o=q[(i+2)%4];return (n[0]-v[0])*(o[1]-n[1])-(n[1]-v[1])*(o[0]-n[0]);});if(cross.every(v=>v>1)){s.quad=q;s.warped=true;}}else{const lx=dx*Math.cos(a)+dy*Math.sin(a),ly=-dx*Math.sin(a)+dy*Math.cos(a),hx=d.handle.includes('e')?1:d.handle.includes('w')?-1:0,hy=d.handle.includes('s')?1:d.handle.includes('n')?-1:0,f=e.altKey?2:1;let sx=t.sx+(hx?f*lx/b.w*hx:0),sy=t.sy+(hy?f*ly/b.h*hy:0);if(($('artAspect').checked||e.shiftKey)&&hx&&hy){const ratio=Math.abs(sx/t.sx)>Math.abs(sy/t.sy)?sx/t.sx:sy/t.sy;sx=t.sx*ratio;sy=t.sy*ratio;}sx=Math.abs(sx)<.01?.01:sx;sy=Math.abs(sy)<.01?.01:sy;if(!e.altKey){const ox=hx*b.w*(sx-t.sx)/2,oy=hy*b.h*(sy-t.sy)/2;t.dx+=ox*Math.cos(a)-oy*Math.sin(a);t.dy+=ox*Math.sin(a)+oy*Math.cos(a);}t.sx=sx;t.sy=sy;}s.t=t;preview();});
+ surface.addEventListener('pointermove',e=>{if(!drag||!session)return;const s=session,p=transformPoint(e),d=drag,b=s.box,t={...d.t},cx=b.x+b.w/2+t.dx,cy=b.y+b.h/2+t.dy,dx=p[0]-d.p[0],dy=p[1]-d.p[1],a=t.angle*Math.PI/180;if(d.handle==='move'){t.dx+=dx;t.dy+=dy;}else if(d.handle==='rotate'){t.angle+=(Math.atan2(p[1]-cy,p[0]-cx)-Math.atan2(d.p[1]-cy,d.p[0]-cx))*180/Math.PI;if(e.shiftKey)t.angle=Math.round(t.angle/15)*15;}else if(d.freeCorner||$('artTransformMode').value==='free'){const lx=(dx*Math.cos(a)+dy*Math.sin(a))/t.sx,ly=(-dx*Math.sin(a)+dy*Math.cos(a))/t.sy,indices={nw:[0],n:[0,1],ne:[1],e:[1,2],se:[2],s:[2,3],sw:[3],w:[3,0]}[d.handle];const q=d.quad.map(p=>[...p]);for(const i of indices){q[i][0]+=lx;q[i][1]+=ly;}const cross=q.map((v,i)=>{const n=q[(i+1)%4],o=q[(i+2)%4];return (n[0]-v[0])*(o[1]-n[1])-(n[1]-v[1])*(o[0]-n[0]);});if(cross.every(v=>v>1)){s.quad=q;s.warped=true;}}else{const lx=dx*Math.cos(a)+dy*Math.sin(a),ly=-dx*Math.sin(a)+dy*Math.cos(a),hx=d.handle.includes('e')?1:d.handle.includes('w')?-1:0,hy=d.handle.includes('s')?1:d.handle.includes('n')?-1:0,f=e.altKey?2:1;let sx=t.sx+(hx?f*lx/b.w*hx:0),sy=t.sy+(hy?f*ly/b.h*hy:0);if(($('artAspect').checked||e.shiftKey)&&hx&&hy){const ratio=Math.abs(sx/t.sx)>Math.abs(sy/t.sy)?sx/t.sx:sy/t.sy;sx=t.sx*ratio;sy=t.sy*ratio;}sx=Math.abs(sx)<.01?.01:sx;sy=Math.abs(sy)<.01?.01:sy;if(!e.altKey){const ox=hx*b.w*(sx-t.sx)/2,oy=hy*b.h*(sy-t.sy)/2;t.dx+=ox*Math.cos(a)-oy*Math.sin(a);t.dy+=ox*Math.sin(a)+oy*Math.cos(a);}t.sx=sx;t.sy=sy;}s.t=t;preview();});
+ surface.addEventListener('dblclick',e=>{if(session&&!e.target.closest('button,input,select')){e.preventDefault();e.stopImmediatePropagation();apply();}},true);
  surface.addEventListener('pointerup',()=>drag=null);surface.addEventListener('pointercancel',()=>{if(drag&&session){session.t=drag.t;session.quad=drag.quad;preview();}drag=null;});
  function magnetic(cv,p){
   const c=bindings.get(cv),radius=+$('lassoMagnet').value||10;
@@ -142,5 +181,6 @@ export function setupArtworkSelection(api){
  paper.addEventListener('dblclick',e=>{if(path?.kind==='polygon'){e.preventDefault();e.stopImmediatePropagation();finishPath();}},true);
  paper.addEventListener('pointercancel',e=>{if(path?.pointer===e.pointerId){path=null;outline();}},true);
  document.addEventListener('keydown',e=>{if(e.target.closest('#sceneDialog')||document.querySelector('dialog[open]'))return;const input=e.target.closest('input,textarea,select,[contenteditable=true]');if(input&&!bar.contains(input)&&!properties.contains(input))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='d'&&(selection||path)){e.preventDefault();e.stopImmediatePropagation();clear();return;}if(k==='backspace'&&path?.kind==='polygon'){e.preventDefault();e.stopImmediatePropagation();path.points.pop();if(!path.points.length)path=null;outline();return;}if((e.ctrlKey||e.metaKey)&&e.altKey&&k==='t'&&selection){e.preventDefault();e.stopImmediatePropagation();begin();return;}if(k==='escape'&&(session||path||selection)){e.preventDefault();e.stopImmediatePropagation();if(session)cancel();else if(path){path=null;outline();}else clear();return;}if(k==='enter'&&(session||path)){e.preventDefault();e.stopImmediatePropagation();session?apply():finishPath();return;}if(session&&(e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();e.stopImmediatePropagation();cancel();return;}if(session&&!input){const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(d){e.preventDefault();e.stopImmediatePropagation();session.t.dx+=d[0]*(e.shiftKey?10:1);session.t.dy+=d[1]*(e.shiftKey?10:1);preview();}}},true);
+ setupFocusLinesTool(api,bindings,c=>selection?.c===c?selection.mask:null);
  return {bind:(c,cv)=>{bindings.set(cv,c);cv.dataset.nativeWidth=nativeSize(c)[0];},clear,selectLayer,hasSelection:()=>!!selection,remove:()=>apply(true),paintMaskFor:c=>$('lassoClipPaint').checked&&selection?.c===c&&!session?(selection.maskURL??=selection.mask.toDataURL('image/png')):null,maskFor:c=>selection?.c===c&&!session?(selection.maskURL??=selection.mask.toDataURL('image/png')):null,begin};
 }

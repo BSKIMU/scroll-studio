@@ -1,3 +1,4 @@
+import {sceneTab} from './scene-panels.js?v=20261028-guide3';
 import {followCamera,recoverFollow} from './camera-navigation.js?v=20261026-navigation2';
 import {RunInput} from './run-input.js?v=20261025-release1';
 import {loadInteractionClips} from './furniture-motion.js?v=20261025-release1';
@@ -25,8 +26,8 @@ export class SceneMovement{
   controls.append(panel);this.panel=panel;
   this.library=new ScenePoseLibrary(this);
   panel.prepend(panel.querySelector('.movement-pad'));
-  const tab=document.createElement('button');tab.textContent='움직임';tab.id='movementTab';
-  tab.onclick=()=>{controls.querySelectorAll('.scene-property-group').forEach(p=>p.hidden=p!==panel);tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tab));this.start();};tabs.children[1].after(tab);
+  const tab=sceneTab('움직임',panel,()=>this.start());tab.id='movementTab';
+  tabs.children[1].after(tab);
   const freeze=()=>{this.stop();surface.focus({preventScroll:true});};$('movementStop').onclick=freeze;$('interactionFreeze').onclick=freeze;
   $('interactLie').onclick=()=>{this.motion?.interact({mode:'lie'});surface.focus({preventScroll:true});};
   $('interactionPause').onclick=()=>{const m=this.motion?.seated;if(m)m.paused=!m.paused;};
@@ -35,7 +36,7 @@ export class SceneMovement{
   $('interactSeat').onclick=()=>{this.motion?.interact();editor.renderer.domElement.focus({preventScroll:true});};
   for(const [id,key]of speeds)$(id).oninput=()=>{this.settings()[key]=Number($(id).value);$(id+'Value').textContent=$(id).value+' m/s';editor.queueLive();};
   $('moveFollow').onchange=()=>{this.settings().follow=$('moveFollow').checked;if(this.settings().follow&&this.active)this.frameFollow();editor.queueLive();};
-  const surface=editor.renderer.domElement,focused=target=>$('sceneDialog').contains(target),movementSelected=()=>!panel.hidden;
+  const surface=editor.renderer.domElement,focused=target=>$('sceneDialog').contains(target)||$('sceneView').contains(target),movementSelected=()=>!panel.hidden;
   let clickTimer=0;this.cancelFurnitureClick=()=>clearTimeout(clickTimer);const ray=new T.Raycaster(),view=$('sceneView');
   const pick=event=>{const r=surface.getBoundingClientRect();ray.setFromCamera(new T.Vector2((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1),editor.camera);return ray.intersectObject(editor.environment,true)[0];};
   // Camera drag captures pointers on sceneView and suppresses clicks after a drag.

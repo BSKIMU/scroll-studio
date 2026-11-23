@@ -6,6 +6,11 @@ export const airbrushPresets=[
  air('스프레이',160,85,{particleSize:5,particles:24,scatter:100,sizeJitter:65,density:65,spacing:12}),
  air('물보라',220,95,{particleSize:17,particles:7,scatter:100,sizeJitter:85,density:85,spacing:25}),
  air('노이즈',150,100,{particleSize:2,particles:32,scatter:100,sizeJitter:30,density:60,spacing:5}),
+ air('안개',320,0,{density:5,spacing:6,sprayRate:12}),
+ air('집중 음영',72,52,{density:32,minSize:35,spacing:6}),
+ air('미세 분말',120,80,{particles:48,particleSize:3,scatter:75,sizeJitter:55,density:40,spacing:9}),
+ air('굵은 점묘',180,96,{particles:5,particleSize:22,scatter:90,sizeJitter:28,density:90,spacing:30}),
+ air('빗살 분사',150,75,{particles:12,particleSize:17,roundness:22,angle:48,scatter:90,density:65,spacing:18}),
  air('번짐 스프레이',200,15,{particleSize:28,particles:9,scatter:100,sizeJitter:75,roundness:65,angleJitter:180,density:30,spacing:18,texture:'paper',textureDepth:65,textureScale:3})
 ];
 const water=(name,size,settings)=>({name,family:'brush',size,opacity:55,hardness:85,smoothing:18,pressure:true,brushSettings:{minSize:35,spacing:10,density:16,opacityPressure:true,texture:'paper',textureDepth:30,textureScale:3,...settings}});

@@ -5,7 +5,7 @@ export function setupPanels(){
  const left=document.querySelector('aside.left'),dock=document.createElement('div');dock.id='paletteDock';dock.setAttribute('aria-label','패널 정렬 목록');left.querySelector('.left-bottom').before(dock);
  const rough=document.createElement('section');rough.id='roughPanel';rough.append($('cutList'));
  const wheelPanel=document.createElement('section');wheelPanel.id='colorWheelPanel';wheelPanel.append($('colorWheelControl'));const colors=document.createElement('section');colors.id='colorPalettePanel';colors.append($('drawingTools').querySelector('.swatches'),$('penColor').closest('label'));
- const pageBrowser=document.createElement('section');pageBrowser.id='pageBrowser';pageBrowser.append($('pageOverview').querySelector('.page-actions'),$('pageThumbnails'));const navigator=createNavigator();
+ const pageBrowser=document.createElement('section');pageBrowser.id='pageBrowser';pageBrowser.append($('pageOverview').querySelector('.page-actions'),$('pageThumbnails'));installPageThumbnailGrip(pageBrowser);const navigator=createNavigator();
  $('pageOverview').append(pageBrowser);
  const entries=[[navigator,'네비게이터'],[wheelPanel,'컬러 서클'],[colors,'컬러 팔레트'],[$('cutPanel'),'컷 도구'],[$('drawingTools'),'도구 · 브러시'],[$('balloonTools'),'텍스트 · 말풍선'],[$('layerPanel'),'레이어'],[rough,'페이지 러프 · 컷']];
  const workspace=document.querySelector('.workspace'),right=document.createElement('aside');right.id='rightPaletteDock';right.setAttribute('aria-label','오른쪽 팔레트 도크');document.body.append(right);
@@ -106,4 +106,14 @@ export function setupPanels(){
  document.addEventListener('palette-context-change',layoutRight);new ResizeObserver(layoutRight).observe(workspace);
  window.addEventListener('resize',()=>{layoutRight();for(const [el]of entries)if(el.classList.contains('palette-floating')){const r=el.getBoundingClientRect();move(el,r.x,r.y);}});
  return {showBrush:()=>{$('drawingTools').hidden=false;}};
+}
+
+function installPageThumbnailGrip(panel){
+ const grip=document.createElement('button');grip.className='thumbnail-height-grip';grip.type='button';grip.title='페이지 미리보기 높이 · 드래그 또는 위아래 방향키';grip.setAttribute('aria-label',grip.title);grip.setAttribute('role','slider');grip.setAttribute('aria-valuemin','28');grip.setAttribute('aria-valuemax','220');panel.append(grip);
+ const key='scroll-thumbnail-height';let value=Number(localStorage.getItem(key))||112,start;
+ function set(v){value=Math.max(28,Math.min(220,Math.round(v)));panel.style.setProperty('--thumbnail-height',value+'px');grip.setAttribute('aria-valuenow',value);}
+ set(value);grip.onpointerdown=e=>{start=[e.clientY,value];grip.setPointerCapture(e.pointerId);};
+ grip.onpointermove=e=>{if(start)set(start[1]+e.clientY-start[0]);};
+ grip.onlostpointercapture=()=>{start=null;localStorage.setItem(key,value);};
+ grip.onkeydown=e=>{if(!['ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();set(value+(e.key==='ArrowDown'?4:-4));localStorage.setItem(key,value);};
 }

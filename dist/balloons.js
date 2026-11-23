@@ -4,7 +4,7 @@ import {balloonTextLayout,dialogueSession} from './balloon-text.js?v=20261025-re
 import {drawBalloonOutline} from './balloon-outline.js?v=20261025-release1';
 import {balloonShapes,presetStyle} from './balloon-presets.js?v=20261025-release1';
 import {createBalloonPresetPicker} from './balloon-preset-ui.js?v=20261025-release1';
-import {balloonFontFamily,loadProjectFonts} from './balloon-fonts.js?v=20261025-release1';
+import {balloonFontFamily,loadProjectFonts,addComicFontOptions,installFontPreview,loadComicFont} from './balloon-fonts.js?v=20261025-release1';
 import {nativeBalloon,ensureBalloonLayers,newBalloonLayer,balloonLayer} from './balloon-model.js?v=20261025-release1';
 export {balloonFontFamily};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -36,11 +36,12 @@ export function setupBalloons({getProject,getTool,setTool,selectedCut,select,che
  const typography=document.createElement('div');typography.className='balloon-typography';typography.innerHTML='<label>글꼴<select id=balloonFamily><option value=sans>고딕</option><option value=serif>명조</option><option value=myeongjo>나눔명조 · ExtraBold 지원</option><option value=round>둥근 고딕</option><option value=mono>고정폭</option></select></label><label>굵기<select id=balloonWeight><option value=400>보통</option><option value=500 selected>중간</option><option value=700>굵게</option><option value=800>ExtraBold</option><option value=900>매우 굵게</option></select></label>';pane.querySelector('.balloon-colors').after(typography);
  const styles=document.createElement('div');styles.className='text-styles';styles.innerHTML='<label class=check><input id=balloonItalic type=checkbox>기울임</label><label class=check><input id=balloonUnderline type=checkbox>밑줄</label>';typography.append(styles);
  const align=document.createElement('label');align.innerHTML='정렬<select id=balloonAlign><option value=left>왼쪽</option><option value=center selected>가운데</option><option value=right>오른쪽</option></select>';typography.append(align);
- const extra=document.createElement('div');extra.innerHTML='<label>글자 사이 px<input id=balloonTracking type=number min=-10 max=50 step=.1 value=0></label><label>줄 간격<input id=balloonLineHeight type=number min=.6 max=3 step=.05 value=1.4></label><label>글자 주변 여백<input id=balloonPadding type=number min=0 max=.3 step=.01 value=.11></label><button id=balloonFontImport>글꼴 파일 불러오기</button><input id=balloonFontFile type=file accept=".ttf,.otf,.woff,.woff2" hidden>';typography.append(extra);
+ const extra=document.createElement('details');extra.className='type-spacing';extra.innerHTML='<summary>간격 · 글꼴 파일</summary><label>글자 사이 px<input id=balloonTracking type=number min=-10 max=50 step=.1 value=0></label><label>줄 간격<input id=balloonLineHeight type=number min=.6 max=3 step=.05 value=1.4></label><label>글자 주변 여백<input id=balloonPadding type=number min=0 max=.3 step=.01 value=.11></label><button id=balloonFontImport>글꼴 파일 불러오기</button><input id=balloonFontFile type=file accept=".ttf,.otf,.woff,.woff2" hidden>';typography.append(extra);
  $('balloonFontImport').onclick=()=>$('balloonFontFile').click();
  $('balloonFontFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;if(f.size>12e6)throw Error('글꼴은 12MB 이하로 선택하세요.');const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(f);});const font={id:'font-'+crypto.randomUUID(),name:f.name,data};checkpoint();(getProject().fonts??=[]).push(font);await loadProjectFonts(getProject());$('balloonFamily').add(new Option(font.name,font.id));$('balloonFamily').value=font.id;$('balloonFamily').dispatchEvent(new Event('change'));save();toast('글꼴을 원고에 포함했습니다.');}catch(error){toast(error.message);}e.target.value='';};
- const mode=document.createElement('label');mode.innerHTML='추가 방법<select id=balloonAddMode><option value=new>레이어 신규 작성</option><option value=selected>선택 중인 레이어에 추가</option></select>';pane.querySelector('p').after(mode);
+ const mode=document.createElement('label');mode.innerHTML='레이어<select id=balloonAddMode aria-label="대사를 추가할 레이어"><option value=new>새 레이어</option><option value=selected>현재 레이어</option></select>';pane.querySelector('p').after(mode);
  
+ addComicFontOptions($('balloonFamily'));installFontPreview($('balloonFamily'));
  typography.prepend($('balloonFont').closest('label'));typography.prepend($('balloonFamily').closest('label'));typography.append($('balloonInk').closest('label'));
  for(const id of ['Shape','Stroke','Fill','Line','Transparent','Tail','Outline'])$('balloon'+id).closest('label').dataset.balloonOnly='';
  const clip=document.createElement('label');clip.className='check';clip.innerHTML='<input id="balloonClipToFrame" type="checkbox"> 컷 안으로 자르기';$('balloonNew').before(clip);
@@ -76,7 +77,7 @@ export function setupBalloons({getProject,getTool,setTool,selectedCut,select,che
   pane.querySelector('.drawing-head b').textContent=isText?'텍스트':'말풍선 · 대사';
   if(!current&&isText){$('balloonShape').value='text';$('balloonTail').value='none';}
   else if(!current&&shownTool==='text'&&$('balloonShape').value==='text'){$('balloonShape').value='ellipse';$('balloonTail').value='straight';}
-  shownTool=getTool();$('balloonShape').dispatchEvent(new CustomEvent('balloon-shape-sync'));
+  shownTool=getTool();$('balloonFamily').dispatchEvent(new Event('font-sync'));$('balloonShape').dispatchEvent(new CustomEvent('balloon-shape-sync'));
  }
  document.addEventListener('balloon-layer-selected',e=>{clear();if(e.detail?.create){$('balloonAddMode').value='selected';forceNew=true;setTool('balloon');}show();});
  function clear(){finish();current=null;overlay?.remove();overlay=null;}
@@ -117,7 +118,7 @@ export function setupBalloons({getProject,getTool,setTool,selectedCut,select,che
   finish();handlesVisible=false;mark(selection.c,selection.b,selection.cv);show();
   $('viewport').focus({preventScroll:true});$('balloonStatus').textContent='말풍선 선택됨 · Delete: 삭제 · Enter: 대사 편집';
  }
- const editButton=document.createElement('button');editButton.id='balloonEditText';editButton.className='full';editButton.textContent='대사 편집 · Enter';mode.before(editButton);
+ const editButton=document.createElement('button');editButton.id='balloonEditText';editButton.className='full';editButton.textContent='대사 편집';editButton.title='대사 편집 · Enter';mode.before(editButton);
  editButton.onclick=()=>{if(current)edit(current);else toast('먼저 말풍선을 선택하세요.');};
  document.addEventListener('keydown',e=>{
   if(e.defaultPrevented||e.isComposing||e.keyCode===229||e.key!=='Enter'||e.ctrlKey||e.metaKey||e.altKey||editing||!current||!['select','balloon','text'].includes(getTool())||typingTarget(e.target)||e.target.closest('button,select,#sceneDialog')||document.querySelector('dialog[open]'))return;
@@ -126,7 +127,7 @@ export function setupBalloons({getProject,getTool,setTool,selectedCut,select,che
  document.addEventListener('pointerdown',e=>{if(editing&&!editing.input.contains(e.target))finish();},true);
  window.addEventListener('beforeunload',()=>finish());
  function mark(c,b,cv){current={c,b,cv};c.activeBalloonLayer=b.balloonLayerId;overlay?.remove();overlay=null;if(editing||!handlesVisible)return;overlay=document.createElement('div');overlay.className='balloon-selection';overlay.style.left=b.x*100+'%';overlay.style.top=b.y*100+'%';overlay.style.width=b.w*100+'%';overlay.style.height=b.h*100+'%';const handle=document.createElement('i');handle.dataset.mode='resize';overlay.append(handle);if((b.tail||'straight')!=='none'&&b.shape!=='text'){const t=b.tailPoint||[b.x+b.w*.42,b.y+b.h*1.24],dot=document.createElement('i');dot.className='tail-handle';dot.dataset.mode='tail';dot.style.left=(t[0]-b.x)/b.w*100+'%';dot.style.top=(t[1]-b.y)/b.h*100+'%';overlay.append(dot);}planeFor(c,cv).append(overlay);$('balloonStatus').textContent='선택됨 · Delete: 삭제 · 모서리와 꼬리 끝: 조절';}
- function populate(b){const s={...defaults,...b};$('balloonText').value=b.text;for(const [key,id]of Object.entries(fields)){const el=$('balloon'+id);if(el.type==='checkbox')el.checked=s[key];else el.value=s[key];}$('balloonShape').dispatchEvent(new CustomEvent('balloon-shape-sync'));}
+ function populate(b){const s={...defaults,...b};$('balloonText').value=b.text;for(const [key,id]of Object.entries(fields)){const el=$('balloon'+id);if(el.type==='checkbox')el.checked=s[key];else el.value=s[key];}$('balloonFamily').dispatchEvent(new Event('font-sync'));$('balloonShape').dispatchEvent(new CustomEvent('balloon-shape-sync'));}
  function frameLine(c){const width=c?.pageWidth*c?.width/100||document.querySelector(`.panel-wrap[data-id="${c?.id}"] canvas`)?.width||1000;return (c?.frame?.size??2)*.75*1000/width;}
  function add(c,position=[.1,.08],emptyText=false){if(!editable(c))return;checkpoint();const s=style(),width=(getProject().width+getProject().bleed)*c.width/100;if(!lineCustomized)s.line=(c.frame?.size??2)*.75*lineFactor;if(getTool()==='text')Object.assign(s,{shape:'text',tail:'none'});const group=$('balloonAddMode').value==='selected'&&balloonLayer(c)||newBalloonLayer(c);const b={...s,metricWidth:width,balloonLayerId:group.id,x:position[0],y:position[1],w:Math.min(.5,220/width),h:Math.min(.5,100/c.height)};if(emptyText)b.text='';c.bubbles.push(b);c.activeLayer='text';c.activeBalloonLayer=group.id;layerRender();const cv=document.querySelector(`.panel-wrap[data-id="${c.id}"] canvas`);redraw(c,cv);mark(c,b,cv);save();return b;}
 
@@ -170,6 +171,6 @@ export function setupBalloons({getProject,getTool,setTool,selectedCut,select,che
  window.addEventListener('blur',()=>{if(drag){drag=null;save();}});
  function bind(c,cv){cv.addEventListener('pointerdown',e=>start(e,c,cv));cv.addEventListener('dblclick',()=>{if(current?.cv===cv)doubleClick(current);});}
  $('balloonLine').addEventListener('input',()=>lineCustomized=true);
- for(const id of Object.values(fields))$('balloon'+id).addEventListener('change',()=>{if(current)$('balloonApply').click();});
+ for(const id of Object.values(fields))$('balloon'+id).addEventListener('change',async()=>{if(id==='Family'){const key=$('balloonFamily').value,before=current;await loadComicFont(key);if(before!==current||key!==$('balloonFamily').value)return;}if(current)$('balloonApply').click();});
  return {show,clear,bind,add,paint,sync,previewCut,finish,removeSelected,hasSelection:()=>!!current&&current.c.bubbles.includes(current.b)};
 }

@@ -1,6 +1,6 @@
 export function setupCanvasDocumentTabs(api){
  const bar=document.createElement('nav');bar.id='canvasDocumentBar';bar.setAttribute('aria-label','열린 원고');
- bar.innerHTML='<div id="canvasDocumentTabs" role="tablist" aria-label="열린 캔버스"></div><button id="canvasNew" title="기존 원고를 유지하고 새 캔버스 열기">＋ 새 원고</button><button id="canvasReopen">닫은 원고</button>';
+ bar.innerHTML='<div id="canvasDocumentTabs" role="tablist" aria-label="열린 캔버스"></div><button id="canvasNew" aria-label="새 원고" title="새 원고">＋</button><button id="canvasReopen" title="닫은 원고" aria-label="닫은 원고"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4v6h6M3.5 10a9 9 0 1 1 1 7M12 6v6l4 2"/></svg></button>';
  document.getElementById('pageDocumentBar').before(bar);
  const tabs=bar.querySelector('#canvasDocumentTabs');let locked=false,lastActive=null;
  async function run(task){if(locked)return;locked=true;render();try{await task();}catch(e){api.toast(e.message);}finally{locked=false;render();}}

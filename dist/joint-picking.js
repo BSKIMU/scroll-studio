@@ -11,6 +11,7 @@ export function pickJointMarker(editor,event){
   if(!figure.visible)return;
   figure.traverse(marker=>{
    if(!marker.visible||!marker.userData.poseMarker)return;
+   for(let parent=marker.parent;parent;parent=parent.parent)if(!parent.visible)return;
    const world=marker.getWorldPosition(new T.Vector3()),point=world.clone().project(editor.camera);
    if(point.z < -1||point.z>1)return;
    const edge=world.clone().add(new T.Vector3(marker.geometry.parameters.radius*marker.getWorldScale(new T.Vector3()).x,0,0).applyQuaternion(editor.camera.quaternion)).project(editor.camera);

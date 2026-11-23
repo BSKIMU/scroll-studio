@@ -1,3 +1,5 @@
+import {sceneTab} from './scene-panels.js?v=20261028-guide3';
+import {supportMelee} from './melee-support.js';
 import {normalizeMeleeProp,alignShieldForearm} from './melee-props.js?v=20261029-grip3';
 import {libraryCatalog} from './library-assets.js';
 import {pickerProps,useGunReadyPose} from './curated-guns.js?v=20261029-curated2';
@@ -37,13 +39,13 @@ export class SceneProps{
  constructor(editor){
   this.e=editor;this.items=[];this.cache=new Map();this.held=new Map();this.entries=[];
   const controls=document.querySelector('.scene-controls'),tabs=controls.querySelector('.scene-tabs'),panel=this.panel=make('div');panel.id='propPanel';panel.className='scene-property-group';panel.hidden=true;controls.append(panel);
-  const tab=this.tab=btn('소품',()=>{controls.querySelectorAll('.scene-property-group').forEach(p=>p.hidden=p!==panel);tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===tab));this.syncFields();});
+  const tab=this.tab=sceneTab('소품',panel,()=>this.syncFields());
   const person=[...tabs.children].find(b=>b.textContent==='인물'),background=[...tabs.children].find(b=>b.textContent==='배경');tabs.prepend(person,tab,background);
   this.launch=btn('',()=>this.open());this.launch.id='openPropLibrary';this.launch.className='prop-library-launch';this.launch.setAttribute('aria-label','소품 라이브러리 열기');this.launch.setAttribute('aria-controls','propLibrary');this.launch.setAttribute('aria-expanded','false');this.count=make('span','불러오는 중');this.count.className='library-count';this.launch.append(make('b','▦ 소품 라이브러리'),this.count,make('small','검 · 방패 · 도끼 · 총 · 손에 연결'));document.getElementById('dockPropsToggle').before(this.launch);
   this.status=make('p','소품은 선택한 인물의 손에 연결됩니다.');this.status.setAttribute('role','status');panel.append(this.status);
   this.auto=make('input');this.auto.type='checkbox';const autoLabel=make('label','액션에 맞는 소품 자동 장착');autoLabel.prepend(this.auto);panel.append(autoLabel);this.auto.onchange=()=>{editor.state.autoMotionProps=this.auto.checked;editor.queueLive();};
   this.side=make('select');this.side.setAttribute('aria-label','소품 장착 손');this.side.add(new Option('오른손','right'));this.side.add(new Option('왼손','left'));panel.append(this.side);this.selectedSide='right';this.side.onchange=()=>{const p=editor.state.people[editor.index],item=moveHeldProp(p,this.selectedSide,this.side.value);this.selectedSide=this.side.value;this.equipmentChanged();const entry=this.entries.find(e=>e.id===item?.id);this.status.textContent=entry?propLabel(entry)+' · '+(this.side.value==='left'?'왼손':'오른손'):'손 소품 없음';};
-  this.handLinks=[panel,document.getElementById('personSelect').parentElement].map(parent=>{const button=btn('양손 소품 연결 해제',()=>{const p=editor.state.people[editor.index];if(!p)return;p.propHandsLinked=p.propHandsLinked===false;this.equipmentChanged();editor.updatePerson({pose:true});this.status.textContent=p.propHandsLinked?'양손을 총 손잡이에 연결했습니다.':'보조 손을 자유롭게 조정합니다. 소품을 든 손은 유지됩니다.';});button.title='기본: 양손으로 총 잡기. 해제하면 보조 손을 자유롭게 편집합니다.';if(parent===panel)parent.append(button);else parent.after(button);return button;});
+  this.handLinks=[panel,document.getElementById('personSelect').parentElement].map(parent=>{const button=btn('양손 소품 연결 해제',()=>{const p=editor.state.people[editor.index];if(!p)return;p.propHandsLinked=p.propHandsLinked===false;this.equipmentChanged();editor.updatePerson({pose:true});this.status.textContent=p.propHandsLinked?'양손을 소품 손잡이에 연결했습니다.':'보조 손을 자유롭게 조정합니다. 소품을 든 손은 유지됩니다.';});button.title='기본: 총·대검을 양손으로 잡기. 해제하면 보조 손을 자유롭게 편집합니다.';if(parent===panel)parent.append(button);else parent.after(button);return button;});
   this.fields=[];for(const [key,label,step]of [['offset','손잡이 위치 · m',.01],['rotation','손잡이 회전 · °',5]]){
    const group=make('fieldset'),title=make('legend',label);group.append(title);const row=make('div');row.className='prop-vector';
    for(let i=0;i<3;i++){const input=make('input');input.type='number';input.step=step;input.setAttribute('aria-label',label+' '+['X','Y','Z'][i]);input.onchange=()=>this.edit(key,i,Number(input.value)||0);this.fields.push({input,key,i});row.append(input);}group.append(row);panel.append(group);
@@ -93,17 +95,17 @@ export class SceneProps{
  equipmentChanged(){this.e.movement?.library.live.cancel();if(this.e.movement?.motion?.seated?.live)this.e.movement.motion.stand();this.syncFields();this.update();this.e.queueLive();this.e.invalidate();}
  clearHands(){const p=this.e.state.people[this.e.index];if(!p){this.message.textContent='먼저 인물을 선택하세요.';return;}p.equipment={};if(p.phone)p.phone.hand='';this.equipmentChanged();this.message.textContent='양손 소품을 해제했습니다.';this.status.textContent='손 소품 없음';}
  async prepareMotion(entry){
-  if(this.e.state.autoMotionProps===false||!motionEquipment(entry))return ()=>{};
+  if(this.e.state.autoMotionProps===false||!entry)return ()=>{};
   const p=this.e.state.people[this.e.index];await this.catalog();
   const equipment=equipmentForMotion(p,entry,this.entries);await Promise.all(Object.values(equipment).map(item=>this.source(item.id)));
   return ()=>{if(p!==this.e.state.people[this.e.index]||this.e.state.autoMotionProps===false)return;
-   p.equipment=equipmentForMotion(p,entry,this.entries);for(const side of Object.keys(p.equipment))if(p.phone?.hand===side)p.phone.hand='';
+   p.equipment=equipmentForMotion(p,entry,this.entries);if(!Object.keys(p.equipment).length&&p.phone)p.phone.hand='';if(Object.values(p.equipment).some(item=>item.twoHanded))p.propHandsLinked=true;for(const side of Object.keys(p.equipment))if(p.phone?.hand===side)p.phone.hand='';
    this.update();this.syncFields();this.e.queueLive();
   };
  }
  async forMotion(entry){try{(await this.prepareMotion(entry))();}catch(error){this.status.textContent=error.message;throw error;}}
  edit(key,i,value){const item=this.e.state.people[this.e.index]?.equipment?.[this.side.value];if(!item)return;item[key]??=[0,0,0];item[key][i]=T.MathUtils.clamp(value,key==='offset'?-1:-360,key==='offset'?1:360);this.e.queueLive();}
- syncFields(){const p=this.e.state?.people[this.e.index];normalizeFirearmHands(p);this.side.hidden=Object.values(p?.equipment||{}).some(item=>this.entries.some(e=>e.id===item.id&&gunCategories.has(e.category)));if(this.side.hidden)this.side.value='right';const item=p?.equipment?.[this.side.value];this.detachButton.disabled=!item;this.selectedSide=this.side.value;this.auto.checked=this.e.state?.autoMotionProps!==false;for(const button of this.handLinks){button.disabled=!Object.values(p?.equipment||{}).some(item=>this.entries.some(e=>e.id===item.id&&gunCategories.has(e.category)));button.textContent=p?.propHandsLinked===false?'양손 소품 다시 연결':'양손 소품 연결 해제';button.setAttribute('aria-pressed',String(p?.propHandsLinked!==false));}for(const {input,key,i}of this.fields){input.disabled=!item;input.value=item?.[key]?.[i]||0;}}
+ syncFields(){const p=this.e.state?.people[this.e.index];normalizeFirearmHands(p);this.side.hidden=Object.values(p?.equipment||{}).some(item=>this.entries.some(e=>e.id===item.id&&gunCategories.has(e.category)));if(this.side.hidden)this.side.value='right';const item=p?.equipment?.[this.side.value];this.detachButton.disabled=!item;this.selectedSide=this.side.value;this.auto.checked=this.e.state?.autoMotionProps!==false;for(const button of this.handLinks){button.disabled=!Object.values(p?.equipment||{}).some(item=>this.entries.some(e=>e.id===item.id&&(gunCategories.has(e.category)||item.twoHanded)));button.textContent=p?.propHandsLinked===false?'양손 소품 다시 연결':'양손 소품 연결 해제';button.setAttribute('aria-pressed',String(p?.propHandsLinked!==false));}for(const {input,key,i}of this.fields){input.disabled=!item;input.value=item?.[key]?.[i]||0;}}
  async reattach(){
   const e=this.e,items=selectedProps(this.items,e.gizmo.objectTarget);if(items.length!==1){this.status.textContent='장면의 소품 하나를 선택한 뒤 다시 연결하세요.';return;}
   if(!e.state.people[e.index]){this.status.textContent='먼저 인물을 선택하세요.';return;}
@@ -141,11 +143,11 @@ export class SceneProps{
   const figures=this.e.figures.children;for(const person of this.e.state?.people||[])normalizeFirearmHands(person);
   for(const [figure,slots]of this.held){if(!figures.includes(figure)){this.held.delete(figure);continue;}for(const [side,item]of slots){if(this.e.state.people[figure.userData.person]?.equipment?.[side]?.id!==item.id){if(item.root){releaseObjects(item.root);item.root.removeFromParent();}slots.delete(side);}}}
   for(let i=0;i<figures.length;i++){const figure=figures[i],person=this.e.state?.people[i];if(!person?.equipment)continue;const motion=this.e.movement?.motion?.person===person?this.e.movement.motion:null;applyGunCarry(figure,person,motion);applyEquipmentGrip(figure,person);let slots=this.held.get(figure);if(!slots){slots=new Map();this.held.set(figure,slots);}
-   for(const [side,setting]of Object.entries(person.equipment)){let item=slots.get(side);if(item){if(item.root){placeHeldProp(item.root,figure,side,gripFrame(person,side,item.category),setting);alignShieldForearm(item.root,figure,side,setting);supportGun(figure,person,item.root,side,item.category,{ready:useGunReadyPose(person,motion)});}continue;}
+   for(const [side,setting]of Object.entries(person.equipment)){let item=slots.get(side);if(item){if(item.root){placeHeldProp(item.root,figure,side,gripFrame(person,side,item.category),setting);alignShieldForearm(item.root,figure,side,setting);supportMelee(figure,person,item.root,side);supportGun(figure,person,item.root,side,item.category,{ready:useGunReadyPose(person,motion)});}continue;}
     const pending={id:setting.id};slots.set(side,pending);
     this.source(setting.id).then(source=>{if(slots.get(side)!==pending||!this.e.figures.children.includes(figure)||person.equipment?.[side]?.id!==setting.id)return;const entry=this.entries.find(e=>e.id===setting.id),frame=gripFrame(person,side,entry.category);if(!frame)throw Error('이 인물의 손 뼈를 찾지 못했습니다.');if(gunCategories.has(entry.category))loadGunCarry().then(()=>this.e.invalidate()).catch(error=>{this.status.textContent=error.message;});const root=normalizeMeleeProp(normalizeGun(instantiateBackground(source),setting.id),setting.id,side);figure.add(root);root.traverse(o=>{if(o.isMesh)o.castShadow=true;});item={id:setting.id,root,frame,category:entry.category};slots.set(side,item);placeHeldProp(root,figure,side,item.frame,setting);alignShieldForearm(root,figure,side,setting);this.e.queueLive();}).catch(error=>{this.status.textContent=error.message;});
    }
-   if(Object.values(person.equipment).some(item=>this.entries.some(e=>e.id===item.id&&gunCategories.has(e.category))))updateFigureLandmarks(figure);
+   if(Object.values(person.equipment).some(item=>item.twoHanded||this.entries.some(e=>e.id===item.id&&gunCategories.has(e.category))))updateFigureLandmarks(figure);
   }
  }
 }

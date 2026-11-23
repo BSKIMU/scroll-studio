@@ -10,10 +10,20 @@ PORT=int(os.environ.get('SCROLL_PORT','8765'))
 BACKGROUND_PRESETS={'test-light.glb':{'id':'local-test-light','name':'test.blend · 경량 배경','meshes':33,'path':ROOT/'local'/'test-background-light.glb'}}
 BACKGROUND_PRESETS['tea-time.glb']={'id':'local-tea-time','name':'Tea Time · 티 타임','meshes':161,'scale':1,'version':2,'path':ROOT/'dist'/'assets'/'tea-time.glb'}
 POSE_ASSETS={name:ROOT/'local'/'pose-lab'/name for name in ['walk-reference.fbx','jump-reference.glb','motion-clips/idle.json','motion-clips/stop.json','motion-clips/run.json','motion-clips/leap.json','motion-clips/leapMirror.json']}
-BLENDER=next((p for p in [os.environ.get('BLENDER_PATH',''),r'D:\_codex\#3d\local\runtime\blender-4.5.9-windows-x64\blender.exe',r'C:\Program Files\Blender Foundation\Blender 3.4\blender.exe'] if p and Path(p).is_file()),None)
+BLENDER=next((p for p in [os.environ.get('BLENDER_PATH',''),r'E:\_codex\#3d\local\runtime\blender-4.5.9-windows-x64\blender.exe',r'C:\Program Files\Blender Foundation\Blender 3.4\blender.exe'] if p and Path(p).is_file()),None)
 lock=threading.Lock()
+class StudioHTTPServer(ThreadingHTTPServer):
+    # Module loading opens many short-lived connections; the default backlog of
+    # five can reject a startup burst on Windows before handlers accept it.
+    request_queue_size=128
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs): super().__init__(*args,directory=str(ROOT/'dist'),**kwargs)
+    def end_headers(self):
+        # Local source edits must appear on reload; keep large model assets cacheable.
+        if self.path.split('?',1)[0].endswith(('.js','.css','.html')) or self.path.split('?',1)[0]=='/':
+            self.send_header('Cache-Control','no-cache')
+        super().end_headers()
     def allowed(self):
         return self.headers.get('Host') in [f'127.0.0.1:{PORT}',f'localhost:{PORT}'] and self.headers.get('Origin') in [None,f'http://127.0.0.1:{PORT}',f'http://localhost:{PORT}']
     def do_GET(self):
@@ -90,4 +100,4 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__=='__main__':
     print(f'SCROLL STUDIO: http://127.0.0.1:{PORT}',flush=True)
     print('Blender available:',bool(BLENDER),flush=True)
-    ThreadingHTTPServer(('127.0.0.1',PORT),Handler).serve_forever()
+    StudioHTTPServer(('127.0.0.1',PORT),Handler).serve_forever()

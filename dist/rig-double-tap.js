@@ -1,5 +1,5 @@
 // Pointer events work with pen taps even when the driver omits dblclick.
-export function setupRigDoubleTap(surface, hitTest, activate){
+export function setupRigDoubleTap(surface, hitTest, activate, select){
  let down=null,last=null;
  surface.addEventListener('pointerdown',e=>{
   if(e.button!==0||e.isPrimary===false){down=null;last=null;return;}
@@ -16,7 +16,7 @@ export function setupRigDoubleTap(surface, hitTest, activate){
   if(e.timeStamp-tap.time>450||Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>9){last=null;return;}
   if(last&&tap.type===last.type&&tap.target.index===last.target.index&&e.timeStamp-last.time<500&&Math.hypot(tap.x-last.x,tap.y-last.y)<24){
    last=null;queueMicrotask(()=>activate(tap.target));
-  }else last={...tap,time:e.timeStamp};
+  }else {last={...tap,time:e.timeStamp};if(select)queueMicrotask(()=>select(tap.target));}
  },true);
  surface.addEventListener('pointercancel',()=>{down=null;last=null;},true);
 }

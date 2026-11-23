@@ -5,7 +5,7 @@ model/soma/kernels.py (Apache-2.0), revision 54fc563aeaaf819a753d72cc9fdc6713989
 Model weights retain NVIDIA's Open Model Agreement. No sample motions are used.
 """
 from pathlib import Path
-import json, math, sys, time
+import json, math, os, sys, sysconfig, time
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
@@ -124,7 +124,18 @@ def run(folder, model):
     bones=list(dict.fromkeys(name for clip in clips for name in clip['bones']))
     if not all('Hips' in c['bones'] and .05<c['legLength']<10 for c in clips):raise ValueError('휴머노이드 동작이 필요합니다.')
     options=ort.SessionOptions();options.intra_op_num_threads=4;options.inter_op_num_threads=1
-    started=time.perf_counter();session=ort.InferenceSession(str(model),sess_options=options,providers=['CPUExecutionProvider']);load_seconds=time.perf_counter()-started
+    provider = 'CUDAExecutionProvider' if '--cuda' in sys.argv else 'CPUExecutionProvider'
+    if provider == 'CUDAExecutionProvider':
+        # cuDNN itself loads engine DLLs after ORT has initialized its provider.
+        bins = (Path(sysconfig.get_path('purelib')) / 'nvidia').glob('*/bin')
+        os.environ['PATH'] = os.pathsep.join([*(str(p) for p in bins), os.environ['PATH']])
+        ort.preload_dlls(directory="")
+    started = time.perf_counter()
+    session = ort.InferenceSession(str(model), sess_options=options, providers=[provider])
+    if session.get_providers()[0] != provider:
+        raise RuntimeError(f'MotionBricks could not initialize {provider}')
+    session.disable_fallback()
+    load_seconds = time.perf_counter() - started
     output_h=[];output_q=[];bridges=[];tail=None
     for idx,(row,clip) in enumerate(zip(rows,clips)):
         start=max(0,row['start']);end=min(clip['duration'],row['end']);duration=(end-start)/row['speed']
@@ -140,7 +151,7 @@ def run(folder, model):
         output_h.extend(h);output_q.extend(q);tail=(h,q)
     if len(output_h)>5401:raise ValueError('연결 결과는 180초 이하로 만들어주세요.')
     frames=[dict(hip=h.tolist(),q=q.flatten().tolist()) for h,q in zip(output_h,output_q)]
-    provenance=dict(engine='MotionBricks-SOMA-RP-v1',revision='54fc563aeaaf819a753d72cc9fdc6713989cdd43',backend='ONNX Runtime CPU',loadSeconds=load_seconds,steps=rows,bridges=bridges)
+    provenance=dict(engine='MotionBricks-SOMA-RP-v1',revision='54fc563aeaaf819a753d72cc9fdc6713989cdd43',backend=provider,loadSeconds=load_seconds,steps=rows,bridges=bridges)
     clip=dict(label=request['name'],duration=(len(frames)-1)/30,legLength=LEG,bones=bones,frames=frames,source='MotionBricks · 로컬 연결 생성',provenance=provenance)
     (folder/'clip.json').write_text(json.dumps(clip,separators=(',',':'),ensure_ascii=False),'utf-8')
     entry=dict(id=folder.name,name=request['name'],duration=clip['duration'],category='액션',kind='motion',source=clip['source'],local=True)

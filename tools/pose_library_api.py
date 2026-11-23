@@ -4,14 +4,24 @@ import json, math, os, re, shutil, subprocess, threading, uuid
 
 ROOT = Path(__file__).resolve().parent.parent
 LIBRARY = ROOT / 'local' / 'pose-library'
-INSTALL = Path(os.environ.get('KIMODO_PATH', 'D:/다운로드/kimodo.cpp'))
+INSTALL = Path(os.environ.get('KIMODO_PATH', 'E:/다운로드/kimodo.cpp'))
 JOB_LOCK = threading.Lock()
-MOTIONBRICKS = Path(os.environ.get('MOTIONBRICKS_PATH', 'D:/_codex/motionbricks'))
+MOTIONBRICKS = Path(os.environ.get('MOTIONBRICKS_PATH', 'E:/_codex/motionbricks'))
+CUDA_HOME = Path(os.environ.get('KIMODO_CUDA_HOME', Path(os.environ.get('LOCALAPPDATA', ''))/'ScrollStudio/kimodo-cuda'))
+
+def kimodo_cuda():
+    return (CUDA_HOME/'ready').is_file() and (CUDA_HOME/'venv/Scripts/python.exe').is_file()
+
+def bricks_python():
+    cuda = MOTIONBRICKS/'.venv-cuda/Scripts/python.exe'
+    return cuda if cuda.is_file() else MOTIONBRICKS/'.venv/Scripts/python.exe'
 
 def motionbricks_available():
-    return (MOTIONBRICKS/'.venv/Scripts/python.exe').is_file() and (MOTIONBRICKS/'mmm_v6_soma_fp32.onnx').is_file()
+    return bricks_python().is_file() and (MOTIONBRICKS/'mmm_v6_soma_fp32.onnx').is_file()
 
 def available():
+    if kimodo_cuda():
+        return bool(shutil.which('node'))
     return all((INSTALL / p).is_file() for p in ['runtime/kmd-generate.exe', 'models/kimodo-soma-rp-v1.1-f32.gguf', 'Llama-3-Kimodo-Q8_0.gguf']) and bool(shutil.which('node'))
 
 def category(name):
@@ -38,7 +48,9 @@ def respond(handler, payload):
 
 def get(handler):
     path = handler.path.removeprefix('/api/pose-library/')
-    if path == 'status': return respond(handler, dict(kimodo=available(), backend='vulkan', motionbricks=motionbricks_available(), motionbricksBackend='onnx-cpu'))
+    if path == 'status':
+        return respond(handler, dict(kimodo=available(), backend='cuda' if kimodo_cuda() else 'vulkan',
+            motionbricks=motionbricks_available(), motionbricksBackend='onnx-cuda' if '.venv-cuda' in bricks_python().parts else 'onnx-cpu'))
     if path == 'catalog': return respond(handler, dict(version=1, entries=entries()))
     if path.startswith('clips/'):
         key = path[6:].removesuffix('.json')
@@ -119,7 +131,11 @@ def connect(handler):
     def run():
         try:
             with (folder/'process.log').open('wb') as log:
-                subprocess.run([str(MOTIONBRICKS/'.venv/Scripts/python.exe'),str(ROOT/'tools/motionbricks_bridge.py'),str(folder),str(MOTIONBRICKS/'mmm_v6_soma_fp32.onnx')],cwd=ROOT,stdout=log,stderr=log,timeout=180,check=True,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                python = bricks_python()
+                args = [str(python), str(ROOT/'tools/motionbricks_bridge.py'), str(folder), str(MOTIONBRICKS/'mmm_v6_soma_fp32.onnx')]
+                if '.venv-cuda' in python.parts:
+                    args.append('--cuda')
+                subprocess.run(args,cwd=ROOT,stdout=log,stderr=log,timeout=180,check=True,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
             status(dict(state='done',entry=key,metrics=json.loads((folder/'metrics.json').read_text('utf-8'))))
         except Exception:status(dict(state='failed',message='연결 생성이 완료되지 않았습니다. 더 가까운 자세를 연결해 보세요. 로컬 process.log에서 원인을 확인할 수 있습니다.'))
         finally:JOB_LOCK.release()

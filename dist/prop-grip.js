@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {movementModel} from './mannequin.js?v=20261031-joint-handles';
-import {applyHandPose,automaticHands} from './hand-pose.js?v=20261029-hands2';
+import {applyHandPose} from './hand-pose.js?v=20261029-hands2';
 import {gunProfiles} from './prop-grip-profiles.js?v=20261029-grip3';
 import {curatedGuns,calibratedGunMotion} from './curated-guns.js?v=20261029-curated2';
 const cache=new Map(),V=()=>new T.Vector3();
@@ -17,9 +17,9 @@ export function supportHandFrame(person,side,category='Rifle'){
  const q=target.multiply(source.invert()).multiply(hand.getWorldQuaternion(new T.Quaternion()));supportCache.set(key,q);return q;
 }
 export function applyEquipmentGrip(figure,person){
- if(!automaticHands(person))return;
- const hands={},fingers={};for(const side of ['left','right'])if(person.equipment?.[side]?.id){const item=person.equipment[side],profile=gunProfiles[item.id];hands[side]=item.grip??profile?.curl??72;if(profile){fingers[side]={Index:35,Thumb:45};const other=side==='left'?'right':'left';if(person.propHandsLinked!==false&&!person.equipment[other]){hands[other]=profile.supportCurl??58;fingers[other]={Thumb:30};}}}
- if(Object.keys(hands).length)applyHandPose(figure,{handMode:'manual',hands,fingers,handPose:person.handPose});
+ // Attached props own the grip; detaching restores the saved hand pose.
+ const hands={},fingers={};for(const side of ['left','right'])if(person.equipment?.[side]?.id){const item=person.equipment[side],profile=gunProfiles[item.id];hands[side]=item.grip??profile?.curl??72;if(item.twoHanded&&person.propHandsLinked!==false&&!person.equipment?.[side==='right'?'left':'right'])hands[side==='right'?'left':'right']=item.grip??72;if(profile){fingers[side]={Index:35,Thumb:45};const other=side==='left'?'right':'left';if(person.propHandsLinked!==false&&!person.equipment[other]){hands[other]=profile.supportCurl??58;fingers[other]={Thumb:30};}}}
+ if(Object.keys(hands).length)applyHandPose(figure,{handMode:'manual',hands,fingers});
 }
 // Model-specific palm frames are derived from the untouched bind skeleton.
 // Props follow the hand's rotation, while their metre scale stays independent of bone units.
@@ -74,12 +74,13 @@ export function motionEquipment(entry){
 // A library selection chooses the equipment; Q chooses motions for the equipment.
 // Keep calibrated grips for compatible items, replace mismatched weapons in both hands.
 export function equipmentForMotion(person,entry,catalog){
- const required=motionEquipment(entry);if(!required)return null;
+ const required=motionEquipment(entry);if(!required)return {};
  const result={};
  for(const [side,id]of Object.entries(required)){
   const current=person.equipment?.[side],wanted=catalog.find(e=>e.id===id),held=catalog.find(e=>e.id===current?.id);
   const adapted=side==='right'&&curatedGuns.has(current?.id)&&calibratedGunMotion(entry);
   result[side]=held&&wanted&&(held.category===wanted.category||adapted)?{...current}:{id,offset:[0,0,0],rotation:[0,0,0],scale:1,automatic:true};
  }
+ if(result.right?.id==='long-sword')result.right.twoHanded=/great.?sword|two.?hand|both|대검|양손/i.test(entry.name||'')&&!result.left;
  return result;
 }

@@ -1,5 +1,7 @@
-// Uses the existing local Vulkan installation. Never downloads weights or uploads input.
+// Both runtimes produce the same SOMA interchange frames.
 import {readFile,writeFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 import path from 'node:path';
 import {Quaternion,Vector3} from '../dist/vendor/three.module.js';
@@ -8,8 +10,18 @@ if(!Number.isInteger(request.frames)||request.frames<60||request.frames>240||typ
 await writeFile(path.join(folder,'prompt.txt'),request.prompt);
 const args=['models/kimodo-soma-rp-v1.1-f32.gguf','Llama-3-Kimodo-Q8_0.gguf',path.join(folder,'prompt.txt'),String(request.frames),String(request.steps),String(request.seed),folder];
 const env={...process.env,KIMODO_BACKEND:'vulkan',KIMODO_THREADS:'6',KIMODO_TEXT_LAYER_CHUNK:'8',GGML_VK_DISABLE_COOPMAT:'1',GGML_VK_DISABLE_COOPMAT2:'1',GGML_VK_DISABLE_F16:'1'};
-const start=Date.now();await new Promise((resolve,reject)=>{const p=spawn(path.join(install,'runtime/kmd-generate.exe'),args,{cwd:install,env,windowsHide:true,stdio:['ignore','inherit','inherit']});p.on('error',reject);p.on('close',code=>code===0?resolve():reject(Error('Kimodo exit '+code)));});
-const skeleton=JSON.parse(await readFile(process.env.KIMODO_SKELETON||'D:/_codex/#3d/tools/kimodo-soma30.json','utf8'));
+const cudaHome=process.env.KIMODO_CUDA_HOME || path.join(process.env.LOCALAPPDATA || '', 'ScrollStudio', 'kimodo-cuda');
+const useCuda=existsSync(path.join(cudaHome,'ready')) || process.env.KIMODO_BACKEND==='cuda';
+const executable=useCuda ? path.join(cudaHome,'venv/Scripts/python.exe') : path.join(install,'runtime/kmd-generate.exe');
+const commandArgs=useCuda ? ['-X','utf8',fileURLToPath(new URL('./kimodo_cuda.py',import.meta.url)),folder,cudaHome] : args;
+const start=Date.now();
+await new Promise((resolve,reject)=>{
+  const p=spawn(executable,commandArgs,{cwd:useCuda?folder:install,env:useCuda?process.env:env,windowsHide:true,stdio:['ignore','inherit','inherit']});
+  p.on('error',reject);
+  p.on('close',code=>code===0?resolve():reject(Error('Kimodo exit '+code)));
+});
+request.backend=useCuda?'cuda':'vulkan';
+const skeleton=JSON.parse(await readFile(process.env.KIMODO_SKELETON||new URL('./motionbricks-soma30.json',import.meta.url),'utf8'));
 const roots=await readFile(path.join(folder,'root_positions.f32')),raw=await readFile(path.join(folder,'local_rotations_xyzw.f32'));
 if(roots.length!==request.frames*12||raw.length!==request.frames*30*16)throw Error('Unexpected generated frame count');
 const mapping={Hips:'Hips',Spine1:'Spine',Spine2:'Spine1',Chest:'Spine2',Neck1:'Neck',Head:'Head',LeftShoulder:'LeftShoulder',LeftArm:'LeftArm',LeftForeArm:'LeftForeArm',LeftHand:'LeftHand',RightShoulder:'RightShoulder',RightArm:'RightArm',RightForeArm:'RightForeArm',RightHand:'RightHand',LeftLeg:'LeftUpLeg',LeftShin:'LeftLeg',LeftFoot:'LeftFoot',LeftToeBase:'LeftToeBase',RightLeg:'RightUpLeg',RightShin:'RightLeg',RightFoot:'RightFoot',RightToeBase:'RightToeBase'};

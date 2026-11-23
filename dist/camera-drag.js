@@ -1,3 +1,4 @@
+import {cameraPointer} from './camera-pointer.js';
 import * as T from 'three';
 import {pickSceneTarget} from './scene-object-transform.js?v=20261030-physics60';
 
@@ -10,6 +11,7 @@ export function installCameraDrag(editor){
  settings.innerHTML='카메라 회전 감도 <output>65%</output><input type="range" min="5" max="150" value="65" step="5" aria-label="카메라 회전 감도"><small>빈 공간 왼쪽 드래그 · Shift: 10% 속도로 미세 조정</small>';
  document.getElementById('fov').parentElement.before(settings);
  settings.querySelector('input').value=Math.round(speed*100);settings.querySelector('output').textContent=Math.round(speed*100)+'%';settings.querySelector('input').oninput=e=>{speed=+e.target.value/100;settings.querySelector('output').textContent=e.target.value+'%';controls.rotateSpeed=speed;try{localStorage.setItem('scroll-camera-speed',speed);}catch{}};controls.rotateSpeed=speed;
+ const mouseLook=cameraPointer(view,()=>{if(drag)end({pointerId:drag.id});});
  const start=e=>{
   const pan=e.shiftKey&&(e.button===2||e.button===1);
   if(!editor.isOpen||editor.loading||editor.fly?.active||editor.gizmo.keyboard?.active||editor.gizmo.transform.dragging||(!pan&&e.button!==0)||e.altKey||e.pointerType==='touch'||(e.target!==view&&e.target!==surface))return;
@@ -26,12 +28,12 @@ export function installCameraDrag(editor){
   // Consume any prior orbit inertia once, then use exact per-pixel movement.
   const damping=controls.enableDamping;controls.enableDamping=false;controls.update();
   drag={id:e.pointerId,x:e.clientX,y:e.clientY,total:0,damping,enabled:controls.enabled,pan};
-  suppressClick=false;controls.enabled=false;view.setPointerCapture(e.pointerId);view.classList.add('camera-dragging');
+  suppressClick=false;controls.enabled=false;view.setPointerCapture(e.pointerId);view.classList.add('camera-dragging');if(!pan)mouseLook.start(e);
  };
  view.addEventListener('pointerdown',start,true);
  view.addEventListener('pointermove',e=>{
   if(!drag||drag.id!==e.pointerId)return;e.preventDefault();e.stopImmediatePropagation();
-  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.total+=Math.hypot(dx,dy);
+  const [dx,dy]=mouseLook.delta(e,drag);drag.x=e.clientX;drag.y=e.clientY;drag.total+=Math.hypot(dx,dy);
   if(drag.pan){
    const camera=editor.camera,span=camera.isOrthographicCamera?(camera.top-camera.bottom)/camera.zoom:2*camera.position.distanceTo(controls.target)*Math.tan(T.MathUtils.degToRad(camera.fov/2))/camera.zoom;
    const viewScale=camera.view?.enabled?camera.view.height/camera.view.fullHeight:1;
@@ -47,7 +49,8 @@ export function installCameraDrag(editor){
  },true);
  const end=e=>{
   if(!drag||drag.id!==e.pointerId)return;
-  const previous=drag;drag=null;suppressClick=previous.total>3;
+  if(e.type==='lostpointercapture'&&document.pointerLockElement===view)return;
+  const previous=drag;drag=null;mouseLook.end();suppressClick=previous.total>3;
   controls.enabled=previous.enabled;controls.enableDamping=previous.damping;view.classList.remove('camera-dragging');
   if(view.hasPointerCapture(e.pointerId))view.releasePointerCapture(e.pointerId);
   if(!editor.movement?.engaged)editor.flush();

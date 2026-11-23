@@ -40,7 +40,7 @@ body.studio-ui.scene-maximized #sceneDialog .scene-layout.resizable-scene{grid-t
 body.studio-ui.scene-maximized #sceneDialog #sceneView{grid-row:3}
 body.studio-ui.scene-maximized #sceneDialog .scene-controls{grid-row:1/4}
 .scene-dock.fly-mode #sceneTopControls{display:none}
-.scene-dock .scene-views{max-width:calc(100% - 60px)}
+
 .figure-picker{position:absolute;z-index:20;right:52px;top:50px;width:min(350px,calc(100% - 64px));padding:14px;border:1px solid #b4c7d746;border-radius:12px;background:rgba(34,42,51,.7);backdrop-filter:blur(10px);color:#edf3f8;box-shadow:0 12px 40px #0004}
 .figure-picker[hidden]{display:none}
 .figure-picker header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:14px}
@@ -56,7 +56,7 @@ body.studio-ui.scene-maximized #sceneDialog .scene-controls{grid-row:1/4}
 .scene-shading button{width:30px;height:29px;padding:5px;border:0;border-radius:0;background:transparent;color:#dce6eb;display:grid;place-items:center}
 .scene-shading button:hover{background:#56647999}.scene-shading button[aria-pressed=true]{background:#2188bfe0;color:white}
 .scene-shading svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linejoin:round;stroke-linecap:round}
-.camera-nav-rail{top:50px}.scene-dock .scene-views{max-width:calc(100% - 108px)}
+.camera-nav-rail{top:50px}
 .cloud-options{padding:9px;background:#18253266;border:1px solid #6f93a642;border-radius:5px}.cloud-options[hidden]{display:none}
 .cloud-options output{display:block;font-size:10px;color:#aac8db;margin-top:7px;line-height:1.5}
 .scene-dock .sky-picker-trigger{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px;background:#202a35;border:1px solid #7891a568;border-radius:7px}

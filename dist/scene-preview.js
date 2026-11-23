@@ -43,7 +43,7 @@ export class ScenePreview{
   // is covered; stop/restore/save flush the final pose at the original resolution.
   const manuscriptVisible=!document.body.classList.contains('scene-maximized')&&!document.fullscreenElement?.contains(e.renderer.domElement);
   const previewPending=manuscriptVisible&&e.previewDirty&&!e.advanced.skies.pending;
-  const capture=previewPending&&!(this.light&&interactive)&&time-(this.lastPreview??-Infinity)>=Math.max(this.light?160:80,(this.captureMs||0)*3);
+  const capture=previewPending&&time-(this.lastPreview??-Infinity)>=Math.max(this.light?160:80,(this.captureMs||0)*3);
   if(capture){const captureStart=performance.now();this.setRenderQuality();e.preview();this.captureMs=performance.now()-captureStart;this.lastPreview=time;}
   const paintStart=performance.now();
   this.paint(interactive,time);this.frames++;

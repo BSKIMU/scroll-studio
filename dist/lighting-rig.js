@@ -1,7 +1,7 @@
 import * as T from 'three';
 import {rotatedHDRDirection} from './hdri-lighting.js?v=20261027-natural1';
 
-export const lightingDefaults={ambientColor:'#e6efff',fill:.35,fillColor:'#b9d1ff',rim:.3,rimColor:'#ffe0bb',shadowSoftness:2,shadowFocus:12};
+export const lightingDefaults={ambientColor:'#e6efff',fill:.35,fillColor:'#b9d1ff',rim:.3,rimColor:'#ffe0bb',shadowSoftness:2,shadowFocus:12,fillFollowCamera:true,rimFollowCamera:true,fillAzimuth:-45,fillAltitude:30,rimAzimuth:150,rimAltitude:40};
 // Movement needs all HDRI light directions (including window occlusion), but
 // not six million shadow texels per frame. Only transient previews use 512².
 // Three does not resize an existing shadow target when mapSize changes.
@@ -38,6 +38,7 @@ export function updateLightFrame(e,s){
   e.sun.position.copy(center).add(new T.Vector3(Math.sin(a)*Math.cos(h),Math.sin(h),Math.cos(a)*Math.cos(h)).multiplyScalar(60));
   const eye=e.camera.position.clone().sub(center);eye.y=Math.max(2,eye.y);eye.normalize();
   e.fillLight.position.copy(center).addScaledVector(eye,20);e.rimLight.position.copy(center).addScaledVector(eye,-20);e.rimLight.position.y+=10;
+  for(const [light,key]of [[e.fillLight,'fill'],[e.rimLight,'rim']])if(s[key+'FollowCamera']===false){const a=T.MathUtils.degToRad(s[key+'Azimuth']),h=T.MathUtils.degToRad(s[key+'Altitude']);light.position.copy(center).add(new T.Vector3(Math.sin(a)*Math.cos(h),Math.sin(h),Math.cos(a)*Math.cos(h)).multiplyScalar(30));}
  }
  for(const light of [e.sun,e.fillLight,e.rimLight]){light.target.position.copy(center);if(!light.target.parent)e.scene.add(light.target);}
  for(const light of [e.sun,e.fillLight,e.rimLight]){Object.assign(light.shadow.camera,{left:-radius,right:radius,top:radius,bottom:-radius,near:.5,far:160});light.shadow.camera.updateProjectionMatrix();}
