@@ -30,7 +30,7 @@ export async function restoreCanvasDocuments(db,validate){
   for(const id of [...new Set(manifest.tabs)]){try{const record=await readStored(db,documentKey(id));if(!record?.project)throw Error('저장 자료 없음');const doc=workspace.add(validate(record.project),record.view||{},id);doc.savedRevision=0;}catch(e){errors.push(id);}}
   workspace.closed=Array.isArray(manifest.closed)?manifest.closed:[];
   // A damaged record remains recoverable; never silently replace it with a blank manuscript.
-  for(const id of errors)workspace.closed.push({id,title:'불러오지 못한 원고',format:'',thumbnail:doc.view.thumbnail,closedAt:Date.now()});
+  for(const id of errors)workspace.closed.push({id,title:'불러오지 못한 원고',format:'',closedAt:Date.now()});
   if(workspace.documents.some(d=>d.id===manifest.activeId))workspace.activeId=manifest.activeId;
  }else{
   const legacy=await readStored(db,'latest');if(legacy)workspace.add(validate(legacy));

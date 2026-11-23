@@ -21,7 +21,7 @@ export class SceneShading{
   const e=this.e,r=e.renderer,background=e.scene.background,dome=e.skyDome?.visible,shadow=r.shadowMap.autoUpdate,materials=[],hidden=[];
   r.domElement.style.filter=this.mode==='solid'?'none':e.advanced.filter();
   try{
-   if(document.body.classList.contains('inline-cut-mode')){
+   if(r.domElement.closest?.('.inline-cut-mode')){
     const grid=e.grid.visible;e.grid.visible=false;if(e.skyDome&&!e.state?.look?.skyPreset)e.skyDome.visible=false;
     try{r.domElement.style.filter=e.advanced.filter();r.render(e.scene,e.camera);e.tone.paint({interactive});}finally{e.grid.visible=grid;}
     return;

@@ -17,9 +17,9 @@ export function supportHandFrame(person,side,category='Rifle'){
  const q=target.multiply(source.invert()).multiply(hand.getWorldQuaternion(new T.Quaternion()));supportCache.set(key,q);return q;
 }
 export function applyEquipmentGrip(figure,person){
- // Attached props own the grip; detaching restores the saved hand pose.
+ // Use equipment defaults for joints without an authored hand pose.
  const hands={},fingers={};for(const side of ['left','right'])if(person.equipment?.[side]?.id){const item=person.equipment[side],profile=gunProfiles[item.id];hands[side]=item.grip??profile?.curl??72;if(item.twoHanded&&person.propHandsLinked!==false&&!person.equipment?.[side==='right'?'left':'right'])hands[side==='right'?'left':'right']=item.grip??72;if(profile){fingers[side]={Index:35,Thumb:45};const other=side==='left'?'right':'left';if(person.propHandsLinked!==false&&!person.equipment[other]){hands[other]=profile.supportCurl??58;fingers[other]={Thumb:30};}}}
- if(Object.keys(hands).length)applyHandPose(figure,{handMode:'manual',hands,fingers});
+ if(Object.keys(hands).length)applyHandPose(figure,{handMode:'manual',hands,fingers,handPose:person.handPose});
 }
 // Model-specific palm frames are derived from the untouched bind skeleton.
 // Props follow the hand's rotation, while their metre scale stays independent of bone units.
